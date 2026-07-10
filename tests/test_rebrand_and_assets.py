@@ -35,16 +35,17 @@ def test_addon_xml_identity(built):
     # No unrelated couplings: Setup owns EZ Maintenance++ (owner decision
     # 2026-07-10 - the skin declares only what it uses).
     assert "ezmaintenanceplusplus" not in addon
-    # The "by" line (provider-name) is Tony.7.Bones ALONE - upstream authors
-    # never consented to authorship billing (owner directive 2026-07-10).
+    # The "by" line (provider-name) is Tony.7.Bones ALONE, and upstream author
+    # names appear NOWHERE in the visible addon.xml - not the author line, not
+    # the description (owner directive 2026-07-10). License-required attribution
+    # lives in ATTRIBUTION.md + LICENSE.txt inside the zip, not on the info page.
     assert 'provider-name="Tony.7.Bones">' in addon
-    for name in ("Guilouz", "PvD", "b-jesch", "Team Kodi", "phil65"):
-        assert 'provider-name="{}'.format(name) not in addon
-        # ...but they ARE thanked in the description (credit, not authorship).
-    # License + credits obligations (GPL-2.0 + CC-BY-SA-4.0), as THANKS.
+    for name in ("Guilouz", "PvD", "b-jesch", "Team Kodi", "phil65", "Piers"):
+        assert name not in addon, (
+            "upstream author {} must not appear in addon.xml".format(name)
+        )
+    # License markers survive (obligation is met via ATTRIBUTION.md).
     assert "CC BY-SA 4.0" in addon and "GENERAL PUBLIC LICENSE" in addon
-    for credit in ("Guilouz", "b-jesch", "Team Kodi"):
-        assert credit in addon.split("<description")[1].split("</description>")[0]
     # Screenshots are original Estuary's (stock), not MOD V2's branded set.
     assert "resources/screenshots/screenshot_" not in addon
     assert addon.count("<screenshot>resources/screenshot-") == 8

@@ -747,11 +747,9 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
         '<description lang="en_GB">Estuary MOD V2 is a mod from Estuary by Guilouz '
         "for Kodi 18 and adapted for Kodi 21 (Omega) by PvD from Kodinerds Community. "
         "It attempts to be easy for first time Kodi users to understand and use.</description>",
-        '<description lang="en_GB">Estuary 7 keeps the look and feel of original '
-        "Estuary with thin fonts everywhere, built from Estuary MOD V2. Credits: "
-        "Estuary MOD V2 by Guilouz, adapted for Kodi 21 (Omega) by PvD / b-jesch "
-        "(Kodinerds); Estuary by phil65 and Piers (Team Kodi). "
-        "Code GPL-2.0, artwork CC-BY-SA-4.0.</description>",
+        '<description lang="en_GB">Estuary 7 - the Tony.7.Bones fleet skin. '
+        "Keeps the look and feel of original Estuary with thin fonts everywhere. "
+        "Code GPL-2.0, artwork CC-BY-SA-4.0 (see ATTRIBUTION.md).</description>",
         path=path,
     )
     text = _replace(
