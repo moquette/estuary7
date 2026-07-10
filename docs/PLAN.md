@@ -303,3 +303,60 @@ Next: Phase 3, device verify on the Office Fire TV (192.168.7.162): install
 Estuary 7 alongside the overlaid MOD V2, switch with the hardened
 `activate_skin`, screencap-parity every documented tweak, reboot cycles,
 fresh-box menu-widget check (the skinshortcuts properties caveat), ATV by eye.
+
+---
+
+## Phase 3 - COMPLETE on the bench box (2026-07-10); ATV by-eye still open
+
+Office Fire TV (192.168.7.162), driven over adb + JSON-RPC. The box was found
+mid-playback (live TV); owner approved interrupting.
+
+**Install path used (bench equivalent of Phase 4's direct-extract ritual):**
+adb push of the built tree into `.kodi/addons/` + Kodi restart (boot rescan
+registers new local add-ons, disabled) + `Addons.SetAddonEnabled`. Found the
+box still on modv2plus 1.6.3 (auto-update lag); pushed 1.8.0 the same way and
+its boot service re-applied, giving the true 1.8.0 overlay baseline first.
+
+**The skin-switch confirm race, reproduced live:** the first
+`Settings.SetSettingValue(lookandfeel.skin)` went live, then skinshortcuts'
+first-build ReloadSkin destroyed the "Keep this skin?" confirm -> auto-revert
+(the exact failure `activate_skin` hardens against; JSON-RPC exposes no
+ExecuteBuiltin on this build, so the bench can't call it). Once the includes
+file existed (build done ~10s), the re-asserted switch + fast poll +
+Input.Right/Input.Select accept held. Phase 5 must keep using the in-Kodi
+`activate_skin` (SendClick(11) + quiescence wait), which handles all of this.
+
+**Parity, screencapped against the same-session 1.8.0 baseline:** home (six
+thin menu items from our shipped DATA, hi-res wordmark, thin clock, top-bar
+weather with outline icon, plain shortcut icons), gear order (Skin settings
+first), thin SkinSettings nav with the "Estuary 7" category (System Info
+overlay toggle off, "Estuary 7 settings" breadcrumb, no master toggle), PVR
+channel list regular-weight and pixel-parity with baseline, power menu =
+Classic list on a fresh skin ($EXP[PowerMenuList] bake proven). Live-skin
+greps on device: zero `[B]` across xml/, zero bold face binds and zero non-lyr
+`<style>bold</style>` in the Default fontset. Survived a Kodi restart
+(booted straight into Estuary 7, no splash). Reverted to MOD V2 with one
+switch; overlay look intact - rollback exercised in BOTH directions.
+
+**Hardware-confirmed finding (drives Phases 4/5):** on the fresh skin the
+six-item menu renders but the Movies pane showed "library empty" - NO widgets
+
+- until `skin.estuary7.properties` was seeded into
+  `addon_data/script.skinshortcuts/` (+ hash drop + restart), after which the
+  widget row matched the baseline exactly. The seed is MANDATORY in Phase 4's
+  `_install_skin` and Phase 5's migrator (and on truly fresh boxes the
+  modv2plus-era unprefixed DATA files won't exist either - the skin's shipped
+  `shortcuts/` defaults cover the menu itself, as proven here).
+
+**Flagged for owner (DESIGN.md rule - not on the deviation list):** the
+SkinSettings window shows upstream's "ESTUARY MOD V2" logo artwork
+(bottom-left). Cosmetic, skin-internal texture; candidate transform for a
+1.0.1 (swap or drop the logo). Decision pending.
+
+**Box end state:** MOD V2 + overlay 1.8.0 active (fleet-standard), Estuary 7
+1.0.0 installed alongside and enabled, properties seeded (inert while MOD V2
+is active). ATV2 by-eye check remains open - tvOS cannot screenshot.
+
+Next: Phase 4 - setup/library/tests in tony7bones.github.io (SKIN_ID flip,
+`_install_skin` direct-extracts the Estuary 7 release zip + seeds the
+skinshortcuts properties, probes simplify, EXPECTED_NET_INSTALLED).

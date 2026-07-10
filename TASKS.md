@@ -34,10 +34,23 @@ Full phase plan + locked decisions: `docs/PLAN.md`. Project rules: `CLAUDE.md`.
       End-to-end verified through the REAL proxy engine: full 98,631,598-byte
       stream sha256-matches the build, live addons.xml lists skin.estuary7
       1.0.0 with the full requires closure, icon/fanart resolve.
-- [ ] **Phase 3 - Device verify** (NEXT): Office Fire TV side-by-side skin
-      switch, screencap parity of every tweak; ATV by eye. EXTRA CHECK: fresh
-      box menu widgets (skinshortcuts properties is addon_data-only - see
-      Phase 1 note).
+- [x] **Phase 3 - Device verify** (2026-07-10, Office Fire TV 192.168.7.162).
+      Estuary 7 1.0.0 installed alongside MOD V2 (adb push + boot rescan +
+      SetAddonEnabled), switched live, screencap parity vs the 1.8.0 overlay
+      baseline: home (six thin items, wordmark, thin clock, top-bar weather
+      w/ outline icon, plain shortcut icons), widgets, gear order, thin
+      SkinSettings nav + our "Estuary 7" category/toggle/breadcrumb, PVR
+      regular headers, Classic-list power menu. Live-skin greps: zero [B],
+      zero bold binds, zero non-lyr style-bold. Survived restart; reverted to
+      MOD V2 in one switch (overlay intact) - rollback exercised BOTH ways.
+      CONFIRMED on hardware: fresh skin shows menu but NO widgets until the
+      skinshortcuts properties is seeded into addon_data (seed + hash drop +
+      restart fixed it) - Phase 4 setup / Phase 5 migrator MUST do this.
+      FLAGGED for owner: upstream "ESTUARY MOD V2" logo artwork still shows in
+      the SkinSettings window corner (cosmetic; candidate 1.0.1 transform).
+      Box end state: MOD V2 + overlay 1.8.0 active (modv2plus updated from
+      1.6.3 via push), Estuary 7 installed alongside. ATV by-eye check still
+      open (tvOS cannot screenshot; owner's call).
 - [ ] **Phase 4 - Setup/library/tests** in tony7bones.github.io (SKIN_ID flip,
       probes simplify, EXPECTED_NET_INSTALLED).
 - [ ] **Phase 5 - Fleet migration**: modv2plus 2.0.0 one-shot migrator
