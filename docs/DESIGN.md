@@ -94,6 +94,13 @@ the overlay; revert = switch skins).
 
 ## Flagged deviations and their decisions
 
+- **addon.xml authorship line** (owner directive 2026-07-10, v1.0.3):
+  `provider-name` is **Tony.7.Bones alone**. Upstream authors (Guilouz,
+  PvD / b-jesch, phil65, Team Kodi) never consented to authorship billing, so
+  they are credited as THANKS in `<description>` and `ATTRIBUTION.md`, never
+  in the "by" line. Skin-info screenshots are original Estuary's (Team Kodi),
+  not MOD V2's branded set.
+
 Found during transform/verify work per the rule above (flag, ask, never
 silently keep):
 
