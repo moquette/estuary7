@@ -392,3 +392,35 @@ Bench soak at close: Estuary 7 1.0.1 active (clean full-tree install), with
 modv2plus AND the MOD V2 skin both disabled-but-installed (frozen rollback,
 no auto-update clobber) - the fleet's intended end-state, soaking ahead of
 Phase 5. ATV by-eye check still open.
+
+
+---
+
+## Phase 4 - COMPLETE (2026-07-10, in tony7bones.github.io)
+
+Shipped as library 1.9.0 + bootstrap 2.3.0 (commit 077a60a, release e564b78).
+
+- `setup/skin.py`: SKIN_ID -> `skin.estuary7`. `_install_skin` direct-extracts
+  the fork from its GitHub release asset (`_skin_release_zip_url` reads the
+  hosted addon.xml for the shipped version - proxy-invisible, the pvr.artwork
+  pattern), selects the remaining closure EXPLICITLY (`SKIN_CLOSURE_IDS` =
+  skinshortcuts + image.resource.select; a `[SKIN_ID]` selection can no longer
+  carry deps because the skin is in no resolver-visible repo), seeds the
+  skinshortcuts properties into addon_data + drops the hash
+  (`_seed_skinshortcuts_properties` - the Phase 3 hardware-proven mandatory
+  step; never clobbers an existing file), and does NOT install modv2plus.
+- `setup/probes.py`: `skin_done` = installed + active. The three-way
+  `_modv2plus_fully_applied` reuse and the opt-out guard died with the overlay.
+- Bootstrap: constant flip + "Estuary 7:" summary lines.
+- NEW PINNED BEHAVIOR (fork resilience): the skin installs AND activates even
+  on a bare repo index - the release-asset path is index-independent. The old
+  "bare = skin FAILED = no activation" tests now pin the failure path via a
+  stubbed-unreachable release URL instead.
+- Golden snapshot regenerated; EXPECTED_NET_INSTALLED swaps modv2plus for
+  skin.estuary7. 1295 tests + ruff green.
+- Real-device proof of the fresh-box path is DEFERRED to Phase 5 by design: a
+  fresh provision would wipe the bench box; the migrator rollout is the live
+  exercise, with the bench (already soaking the end-state) as first subject.
+
+Next: Phase 5 - fleet migration (modv2plus 2.0.0 one-shot migrator, disarmed
+first; box-by-box; rollback = one skin switch).

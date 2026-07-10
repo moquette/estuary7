@@ -53,8 +53,17 @@ Full phase plan + locked decisions: `docs/PLAN.md`. Project rules: `CLAUDE.md`.
       2026-07-10: owner installed 1.0.1 on the ATV via Install-from-repository
       (the first real repo-path install - proxy resolved, release asset
       streamed on tvOS) and verified the look by eye. Phase 3 fully complete.
-- [ ] **Phase 4 - Setup/library/tests** in tony7bones.github.io (SKIN_ID flip,
-      probes simplify, EXPECTED_NET_INSTALLED).
+- [x] **Phase 4 - Setup/library/tests** (2026-07-10, tony7bones.github.io
+      077a60a + release e564b78: library 1.9.0 + bootstrap 2.3.0). SKIN_ID ->
+      skin.estuary7; the Skin layer direct-extracts the fork from its GitHub
+      release asset (version from the hosted metadata), selects the remaining
+      closure (skinshortcuts + image.resource.select) explicitly, seeds the
+      skinshortcuts properties into addon_data (+hash drop), and no longer
+      installs modv2plus on fresh boxes. skin_done = installed + active.
+      Fork-resilience pinned: the skin installs/activates even on a bare repo
+      index. Snapshot regenerated; 1295 tests + ruff green. Real-device proof
+      of the fresh-box path deliberately deferred to Phase 5 (a full fresh
+      provision would wipe the bench; the migrator run IS the live exercise).
 - [ ] **Phase 5 - Fleet migration**: modv2plus 2.0.0 one-shot migrator
       (disarmed first), box-by-box, rollback = one skin switch.
 - [ ] **Phase 6 - Retirement + docs**: retire modv2plus, correct the playbook's
