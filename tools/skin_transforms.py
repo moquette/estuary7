@@ -135,47 +135,29 @@ _WIDGET_FLAGS = (
     "imageaddons",  # Picture add-ons (#1039)
 )
 
-# Our Skin Settings category (SkinSettings.xml): per-item toggles only. The
-# patch era's master Apply/Restore radiobutton (id 1102) is deliberately
-# absent - revert UX is Kodi's skin chooser (stock MOD V2 stays on Kodinerds).
-_T7B_GROUPLIST = """\t\t\t<control type="grouplist" id="1100">
-\t\t\t\t<top>168</top>
-\t\t\t\t<left>0</left>
-\t\t\t\t<right>0</right>
-\t\t\t\t<bottom>142</bottom>
-\t\t\t\t<onleft>9000</onleft>
-\t\t\t\t<onright>60</onright>
-\t\t\t\t<onup>1100</onup>
-\t\t\t\t<ondown>1100</ondown>
-\t\t\t\t<pagecontrol>60</pagecontrol>
-\t\t\t\t<visible>Container(9000).HasFocus(11)</visible>
-\t\t\t\t<control type="label" id="100111">
-\t\t\t\t\t<textoffsetx>45</textoffsetx>
-\t\t\t\t\t<top>0</top>
-\t\t\t\t\t<height>80</height>
-\t\t\t\t\t<label>Estuary 7</label>
-\t\t\t\t\t<align>center</align>
-\t\t\t\t\t<aligny>center</aligny>
-\t\t\t\t\t<font>font28_title</font>
-\t\t\t\t\t<textcolor>grey</textcolor>
-\t\t\t\t\t<shadowcolor>black</shadowcolor>
-\t\t\t\t</control>
-\t\t\t\t<control type="radiobutton" id="1101">
-\t\t\t\t\t<label>System Info overlay</label>
+# The system-info toggle lives in stock Estuary's OWN structure (owner
+# directive 2026-07-10: no custom "Estuary 7" tab - as close to stock Estuary
+# as possible): General category, right below "Disable zoom effect"
+# (radiobutton 702), i.e. before "Default button on Video/Audio OSD" (button
+# 703). Id 1101 is unused by upstream.
+_SYSINFO_TOGGLE = """\t\t\t\t<control type="radiobutton" id="1101">
+\t\t\t\t\t<label>Show system info on Settings focus</label>
 \t\t\t\t\t<include>DefaultSettingButton</include>
 \t\t\t\t\t<onclick>Skin.ToggleSetting(show_system_info_overlay)</onclick>
 \t\t\t\t\t<selected>Skin.HasSetting(show_system_info_overlay)</selected>
 \t\t\t\t</control>
-\t\t\t</control>
-"""
-
-_T7B_CATEGORY_ITEM = """\t\t\t\t\t<item id="11">
-\t\t\t\t\t\t<label>Estuary 7</label>
-\t\t\t\t\t</item>
 """
 
 
 def _edit_home(text: str, path: str) -> str:
+    # The system-info overlay's skin line names the skin literally (the
+    # version $INFO beside it is covered by the global id rename).
+    text = _replace(
+        text,
+        "$LOCALIZE[166] Estuary MOD V2 • ",
+        "$LOCALIZE[166] Estuary 7 • ",
+        path=path,
+    )
     # System-info overlay opt-in gate (fresh box: hidden).
     text = _replace(
         text,
@@ -285,13 +267,6 @@ def _edit_includes(text: str, path: str) -> str:
 
 
 def _edit_variables(text: str, path: str) -> str:
-    # Breadcrumb label for our Skin Settings category.
-    text = _insert_after(
-        text,
-        '<value condition="Container(9000).HasFocus(10)">$LOCALIZE[31314]</value>\n',
-        '\t\t<value condition="Container(9000).HasFocus(11)">Estuary 7 settings</value>\n',
-        path=path,
-    )
     # Plain Power/Settings/Search backgrounds by default.
     for flag in _BACKGROUND_FLAGS:
         text = _replace(
@@ -312,43 +287,12 @@ def _edit_variables(text: str, path: str) -> str:
 
 
 def _edit_skinsettings(text: str, path: str) -> str:
-    # Our category: grouplist after the stock widget-toggle grouplist...
-    text = _insert_after(
+    # System-info toggle: General category, below "Disable zoom effect"
+    # (stock structure, no custom tab - THE FIRST MANDATE).
+    text = _insert_before(
         text,
-        "<selected>!Skin.HasSetting(enable_settingswidget)</selected>\n"
-        "\t\t\t\t</control>\n"
-        "\t\t\t</control>\n",
-        _T7B_GROUPLIST,
-        path=path,
-    )
-    # ...its category-list item...
-    text = _insert_after(
-        text,
-        '\t\t\t\t\t<item id="8">\n'
-        "\t\t\t\t\t\t<label>$LOCALIZE[31273]</label>\n"
-        "\t\t\t\t\t</item>\n",
-        _T7B_CATEGORY_ITEM,
-        path=path,
-    )
-    # ...room for the eleventh item...
-    text = _replace(
-        text,
-        "\t\t\t\t<width>470</width>\n\t\t\t\t<height>700</height>",
-        "\t\t\t\t<width>470</width>\n\t\t\t\t<height>770</height>",
-        path=path,
-    )
-    # ...scrollbar wiring + visibility for the new pane.
-    text = _insert_after(
-        text,
-        '<onright condition="Container(9000).HasFocus(10)">100</onright>\n',
-        '\t\t\t\t<onleft condition="Container(9000).HasFocus(11)">1100</onleft>\n'
-        '\t\t\t\t<onright condition="Container(9000).HasFocus(11)">1100</onright>\n',
-        path=path,
-    )
-    text = _replace(
-        text,
-        "Control.IsVisible(1000)</visible>",
-        "Control.IsVisible(1000) | Control.IsVisible(1100)</visible>",
+        '\t\t\t\t<control type="button" id="703">\n',
+        _SYSINFO_TOGGLE,
         path=path,
     )
     # Thin category nav column (stock Estuary emphasis-by-size, not weight).

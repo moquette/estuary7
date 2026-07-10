@@ -360,3 +360,25 @@ is active). ATV2 by-eye check remains open - tvOS cannot screenshot.
 Next: Phase 4 - setup/library/tests in tony7bones.github.io (SKIN_ID flip,
 `_install_skin` direct-extracts the Estuary 7 release zip + seeds the
 skinshortcuts properties, probes simplify, EXPECTED_NET_INSTALLED).
+
+---
+
+## 1.0.1 tweak round (2026-07-10, in progress - release held until done)
+
+Owner-directed refinements after Phase 3, all toward THE FIRST MANDATE
+(stock Estuary structure, no custom chrome). Each tweak: transform + tests +
+bench push + owner eyes-on verify.
+
+1. **Custom "Estuary 7" Skin Settings tab REMOVED** (grouplist 1100, category
+   item 11, scrollbar wiring, stretched list all gone). The system-info
+   toggle moves into stock **General**, directly below "Disable zoom effect"
+   (before "Default button on Video/Audio OSD"), labeled
+   **"Show system info on Settings focus"**. Owner-verified on the bench.
+2. **System-info overlay skin line** now reads "Estuary 7" + the fork's own
+   version via `System.AddonVersion(skin.estuary7)` (was hardcoded
+   "Estuary MOD V2"). Owner-verified on the bench.
+
+Still open in this round: further owner tweaks TBD; the flagged MOD V2 logo
+artwork in SkinSettings (DESIGN.md flagged list) awaits a decision. When the
+round closes: final gates, re-verify, `gh release create v1.0.1`, bump the
+hosted addon.xml + proxy release in tony7bones.github.io.

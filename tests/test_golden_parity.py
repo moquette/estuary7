@@ -11,12 +11,15 @@ The normalization applied to each golden below IS the divergence record:
                - the runtime-written skin settings are baked as inverted
                  opt-out conditions (see skin_transforms module docstring).
   SkinSettings.xml
-               - the master Apply/Restore toggle (radiobutton 1102) does not
-                 exist in the fork; the category is named "Estuary 7", is no
-                 longer gated on the retired modv2plus add-on, and the
-                 category nav column is UNCONDITIONALLY thin (the golden
-                 carried a dual thin/bold label pair driven by the runtime
-                 t7b_patch_on mirror - plumbing the fork does not need).
+               - the overlay's whole custom category (grouplist 1100 with the
+                 master Apply/Restore toggle 1102, its category-list item 11,
+                 the scrollbar wiring, the stretched category list) does not
+                 exist in the fork (owner directive 2026-07-10: stock
+                 structure only); the System Info overlay toggle moves into
+                 General > Top Bar above "Show date"; the category nav column
+                 is UNCONDITIONALLY thin (the golden carried a dual thin/bold
+                 label pair driven by the runtime t7b_patch_on mirror -
+                 plumbing the fork does not need).
 
 Anything NOT normalized here that differs from the golden fails the test.
 """
@@ -109,13 +112,67 @@ _FORK_SINGLE_FOCUSEDLAYOUT = (
     "\t\t\t\t\t\t<label>$INFO[ListItem.Label]</label>\n"
     "\t\t\t\t\t</control>\n"
 )
-_GOLDEN_MASTER_TOGGLE = (
+# The overlay's whole custom category dies in the fork (owner directive
+# 2026-07-10: no Estuary 7 tab): the grouplist with the header label, the
+# master toggle 1102, and the System Info radiobutton 1101 - which moves into
+# stock General > Top Bar instead (see _SYSINFO_IN_TOPBAR).
+_GOLDEN_T7B_GROUPLIST = (
+    '\t\t\t<control type="grouplist" id="1100">\n'
+    "\t\t\t\t<top>168</top>\n"
+    "\t\t\t\t<left>0</left>\n"
+    "\t\t\t\t<right>0</right>\n"
+    "\t\t\t\t<bottom>142</bottom>\n"
+    "\t\t\t\t<onleft>9000</onleft>\n"
+    "\t\t\t\t<onright>60</onright>\n"
+    "\t\t\t\t<onup>1100</onup>\n"
+    "\t\t\t\t<ondown>1100</ondown>\n"
+    "\t\t\t\t<pagecontrol>60</pagecontrol>\n"
+    "\t\t\t\t<visible>Container(9000).HasFocus(11)</visible>\n"
+    '\t\t\t\t<control type="label" id="100111">\n'
+    "\t\t\t\t\t<textoffsetx>45</textoffsetx>\n"
+    "\t\t\t\t\t<top>0</top>\n"
+    "\t\t\t\t\t<height>80</height>\n"
+    "\t\t\t\t\t<label>Tony.7.Bones MOD V2++</label>\n"
+    "\t\t\t\t\t<align>center</align>\n"
+    "\t\t\t\t\t<aligny>center</aligny>\n"
+    "\t\t\t\t\t<font>font28_title</font>\n"
+    "\t\t\t\t\t<textcolor>grey</textcolor>\n"
+    "\t\t\t\t\t<shadowcolor>black</shadowcolor>\n"
+    "\t\t\t\t</control>\n"
     '\t\t\t\t<control type="radiobutton" id="1102">\n'
     "\t\t\t\t\t<label>Tony.7.Bones MOD V2++</label>\n"
     "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
     "\t\t\t\t\t<onclick>RunScript(script.tony7bones.modv2plus,toggle)</onclick>\n"
     "\t\t\t\t\t<selected>Skin.HasSetting(t7b_patch_on)</selected>\n"
     "\t\t\t\t</control>\n"
+    '\t\t\t\t<control type="radiobutton" id="1101">\n'
+    "\t\t\t\t\t<label>System Info overlay</label>\n"
+    "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+    "\t\t\t\t\t<onclick>Skin.ToggleSetting(show_system_info_overlay)</onclick>\n"
+    "\t\t\t\t\t<selected>Skin.HasSetting(show_system_info_overlay)</selected>\n"
+    "\t\t\t\t</control>\n"
+    "\t\t\t</control>\n"
+)
+_GOLDEN_T7B_ITEM11 = (
+    '\t\t\t\t\t<item id="11">\n'
+    "\t\t\t\t\t\t<label>Tony.7.Bones MOD V2++</label>\n"
+    "\t\t\t\t\t\t<visible>System.AddonIsEnabled(script.tony7bones.modv2plus)</visible>\n"
+    "\t\t\t\t\t</item>\n"
+)
+_GOLDEN_SCROLLBAR_WIRING = (
+    '\t\t\t\t<onleft condition="Container(9000).HasFocus(11)">1100</onleft>\n'
+    '\t\t\t\t<onright condition="Container(9000).HasFocus(11)">1100</onright>\n'
+)
+# The fork inserts the toggle below "Disable zoom effect" (radiobutton 702),
+# i.e. before "Default button on Video/Audio OSD" (button 703).
+_SYSINFO_IN_GENERAL = (
+    '\t\t\t\t<control type="radiobutton" id="1101">\n'
+    "\t\t\t\t\t<label>Show system info on Settings focus</label>\n"
+    "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+    "\t\t\t\t\t<onclick>Skin.ToggleSetting(show_system_info_overlay)</onclick>\n"
+    "\t\t\t\t\t<selected>Skin.HasSetting(show_system_info_overlay)</selected>\n"
+    "\t\t\t\t</control>\n"
+    '\t\t\t\t<control type="button" id="703">\n'
 )
 
 # (old, new, count) replaces that turn each GOLDEN into the expected fork
@@ -142,7 +199,14 @@ _BACKGROUND_INVERSIONS = [
 ]
 
 NORMALIZE = {
-    "Home.xml": _WIDGET_INVERSIONS,
+    "Home.xml": _WIDGET_INVERSIONS
+    + [
+        (
+            "$LOCALIZE[166] Estuary MOD V2 • ",
+            "$LOCALIZE[166] Estuary 7 • ",
+            1,
+        ),
+    ],
     "Settings.xml": [
         ("Skin.SetBool(EnableSplashScreen)", "Skin.Reset(ShowSplashScreen)", 1),
     ],
@@ -163,7 +227,12 @@ NORMALIZE = {
         ),
     ],
     "Variables.xml": [
-        ("Tony.7.Bones MOD V2++ settings", "Estuary 7 settings", 1),
+        (
+            '\t\t<value condition="Container(9000).HasFocus(11)">'
+            "Tony.7.Bones MOD V2++ settings</value>\n",
+            "",
+            1,
+        ),
         (
             '<value condition="Skin.HasSetting(powermenu_list)">$LOCALIZE[31427]</value>',
             "<value>$LOCALIZE[31427]</value>",
@@ -172,14 +241,20 @@ NORMALIZE = {
     ]
     + _BACKGROUND_INVERSIONS,
     "SkinSettings.xml": [
-        (_GOLDEN_MASTER_TOGGLE, "", 1),
-        ("Tony.7.Bones MOD V2++", "Estuary 7", 2),
+        (_GOLDEN_T7B_GROUPLIST, "", 1),
+        (_GOLDEN_T7B_ITEM11, "", 1),
+        (_GOLDEN_SCROLLBAR_WIRING, "", 1),
         (
-            "\t\t\t\t\t\t<visible>System.AddonIsEnabled(script.tony7bones.modv2plus)"
-            "</visible>\n",
-            "",
+            "\t\t\t\t<width>470</width>\n\t\t\t\t<height>770</height>",
+            "\t\t\t\t<width>470</width>\n\t\t\t\t<height>700</height>",
             1,
         ),
+        (
+            "Control.IsVisible(1000) | Control.IsVisible(1100)</visible>",
+            "Control.IsVisible(1000)</visible>",
+            1,
+        ),
+        ('\t\t\t\t<control type="button" id="703">\n', _SYSINFO_IN_GENERAL, 1),
         (_GOLDEN_DUAL_ITEMLAYOUT, _FORK_SINGLE_ITEMLAYOUT, 1),
         (_GOLDEN_DUAL_FOCUSEDLAYOUT, _FORK_SINGLE_FOCUSEDLAYOUT, 1),
         (
