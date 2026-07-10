@@ -20,11 +20,18 @@ def test_addon_xml_identity(built):
     for dep in (
         "script.skinshortcuts",
         "script.image.resource.select",
-        "script.module.pvr.artwork",
         "resource.images.weathericons.outline-hd",
         "script.module.autocompletion",
     ):
         assert '<import addon="{}"'.format(dep) in addon
+    # pvr.artwork is OPTIONAL: it is the one dep not in Kodi's official repo,
+    # so a REQUIRED import made a clean-box install abandon the whole closure
+    # and disable the skin. Optional = the skin enables without it (owner
+    # directive 2026-07-10). Setup still installs it on the fleet.
+    assert (
+        '<import addon="script.module.pvr.artwork" version="2.0.0" optional="true"/>'
+        in addon
+    )
     # No unrelated couplings: Setup owns EZ Maintenance++ (owner decision
     # 2026-07-10 - the skin declares only what it uses).
     assert "ezmaintenanceplusplus" not in addon
