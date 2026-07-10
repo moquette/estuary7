@@ -363,22 +363,32 @@ skinshortcuts properties, probes simplify, EXPECTED_NET_INSTALLED).
 
 ---
 
-## 1.0.1 tweak round (2026-07-10, in progress - release held until done)
+## 1.0.1 stock-alignment round - COMPLETE (2026-07-10)
 
-Owner-directed refinements after Phase 3, all toward THE FIRST MANDATE
-(stock Estuary structure, no custom chrome). Each tweak: transform + tests +
-bench push + owner eyes-on verify.
+Seven owner-directed tweaks toward THE FIRST MANDATE, each verified on the
+bench before commit (evidence: `docs/verification/round-1.0.1/`):
 
-1. **Custom "Estuary 7" Skin Settings tab REMOVED** (grouplist 1100, category
-   item 11, scrollbar wiring, stretched list all gone). The system-info
-   toggle moves into stock **General**, directly below "Disable zoom effect"
-   (before "Default button on Video/Audio OSD"), labeled
-   **"Show system info on Settings focus"**. Owner-verified on the bench.
-2. **System-info overlay skin line** now reads "Estuary 7" + the fork's own
-   version via `System.AddonVersion(skin.estuary7)` (was hardcoded
-   "Estuary MOD V2"). Owner-verified on the bench.
+1. Custom "Estuary 7" settings tab removed; the system-info toggle lives in
+   stock General below "Disable zoom effect" as "Show system info on
+   Settings focus".
+2. System-info overlay skin line reads "Estuary 7" + the fork's own version.
+3. Skin Settings categories in stock Estuary's order (General, Home menu,
+   Artworks, Music OSD, Video OSD, then the MOD V2-only panels; opens on
+   General like stock). Tail order deferred for later review (TASKS.md).
+4. MOD V2 wordmark (dialogs/logo.png) removed from SkinSettings AND the
+   media-menu blade - stock shows nothing in either spot (closed the Phase 3
+   flagged deviation).
+5. Skin-chooser artwork = original Estuary icon/fanart (Team Kodi, vendored
+   into assets/resources/).
+6. MOD V2's header bullet chips (frame/puce.png) removed at all 8 sites
+   (home widget headers + 3 info dialogs); labels shifted flush.
+7. No xbmc.python.script extension: Kodi's addons://sources/executable/
+   node buckets script-extension add-ons under Program add-ons by TYPE
+   (empty `<provides>` does NOT help - proven live); all 15 RunScript callers
+   now invoke special://skin/scripts/helpers.py by path. The skin lists only
+   as a skin.
 
-Still open in this round: further owner tweaks TBD; the flagged MOD V2 logo
-artwork in SkinSettings (DESIGN.md flagged list) awaits a decision. When the
-round closes: final gates, re-verify, `gh release create v1.0.1`, bump the
-hosted addon.xml + proxy release in tony7bones.github.io.
+Bench soak at close: Estuary 7 1.0.1 active (clean full-tree install), with
+modv2plus AND the MOD V2 skin both disabled-but-installed (frozen rollback,
+no auto-update clobber) - the fleet's intended end-state, soaking ahead of
+Phase 5. ATV by-eye check still open.

@@ -734,9 +734,11 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
         text,
         "        <news>\nFor a complete view of changes visit "
         "https://github.com/b-jesch/skin.estuary.modv2/tree/Omega\n        </news>",
-        "        <news>\nv{}: first Estuary 7 release - fork-by-build of Estuary "
-        "MOD V2 21.4+omega.4: no bold anywhere, Estuary weights, Outline HD weather, "
-        "baked Tony.7.Bones defaults.\n        </news>".format(version),
+        "        <news>\nv{}: stock-Estuary alignment - no custom settings tab, "
+        "stock category order and artwork, MOD V2 branding and header chips removed, "
+        "skin lists only as a skin. Base: fork-by-build of Estuary MOD V2 "
+        "21.4+omega.4, no bold anywhere, baked Tony.7.Bones defaults.\n"
+        "        </news>".format(version),
         path=path,
     )
     return text
