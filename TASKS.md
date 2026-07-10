@@ -71,6 +71,16 @@ Full phase plan + locked decisions: `docs/PLAN.md`. Project rules: `CLAUDE.md`.
 
 ## Deferred / revisit later
 
+- **Phase 4/5 MUST handle the proxy's 1h manifest cache** (learned on the ATV
+  2026-07-10): the proxy service caches its GENERATED addons.xml for an hour
+  (LoadingCache TTL) and Kodi's "Check for updates" / full Kodi restarts do
+  NOT reliably bust a bad/stale build - the deterministic refresh is the
+  proxy's own update endpoint (`http://127.0.0.1:<port>/update`, exposed in
+  the add-on menu as "Update repository", or
+  `Addons.ExecuteAddon(repository.tony7bones, update_repository)`). Any
+  repo-resolved install of skin.estuary7 right after a proxy release must hit
+  that endpoint first or the skin may be invisible to the resolver.
+
 - **Skin Settings category order**: revisit in a future round. The 1.0.1
   order (commit 6158a83) leads with stock Estuary's sequence (General, Home
   menu, Artworks, Music OSD, Video OSD) and appends MOD V2's extra panels
