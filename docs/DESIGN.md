@@ -1,5 +1,27 @@
 # Design intent - what Estuary 7 must look like, and why
 
+## THE FIRST MANDATE (owner, 2026-07-10)
+
+**Estuary 7 keeps the look and feel AS CLOSELY AS POSSIBLE to ORIGINAL (stock)
+Estuary - with thin fonts everywhere.** That is the objective; everything else
+is subordinate to it.
+
+What this means in practice:
+
+- **Stock Estuary is the visual reference, not MOD V2.** MOD V2 is the code
+  base we build from (for its functional mods), but whenever a visual choice
+  arises - a weight, a size, a color, a layout detail - the answer is:
+  whatever original Estuary does, rendered thin.
+- **Every visual deviation from stock Estuary must be DELIBERATE and listed**
+  (the curated set at the bottom of this file: wordmark, trimmed menu, gear
+  order, Outline HD weather, plain backgrounds, top-bar weather). Anything MOD
+  V2 changed visually that is NOT on that list is a candidate to revert toward
+  stock during transform work - flag it, ask the owner, do not silently keep it.
+- **Thin fonts everywhere** is the one place we go beyond stock: stock Estuary
+  already has zero bold binds in its Default fontset, and we ALSO kill the
+  synthetic bold vectors (style tags, [B] markup) so nothing renders bold at
+  all.
+
 ## The origin (so the taste survives context loss)
 
 On 2026-07-10, tvOS purged ATV2's Kodi caches and the box fell back to the
@@ -8,11 +30,11 @@ STOCK Estuary skin bundled inside the app. The owner's reaction, verbatim:
 eyes", "it feels very sharp and modern", and then the directive:
 "I do not want bold ANYWHERE."
 
-**The target look is stock Estuary Omega's regular-weight typography, applied
-to MOD V2's layout.** When in doubt about a weight decision, the answer is:
-whatever stock Estuary renders. Stock Estuary's Default fontset contains ZERO
-bold binds - every `*_title` id and `font_MainMenu` is NotoSans-Regular;
-emphasis is done by size, not weight.
+That moment became THE FIRST MANDATE above: original Estuary's look and feel,
+as closely as possible, thin everywhere. When in doubt about ANY visual
+decision, the answer is: whatever stock Estuary renders. Stock Estuary's
+Default fontset contains ZERO bold binds - every `*_title` id and
+`font_MainMenu` is NotoSans-Regular; emphasis is done by size, not weight.
 
 ## The hard-won lesson: bold has THREE sources (a fontset fixes only one)
 
@@ -53,10 +75,19 @@ Proven look on the Office Fire TV under overlay 1.8.0 (the goldens in
 - Live-skin greps after install: zero `[B]` in xml/, zero `<style>bold` on
   non-`lyr*` ids in the Default fontset
 
-## Everything else the fork carries (the pre-existing MOD V2++ look)
+## The deliberate deviations from stock Estuary (the COMPLETE list)
 
-Thin clock, crisp white nav wordmark, thin side navigation (font13/font12 on
-all four left-hand nav columns), Outline HD weather icons, plain
-Power/Settings/Search backgrounds, gear-menu reorder, trimmed six-item home
-menu, top-bar weather. One opinionated look, no look toggles (the runtime
-master switch dies with the overlay; revert = switch skins).
+Per THE FIRST MANDATE, these are the ONLY intended visual departures from
+original Estuary. Anything else MOD V2 changed visually is a candidate to
+revert toward stock - flag it during transform work, ask the owner:
+
+- Thin clock; crisp white nav wordmark
+- Thin side navigation (font13/font12 on all four left-hand nav columns)
+- Outline HD weather icons; top-bar weather
+- Plain Power/Settings/Search backgrounds
+- Gear-menu reorder; trimmed six-item home menu (skinshortcuts)
+- MOD V2's FUNCTIONAL mods (PVR integration, widgets, custom windows) stay -
+  the mandate is about look and feel, not features
+
+One opinionated look, no look toggles (the runtime master switch dies with
+the overlay; revert = switch skins).

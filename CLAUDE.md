@@ -29,6 +29,11 @@ sibling repo's `docs/playbooks/modv2plus-dev-cycle-and-lessons.md`.
 
 ## The build contract
 
+- **THE FIRST MANDATE: as close as possible to ORIGINAL (stock) Estuary, with
+  thin fonts everywhere.** Stock Estuary is the visual reference, not MOD V2;
+  every visual deviation must be on the deliberate list in `docs/DESIGN.md`.
+  A MOD V2 visual change not on that list gets flagged to the owner, never
+  silently kept.
 - **Pin by SHA.** Upstream (b-jesch/skin.estuary.modv2, `Omega` branch) has no
   usable tags. `skin_build.lock` records `{upstream_sha, upstream_version,
 our_version, zip_sha256}`. Rebase = bump the SHA, rebuild, review anchor
