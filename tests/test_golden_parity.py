@@ -159,6 +159,49 @@ _GOLDEN_T7B_ITEM11 = (
     "\t\t\t\t\t\t<visible>System.AddonIsEnabled(script.tony7bones.modv2plus)</visible>\n"
     "\t\t\t\t\t</item>\n"
 )
+
+
+def _cat_item(item_id, label_id):
+    return (
+        '\t\t\t\t\t<item id="{}">\n'
+        "\t\t\t\t\t\t<label>$LOCALIZE[{}]</label>\n"
+        "\t\t\t\t\t</item>\n".format(item_id, label_id)
+    )
+
+
+# The fork lists the categories in stock Estuary's order (General, Main menu,
+# Artwork, OSD, then MOD V2's extra panels); the golden kept upstream's order.
+_GOLDEN_CATEGORY_ORDER = "".join(
+    _cat_item(i, l)
+    for i, l in (
+        (2, 31203),
+        (1, 128),
+        (5, 14022),
+        (3, 31159),
+        (9, 31278),
+        (10, 31279),
+        (7, 14204),
+        (4, 31219),
+        (6, 31266),
+        (8, 31273),
+    )
+)
+_FORK_CATEGORY_ORDER = "".join(
+    _cat_item(i, l)
+    for i, l in (
+        (1, 128),
+        (2, 31203),
+        (3, 31159),
+        (9, 31278),
+        (10, 31279),
+        (5, 14022),
+        (7, 14204),
+        (4, 31219),
+        (6, 31266),
+        (8, 31273),
+    )
+)
+
 _GOLDEN_SCROLLBAR_WIRING = (
     '\t\t\t\t<onleft condition="Container(9000).HasFocus(11)">1100</onleft>\n'
     '\t\t\t\t<onright condition="Container(9000).HasFocus(11)">1100</onright>\n'
@@ -243,6 +286,7 @@ NORMALIZE = {
     "SkinSettings.xml": [
         (_GOLDEN_T7B_GROUPLIST, "", 1),
         (_GOLDEN_T7B_ITEM11, "", 1),
+        (_GOLDEN_CATEGORY_ORDER, _FORK_CATEGORY_ORDER, 1),
         (_GOLDEN_SCROLLBAR_WIRING, "", 1),
         (
             "\t\t\t\t<width>470</width>\n\t\t\t\t<height>770</height>",

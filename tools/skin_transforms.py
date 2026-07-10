@@ -149,6 +149,45 @@ _SYSINFO_TOGGLE = """\t\t\t\t<control type="radiobutton" id="1101">
 """
 
 
+def _category_item(item_id: int, label_id: int) -> str:
+    return (
+        '\t\t\t\t\t<item id="{}">\n'
+        "\t\t\t\t\t\t<label>$LOCALIZE[{}]</label>\n"
+        "\t\t\t\t\t</item>\n".format(item_id, label_id)
+    )
+
+
+# Skin Settings categories in STOCK Estuary's order (owner directive
+# 2026-07-10). Stock ships General, Main menu items, Artwork, On screen
+# display; MOD V2's extra panels follow in their upstream relative order.
+# Panes are gated on Container(9000).HasFocus(<item id>), so reordering the
+# list items never rewires a pane.
+_CATEGORY_ORDER_UPSTREAM = (
+    (2, 31203),  # Home menu
+    (1, 128),  # General
+    (5, 14022),  # Library
+    (3, 31159),  # Artworks
+    (9, 31278),  # Music OSD
+    (10, 31279),  # Video OSD
+    (7, 14204),  # PVR & Live TV
+    (4, 31219),  # Colors
+    (6, 31266),  # Extras
+    (8, 31273),  # Necessary add-ons
+)
+_CATEGORY_ORDER_STOCK = (
+    (1, 128),  # General            (stock #1)
+    (2, 31203),  # Home menu        (stock #2: Main menu items)
+    (3, 31159),  # Artworks         (stock #3: Artwork)
+    (9, 31278),  # Music OSD        (stock #4: On screen display...)
+    (10, 31279),  # Video OSD       (...which MOD V2 splits in two)
+    (5, 14022),  # Library
+    (7, 14204),  # PVR & Live TV
+    (4, 31219),  # Colors
+    (6, 31266),  # Extras
+    (8, 31273),  # Necessary add-ons
+)
+
+
 def _edit_home(text: str, path: str) -> str:
     # The system-info overlay's skin line names the skin literally (the
     # version $INFO beside it is covered by the global id rename).
@@ -293,6 +332,13 @@ def _edit_skinsettings(text: str, path: str) -> str:
         text,
         '\t\t\t\t<control type="button" id="703">\n',
         _SYSINFO_TOGGLE,
+        path=path,
+    )
+    # Categories in stock Estuary's order.
+    text = _replace(
+        text,
+        "".join(_category_item(i, l) for i, l in _CATEGORY_ORDER_UPSTREAM),
+        "".join(_category_item(i, l) for i, l in _CATEGORY_ORDER_STOCK),
         path=path,
     )
     # Thin category nav column (stock Estuary emphasis-by-size, not weight).
