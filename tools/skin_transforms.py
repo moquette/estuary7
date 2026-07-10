@@ -702,7 +702,8 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
     text = _insert_after(
         text,
         '<import addon="script.module.pvr.artwork" version="2.0.0"/>\n',
-        '\t\t<import addon="resource.images.weathericons.outline-hd" version="0.0.1"/>\n',
+        '\t\t<import addon="resource.images.weathericons.outline-hd" version="0.0.1"/>\n'
+        '\t\t<import addon="script.module.autocompletion" version="1.0.0"/>\n',
         path=path,
     )
     text = _replace(

@@ -22,8 +22,12 @@ def test_addon_xml_identity(built):
         "script.image.resource.select",
         "script.module.pvr.artwork",
         "resource.images.weathericons.outline-hd",
+        "script.module.autocompletion",
     ):
         assert '<import addon="{}"'.format(dep) in addon
+    # No unrelated couplings: Setup owns EZ Maintenance++ (owner decision
+    # 2026-07-10 - the skin declares only what it uses).
+    assert "ezmaintenanceplusplus" not in addon
     # License + credits obligations (GPL-2.0 + CC-BY-SA-4.0).
     assert "CC BY-SA 4.0" in addon and "GENERAL PUBLIC LICENSE" in addon
     for credit in ("Guilouz", "b-jesch", "Team Kodi"):
