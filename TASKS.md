@@ -49,8 +49,10 @@ Full phase plan + locked decisions: `docs/PLAN.md`. Project rules: `CLAUDE.md`.
       FLAGGED for owner: upstream "ESTUARY MOD V2" logo artwork still shows in
       the SkinSettings window corner (cosmetic; candidate 1.0.1 transform).
       Box end state: MOD V2 + overlay 1.8.0 active (modv2plus updated from
-      1.6.3 via push), Estuary 7 installed alongside. ATV by-eye check still
-      open (tvOS cannot screenshot; owner's call).
+      1.6.3 via push), Estuary 7 installed alongside. ATV by-eye check CLOSED
+      2026-07-10: owner installed 1.0.1 on the ATV via Install-from-repository
+      (the first real repo-path install - proxy resolved, release asset
+      streamed on tvOS) and verified the look by eye. Phase 3 fully complete.
 - [ ] **Phase 4 - Setup/library/tests** in tony7bones.github.io (SKIN_ID flip,
       probes simplify, EXPECTED_NET_INSTALLED).
 - [ ] **Phase 5 - Fleet migration**: modv2plus 2.0.0 one-shot migrator
