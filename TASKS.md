@@ -60,13 +60,14 @@ Full phase plan + locked decisions: `docs/PLAN.md`. Project rules: `CLAUDE.md`.
 
 ## Bench state (Office Fire TV 192.168.7.162)
 
-- Since 2026-07-10 (1.0.1 tweak round): Estuary 7 ACTIVE with
-  `script.tony7bones.modv2plus` DISABLED (deliberate end-state soak - the
-  skin standing with zero overlay machinery). modv2plus stays INSTALLED at
-  1.8.0 for the Phase 5 migrator. Caveat while disabled: a Kodinerds MOD V2
-  skin update would clobber the on-disk overlay with nothing re-applying it,
-  so a rollback to MOD V2 after such an update renders stock until modv2plus
-  is re-enabled. The other six boxes keep it enabled until Phase 5.
+- Since 2026-07-10 (1.0.1 tweak round): Estuary 7 ACTIVE; BOTH
+  `script.tony7bones.modv2plus` AND `skin.estuary.modv2` DISABLED (deliberate
+  end-state soak - the fork standing with zero overlay machinery). Both stay
+  INSTALLED: modv2plus 1.8.0 is the future Phase 5 migrator, and the MOD V2
+  skin dir keeps the applied overlay + .baks frozen (disabled add-ons do not
+  auto-update, so no Kodinerds clobber is possible). Rollback = re-enable
+  both, switch skins - seconds, no downloads. The other six boxes keep
+  everything enabled until Phase 5.
 
 ## Deferred / revisit later
 
