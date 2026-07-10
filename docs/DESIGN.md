@@ -81,7 +81,9 @@ Per THE FIRST MANDATE, these are the ONLY intended visual departures from
 original Estuary. Anything else MOD V2 changed visually is a candidate to
 revert toward stock - flag it during transform work, ask the owner:
 
-- Thin clock; crisp white nav wordmark
+- Thin clock; crisp white nav wordmark, centered ◆KODI in the blade like
+  original Estuary (conditional +70 slide when the menu is full; the lone
+  diamond re-centers over the icon column when minimized - MOD V2 default)
 - Thin side navigation (font13/font12 on all four left-hand nav columns)
 - Outline HD weather icons; top-bar weather
 - Plain Power/Settings/Search backgrounds

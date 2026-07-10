@@ -274,6 +274,30 @@ NORMALIZE = {
             1,
         ),
         _runscript_rewire(1),
+        # Centered ◆KODI logo (owner directive 2026-07-10): the main logo group
+        # gets a conditional +70 slide when the menu is full, and its wordmark
+        # is left-aligned at left=78 (tight gap). Both are new vs the golden.
+        (
+            "!Skin.HasSetting(MinimizeMainMenu)]]</visible>\n"
+            "\t\t\t\t<top>20</top>\n\t\t\t\t<left>20</left>",
+            "!Skin.HasSetting(MinimizeMainMenu)]]</visible>\n"
+            '\t\t\t\t<animation effect="slide" end="70,0" time="0" '
+            'condition="!Skin.HasSetting(MinimizeMainMenu)">Conditional</animation>\n'
+            "\t\t\t\t<top>20</top>\n\t\t\t\t<left>20</left>",
+            1,
+        ),
+        (
+            "\t\t\t\t\t<left>55</left>\n\t\t\t\t\t<top>8</top>\n"
+            "\t\t\t\t\t<aspectratio>keep</aspectratio>\n\t\t\t\t\t<width>202</width>\n"
+            "\t\t\t\t\t<height>39</height>\n"
+            "\t\t\t\t\t<texture>extras/logo-text-hires.png</texture>",
+            "\t\t\t\t\t<left>78</left>\n\t\t\t\t\t<top>8</top>\n"
+            '\t\t\t\t\t<aspectratio align="left">keep</aspectratio>\n'
+            "\t\t\t\t\t<width>202</width>\n"
+            "\t\t\t\t\t<height>39</height>\n"
+            "\t\t\t\t\t<texture>extras/logo-text-hires.png</texture>",
+            1,
+        ),
     ],
     "Settings.xml": [
         ("Skin.SetBool(EnableSplashScreen)", "Skin.Reset(ShowSplashScreen)", 1),

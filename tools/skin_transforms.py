@@ -223,6 +223,8 @@ def _edit_home(text: str, path: str) -> str:
         path=path,
     )
     # Nav wordmark, main group (replaces the seasonal $VAR[LogoTextVar]).
+    # left=78 + left-align pulls "KODI" tight against the diamond (the
+    # Estuary-matched gap, owner-verified on the bench 2026-07-10).
     text = _replace(
         text,
         "\t\t\t\t\t<left>55</left>\n"
@@ -231,12 +233,29 @@ def _edit_home(text: str, path: str) -> str:
         "\t\t\t\t\t<width>202</width>\n"
         "\t\t\t\t\t<height>50</height>\n"
         "\t\t\t\t\t<texture>$VAR[LogoTextVar]</texture>",
-        "\t\t\t\t\t<left>55</left>\n"
+        "\t\t\t\t\t<left>78</left>\n"
         "\t\t\t\t\t<top>8</top>\n"
-        "\t\t\t\t\t<aspectratio>keep</aspectratio>\n"
+        '\t\t\t\t\t<aspectratio align="left">keep</aspectratio>\n'
         "\t\t\t\t\t<width>202</width>\n"
         "\t\t\t\t\t<height>39</height>\n"
         "\t\t\t\t\t<texture>extras/logo-text-hires.png</texture>",
+        path=path,
+    )
+    # Centered ◆KODI like Estuary, WITHOUT breaking the minimized state: the
+    # main logo group keeps its default left=20 (so the lone diamond centers
+    # over the icon column when the menu is minimized, the MOD V2 default), and
+    # a conditional slide shifts it +70 ONLY when the menu is full - putting the
+    # ◆KODI unit at Estuary's left-of-center spot. time=0 = no visible slide.
+    # (owner-verified in both states on the bench 2026-07-10). The fallback
+    # "clear logo" group is untouched for now - a follow-up mirrors this there.
+    text = _replace(
+        text,
+        "!Skin.HasSetting(MinimizeMainMenu)]]</visible>\n"
+        "\t\t\t\t<top>20</top>\n\t\t\t\t<left>20</left>",
+        "!Skin.HasSetting(MinimizeMainMenu)]]</visible>\n"
+        '\t\t\t\t<animation effect="slide" end="70,0" time="0" '
+        'condition="!Skin.HasSetting(MinimizeMainMenu)">Conditional</animation>\n'
+        "\t\t\t\t<top>20</top>\n\t\t\t\t<left>20</left>",
         path=path,
     )
     # Widget-hide bakes: fresh box shows only the trimmed widget set.
