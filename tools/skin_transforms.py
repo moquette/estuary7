@@ -684,6 +684,18 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
         ),
         path=path,
     )
+    # The helpers script extension defaults to provides="executable", which
+    # lists the skin under Program add-ons. An explicitly EMPTY provides keeps
+    # RunScript(skin.estuary7,...) working while the skin lists only as a
+    # skin - like stock Estuary (owner directive 2026-07-10).
+    text = _replace(
+        text,
+        '\t<extension point="xbmc.python.script" library="scripts/helpers.py" />',
+        '\t<extension point="xbmc.python.script" library="scripts/helpers.py">\n'
+        "\t\t<provides></provides>\n"
+        "\t</extension>",
+        path=path,
+    )
     # The weather-icon pack is baked into XML defaults, so it must resolve as
     # a dependency instead of being a user pick.
     text = _insert_after(

@@ -29,6 +29,12 @@ def test_addon_xml_identity(built):
     for credit in ("Guilouz", "b-jesch", "Team Kodi"):
         assert credit in addon, "addon.xml must credit {}".format(credit)
     assert built.lock["our_version"] in addon.split("<news>")[1]
+    # The helpers script must not advertise executable content - an addon
+    # with default provides lists under Program add-ons; a skin must not.
+    assert (
+        '<extension point="xbmc.python.script" library="scripts/helpers.py">\n'
+        "\t\t<provides></provides>" in addon
+    )
 
 
 def test_upstream_id_fully_renamed(built):
