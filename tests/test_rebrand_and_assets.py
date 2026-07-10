@@ -95,18 +95,27 @@ def test_license_and_attribution_ship_in_the_zip_tree(built):
         assert credit in attribution
 
 
-def test_shortcuts_assets_match_goldens(built):
-    """The shipped menu defaults are byte-identical to the hardware-verified
-    goldens; only the properties file is re-keyed (name only, same bytes)."""
-    golden_dir = GOLDENS / "skinshortcuts"
-    for golden in sorted(golden_dir.glob("*.DATA.xml")):
-        shipped = built.tree / "shortcuts" / golden.name
-        assert shipped.is_file(), "shortcuts/{} missing".format(golden.name)
-        assert shipped.read_bytes() == golden.read_bytes(), golden.name
-    props = built.tree / "shortcuts" / "{}.properties".format(SKIN_ID)
-    golden_props = golden_dir / "{}.properties".format(UPSTREAM_ID)
-    assert props.read_bytes() == golden_props.read_bytes()
-    # Exactly one properties file ships - the upstream-keyed one must not.
+def test_home_menu_is_upstream_default(built):
+    """The home menu is UPSTREAM MOD V2's default (owner directive 2026-07-10):
+    the fork ships NO custom skinshortcuts menu. Upstream's mainmenu.DATA.xml
+    stands unmodified, and NO fork-keyed properties ship (skinshortcuts builds
+    the menu from upstream's DATA + overrides.xml widget defaults - no seed)."""
+    from conftest import ROOT
+
+    lock = built.lock
+    upstream = (
+        ROOT
+        / "upstream-cache"
+        / lock["upstream_sha"]
+        / "shortcuts"
+        / "mainmenu.DATA.xml"
+    )
+    shipped = built.tree / "shortcuts" / "mainmenu.DATA.xml"
+    assert shipped.read_bytes() == upstream.read_bytes(), (
+        "mainmenu must be upstream's default, not the fleet trim"
+    )
+    # No fork properties, and the fleet's trimmed menu is NOT shipped.
+    assert not (built.tree / "shortcuts" / "{}.properties".format(SKIN_ID)).exists()
     assert not (built.tree / "shortcuts" / "{}.properties".format(UPSTREAM_ID)).exists()
 
 
@@ -136,10 +145,11 @@ def test_skin_selection_artwork_is_stock_estuary(built):
 
 
 def test_stock_upstream_shortcuts_survive(built):
-    """Our defaults OVERWRITE mainmenu/movies/tvshows and ADD submenu files;
-    the rest of upstream's shortcuts dir (incl. overrides.xml + template.xml,
-    which skinshortcuts builds from) must still be there."""
+    """Upstream's shortcuts dir ships intact (nothing overwritten): the full
+    default menu, overrides.xml + template.xml that skinshortcuts builds from,
+    and every submenu DATA file."""
     for name in (
+        "mainmenu.DATA.xml",
         "overrides.xml",
         "template.xml",
         "powermenu.DATA.xml",

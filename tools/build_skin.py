@@ -109,9 +109,15 @@ def extract_tree(tarball: Path, dest: Path) -> Path:
 
 
 def add_assets(tree: Path) -> None:
-    """Ship the fleet's menu defaults, wordmark, artwork, and provenance docs."""
-    for src in sorted((ASSETS_DIR / "shortcuts").iterdir()):
-        shutil.copyfile(src, tree / "shortcuts" / src.name)
+    """Ship the wordmark, artwork, and provenance docs.
+
+    The home menu is UPSTREAM MOD V2's default (owner directive 2026-07-10):
+    the fork ships NO custom skinshortcuts menu, so upstream's shortcuts/
+    (full default mainmenu.DATA.xml + overrides.xml widget defaults) stands
+    unmodified. This also retires the skinshortcuts-properties seed - stock
+    upstream needs none. The fleet's old trimmed menu lives on in assets/
+    shortcuts/ (unused by the build) if it is ever wanted per-box.
+    """
     extras = tree / "media" / "extras"
     extras.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(
@@ -158,8 +164,13 @@ def check_contracts(tree: Path) -> None:
         problems.append("addon.xml: missing rebranded id")
     if "resource.images.weathericons.outline-hd" not in addon:
         problems.append("addon.xml: missing outline-hd dependency")
-    if not (tree / "shortcuts" / "{}.properties".format(SKIN_ID)).is_file():
-        problems.append("shortcuts: missing re-keyed skinshortcuts properties")
+    # The home menu is upstream MOD V2's default: our custom menu + its
+    # re-keyed properties must NOT ship (owner directive 2026-07-10). Verify
+    # upstream's default mainmenu survives and no fork properties leaked in.
+    if not (tree / "shortcuts" / "mainmenu.DATA.xml").is_file():
+        problems.append("shortcuts: upstream default mainmenu.DATA.xml missing")
+    if (tree / "shortcuts" / "{}.properties".format(SKIN_ID)).is_file():
+        problems.append("shortcuts: fork properties shipped (menu must be stock)")
     if not (tree / "media" / "extras" / "logo-text-hires.png").is_file():
         problems.append("media/extras: missing wordmark")
     if problems:

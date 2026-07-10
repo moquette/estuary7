@@ -85,7 +85,9 @@ revert toward stock - flag it during transform work, ask the owner:
 - Thin side navigation (font13/font12 on all four left-hand nav columns)
 - Outline HD weather icons; top-bar weather
 - Plain Power/Settings/Search backgrounds
-- Gear-menu reorder; trimmed six-item home menu (skinshortcuts)
+- Gear-menu reorder. HOME MENU: reverted to upstream MOD V2's default
+  (owner directive 2026-07-10) - the fork ships NO custom skinshortcuts
+  menu, so the fleet's old trimmed six-item menu is no longer a deviation.
 - MOD V2's FUNCTIONAL mods (PVR integration, widgets, custom windows) stay -
   the mandate is about look and feel, not features
 
