@@ -20,9 +20,12 @@ GitHub Release asset on THIS repo, and the proxy's `repository.json` points at
 it (the proxy engine supports `release_asset://` and plain https zip URLs and
 streams in chunks, so the ~94MB zip never enters git).
 
-Full phase plan and decision record: `docs/PLAN.md`. The origin story and the
-patch-era lessons live in the sibling repo's
-`docs/playbooks/modv2plus-dev-cycle-and-lessons.md`.
+Full phase plan and decision record: `docs/PLAN.md`. **The design intent - what
+the skin must LOOK like and why (the owner's font directive, the three bold
+vectors, the verification checklist) - is `docs/DESIGN.md`; read it before any
+transform work.** The proven desired bytes are vendored in `tests/goldens/`
+(from overlay 1.8.0, hardware-verified). The patch-era lessons live in the
+sibling repo's `docs/playbooks/modv2plus-dev-cycle-and-lessons.md`.
 
 ## The build contract
 
