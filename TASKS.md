@@ -58,6 +58,17 @@ Full phase plan + locked decisions: `docs/PLAN.md`. Project rules: `CLAUDE.md`.
 - [ ] **Phase 6 - Retirement + docs**: retire modv2plus, correct the playbook's
       wrong "MIT" license note (upstream = GPL-2.0 code + CC-BY-SA-4.0 art).
 
+## Deferred / revisit later
+
+- **Skin Settings category order**: revisit in a future round. The 1.0.1
+  order (commit 6158a83) leads with stock Estuary's sequence (General, Home
+  menu, Artworks, Music OSD, Video OSD) and appends MOD V2's extra panels
+  (Library, PVR & Live TV, Colors, Extras, Necessary add-ons) in upstream
+  relative order - the tail placement was a judgment call, not an owner
+  decision. Reordering is safe anytime: panes gate on item ids, and the
+  transform is one data table (`_CATEGORY_ORDER_STOCK` in
+  `tools/skin_transforms.py`).
+
 ## Standing constraints
 
 - The fleet stays on overlay 1.8.0 until Phase 5; nothing here touches boxes
