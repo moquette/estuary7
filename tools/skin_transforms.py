@@ -579,7 +579,7 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
     text = _replace(
         text,
         "<source>https://github.com/b-jesch/skin.estuary.modv2/tree/Omega</source>",
-        "<source>https://github.com/tony7bones/estuary7</source>",
+        "<source>https://github.com/moquette/estuary7</source>",
         path=path,
     )
     text = _replace(

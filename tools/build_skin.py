@@ -50,7 +50,7 @@ This zip is produced by an automated build from a pinned upstream commit
 plus anchored transforms - see the source repository for the build pipeline,
 license (GPL-2.0 code, CC-BY-SA-4.0 artwork), and full attribution:
 
-    https://github.com/tony7bones/estuary7
+    https://github.com/moquette/estuary7
 
 Credits: Estuary MOD V2 by Guilouz, adapted for Kodi 21 (Omega) by PvD /
 b-jesch (Kodinerds); Estuary by phil65 and Piers (Team Kodi).

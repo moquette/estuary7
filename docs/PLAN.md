@@ -109,8 +109,12 @@ In estuary7:
 
 ## Phase 2 - First release + hosting (~1 day)
 
-- Create the public GitHub repo (`tony7bones/estuary7`; public is required for GPL
-  source availability AND anonymous asset downloads), push
+- Create the public GitHub repo (`moquette/estuary7`; public is required for GPL
+  source availability AND anonymous asset downloads), push.
+  **Owner decision (2026-07-10):** moquette, not tony7bones - the tony7bones
+  GitHub user's credentials are not on this machine (gh CLI + SSH both auth as
+  moquette). A later transfer to tony7bones is safe: GitHub redirects git,
+  release, and asset URLs after a transfer.
 - `gh release create v1.0.0` + upload `skin.estuary7-1.0.0.zip` as the asset
 - In tony7bones.github.io: `addons/hosted/skin.estuary7/{addon.xml,icon.png,fanart.jpg}`
   (small, in-tree) + `repository.json` entry (asset_prefix pointing at the raw hosted
