@@ -24,11 +24,20 @@ Full phase plan + locked decisions: `docs/PLAN.md`. Project rules: `CLAUDE.md`.
       re-keyed copy shipped at `shortcuts/skin.estuary7.properties` must be
       seeded by Setup's `_install_skin` (Phase 4) / the migrator (Phase 5);
       the DATA files ARE consumed natively as skin defaults.
-- [ ] **Phase 2 - First release + hosting** (NEXT): public GitHub repo, `gh release`
-      v1.0.0 asset, hosted metadata + repository.json entry + proxy release in
-      tony7bones.github.io.
-- [ ] **Phase 3 - Device verify**: Office Fire TV side-by-side skin switch,
-      screencap parity of every tweak; ATV by eye.
+- [x] **Phase 2 - First release + hosting** (2026-07-10). Public repo
+      `moquette/estuary7` (owner decision: moquette, not tony7bones - no
+      tony7bones GitHub credentials on this machine; transfer later is safe,
+      GitHub redirects). Release v1.0.0 with the 94MB zip asset; anonymous
+      download sha256-verified against the build. tony7bones.github.io:
+      `addons/hosted/skin.estuary7/` metadata + repository.json entry (zip
+      template -> the release asset URL), shipped via proxy release 2.2.7.
+      End-to-end verified through the REAL proxy engine: full 98,631,598-byte
+      stream sha256-matches the build, live addons.xml lists skin.estuary7
+      1.0.0 with the full requires closure, icon/fanart resolve.
+- [ ] **Phase 3 - Device verify** (NEXT): Office Fire TV side-by-side skin
+      switch, screencap parity of every tweak; ATV by eye. EXTRA CHECK: fresh
+      box menu widgets (skinshortcuts properties is addon_data-only - see
+      Phase 1 note).
 - [ ] **Phase 4 - Setup/library/tests** in tony7bones.github.io (SKIN_ID flip,
       probes simplify, EXPECTED_NET_INSTALLED).
 - [ ] **Phase 5 - Fleet migration**: modv2plus 2.0.0 one-shot migrator

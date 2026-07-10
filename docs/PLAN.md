@@ -272,3 +272,34 @@ What shipped, and the decisions made inside the phase:
 
 Next: Phase 2, first release + hosting (public repo, v1.0.0 release asset,
 proxy release in tony7bones.github.io).
+
+---
+
+## Phase 2 - COMPLETE (2026-07-10)
+
+- **Repo**: `https://github.com/moquette/estuary7`, public, main pushed.
+  Owner decision recorded above (moquette, not tony7bones - credentials).
+- **Release**: `v1.0.0` with `skin.estuary7-1.0.0.zip` (94MB) as the asset.
+  Anonymous download verified byte-identical to the build
+  (sha256 `8c77c853fb1a...`, matches `skin_build.lock`).
+- **Hosting**: tony7bones.github.io `addons/hosted/skin.estuary7/`
+  (addon.xml with the screenshot list stripped - the proxy would 404 the
+  unhosted PNGs - plus `resources/icon.png` + `resources/fanart.jpg`, which is
+  where the engine resolves `asset_prefix + <relative asset path>`), and the
+  repository.json entry with
+  `zip: https://github.com/moquette/estuary7/releases/download/v{version}/{id}-{version}.zip`.
+  Shipped as **proxy release 2.2.7** (release.py --proxy: bump, regen, tag,
+  push, live Pages verify, KodiShare mirror sync - all green).
+- **End-to-end proof, engine-level** (not just curl): instantiated the actual
+  `lib/repository.py` Repository against the shipped manifest and (a) streamed
+  the full zip - 98,631,598 bytes, sha256 matches the build; (b) generated
+  `addons.xml` lists `skin.estuary7 1.0.0` with the complete requires closure
+  incl. `resource.images.weathericons.outline-hd`; (c) addon.xml / icon /
+  fanart all 200 via the live hosted path.
+- Fleet impact: additive only. Boxes' proxies self-update to 2.2.7 and start
+  SERVING Estuary 7; nothing installs it until Phase 3 (bench box, manually).
+
+Next: Phase 3, device verify on the Office Fire TV (192.168.7.162): install
+Estuary 7 alongside the overlaid MOD V2, switch with the hardened
+`activate_skin`, screencap-parity every documented tweak, reboot cycles,
+fresh-box menu-widget check (the skinshortcuts properties caveat), ATV by eye.
