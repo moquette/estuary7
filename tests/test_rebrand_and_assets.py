@@ -1,0 +1,92 @@
+"""Rebrand + shipped-assets contracts."""
+
+from __future__ import annotations
+
+from conftest import GOLDENS
+from skin_transforms import SKIN_ID, SKIN_NAME, UPSTREAM_ID
+
+TEXT_SUFFIXES = (".xml", ".py", ".po", ".md", ".properties")
+
+
+def test_addon_xml_identity(built):
+    addon = (built.tree / "addon.xml").read_text(encoding="utf-8")
+    assert (
+        '<addon id="{}" version="{}" name="{}"'.format(
+            SKIN_ID, built.lock["our_version"], SKIN_NAME
+        )
+        in addon
+    )
+    # The upstream dependency closure survives the rebrand intact.
+    for dep in (
+        "script.skinshortcuts",
+        "script.image.resource.select",
+        "script.module.pvr.artwork",
+        "resource.images.weathericons.outline-hd",
+    ):
+        assert '<import addon="{}"'.format(dep) in addon
+    # License + credits obligations (GPL-2.0 + CC-BY-SA-4.0).
+    assert "CC BY-SA 4.0" in addon and "GENERAL PUBLIC LICENSE" in addon
+    for credit in ("Guilouz", "b-jesch", "Team Kodi"):
+        assert credit in addon, "addon.xml must credit {}".format(credit)
+    assert built.lock["our_version"] in addon.split("<news>")[1]
+
+
+def test_upstream_id_fully_renamed(built):
+    offenders = []
+    for path in sorted(built.tree.rglob("*")):
+        if not path.is_file() or path.suffix not in TEXT_SUFFIXES:
+            continue
+        if path.name == "ATTRIBUTION.md":
+            continue  # provenance doc - naming upstream is the point
+        if UPSTREAM_ID in path.read_text(encoding="utf-8", errors="ignore"):
+            offenders.append(str(path.relative_to(built.tree)))
+    assert not offenders, offenders
+
+
+def test_current_skin_property_uses_new_id(built):
+    home = (built.tree / "xml" / "Home.xml").read_text(encoding="utf-8")
+    assert "<onload>SetProperty(CurrentSkin,{},home)</onload>".format(SKIN_ID) in home
+
+
+def test_license_and_attribution_ship_in_the_zip_tree(built):
+    assert (built.tree / "LICENSE.txt").is_file()  # upstream GPL text, untouched
+    attribution = (built.tree / "ATTRIBUTION.md").read_text(encoding="utf-8")
+    for credit in ("b-jesch", "Guilouz", "Team Kodi"):
+        assert credit in attribution
+
+
+def test_shortcuts_assets_match_goldens(built):
+    """The shipped menu defaults are byte-identical to the hardware-verified
+    goldens; only the properties file is re-keyed (name only, same bytes)."""
+    golden_dir = GOLDENS / "skinshortcuts"
+    for golden in sorted(golden_dir.glob("*.DATA.xml")):
+        shipped = built.tree / "shortcuts" / golden.name
+        assert shipped.is_file(), "shortcuts/{} missing".format(golden.name)
+        assert shipped.read_bytes() == golden.read_bytes(), golden.name
+    props = built.tree / "shortcuts" / "{}.properties".format(SKIN_ID)
+    golden_props = golden_dir / "{}.properties".format(UPSTREAM_ID)
+    assert props.read_bytes() == golden_props.read_bytes()
+    # Exactly one properties file ships - the upstream-keyed one must not.
+    assert not (built.tree / "shortcuts" / "{}.properties".format(UPSTREAM_ID)).exists()
+
+
+def test_wordmark_ships_where_home_points(built):
+    golden = (GOLDENS / "logo-text-hires.png").read_bytes()
+    shipped = built.tree / "media" / "extras" / "logo-text-hires.png"
+    assert shipped.read_bytes() == golden
+    home = (built.tree / "xml" / "Home.xml").read_text(encoding="utf-8")
+    assert home.count("<texture>extras/logo-text-hires.png</texture>") == 2
+
+
+def test_stock_upstream_shortcuts_survive(built):
+    """Our defaults OVERWRITE mainmenu/movies/tvshows and ADD submenu files;
+    the rest of upstream's shortcuts dir (incl. overrides.xml + template.xml,
+    which skinshortcuts builds from) must still be there."""
+    for name in (
+        "overrides.xml",
+        "template.xml",
+        "powermenu.DATA.xml",
+        "music.DATA.xml",
+        "addons.DATA.xml",
+    ):
+        assert (built.tree / "shortcuts" / name).is_file(), name

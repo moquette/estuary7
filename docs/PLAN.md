@@ -211,3 +211,60 @@ README, this plan). Groundwork results:
   `repository.json`; `release_asset://` stays as fallback.
 
 Next: Phase 1, the build pipeline (`tools/skin_transforms.py` + `tools/build_skin.py` + tests).
+
+---
+
+## Phase 1 - COMPLETE (2026-07-10)
+
+The pipeline builds `dist/skin.estuary7-1.0.0.zip` (94MB, sha256 recorded in
+`skin_build.lock`); `--check` double-builds byte-identically; 70 tests green.
+
+What shipped, and the decisions made inside the phase:
+
+- **Transforms** (`tools/skin_transforms.py`): 15 per-file anchored edit
+  functions + addon.xml rebrand + global id rename (24 files) + [B] sweep
+  (46 files - matching the patch era's known blast radius) + the Font.xml
+  Default-fontset rewrite (11 NotoSans-Bold and 5 RobotoCondensed-Bold
+  re-binds, 3 UI style-bold neutralized, lyrics faces kept, id inventory
+  byte-identical - all counts asserted). Every anchor miscount raises
+  TransformError naming the file.
+- **Baked defaults**: every skin setting the runtime overlay wrote is now an
+  inverted opt-out/opt-in condition, so a fresh box needs zero writes:
+  `show_weatherinfo`->`hide_weatherinfo`, `EnableSplashScreen`->opt-in
+  `ShowSplashScreen`, `DisableThemes`->opt-in `EnableThemes`,
+  `enable_*_background`->`show_*_background`, six widget `hide_*`->`show_*`,
+  power menu Classic-list default via a new `PowerMenuList` expression (the
+  three `powermenu_*` bools and their SelectBool picker survive untouched;
+  `ShowPVRChannelNumbers` needed no bake - unset already means hidden).
+  Weather icons: the four `weathericons.default` fallbacks + the top-bar
+  texture retarget to Outline HD, and addon.xml gains the
+  `resource.images.weathericons.outline-hd` import (floor 0.0.1; Kodinerds
+  serves it to the fleet already).
+- **Our Skin Settings category**: item 11 + grouplist 1100 with the header
+  and the System Info overlay toggle only. The master Apply/Restore toggle,
+  its display mirror (`t7b_patch_on`), the dual thin/bold nav labels, and the
+  `System.AddonIsEnabled(script.tony7bones.modv2plus)` gate are all gone.
+- **Assets** (`assets/`): the 15 menu DATA files + the properties file
+  re-keyed to `skin.estuary7.properties` + the wordmark PNG, seeded from
+  `tests/goldens/` (which stay pristine as test fixtures; a test asserts
+  byte-parity between the two). Upstream's `overrides.xml`/`template.xml`
+  and untouched DATA files survive alongside ours.
+- **skinshortcuts finding (matters in Phases 4/5)**: verified against the
+  Omega `script.skinshortcuts` 2.0.3 source: group DATA files ARE read from
+  the skin's `shortcuts/` dir as defaults, but `<skinid>.properties` is read
+  ONLY from `addon_data/script.skinshortcuts/`. The shipped re-keyed
+  properties file is therefore inert until Setup's `_install_skin` (Phase 4)
+  or the 2.0.0 migrator (Phase 5) copies it into addon_data. Phase 3 device
+  verify must check the menu builds correctly from DATA-only on a fresh box
+  (widget defaults may fall back to `overrides.xml`).
+- **Golden parity** (`tests/test_golden_parity.py`): transform output equals
+  the hardware-verified 1.8.0 bytes for all 9 files; the per-file
+  normalization table in that test IS the documented divergence record
+  (marker comments, id rename, master-toggle removal, baked-default
+  inversions). A one-byte mutation test proved the gate bites.
+- **Ship contracts in the build itself**: no [B], no upstream id (ATTRIBUTION
+  excepted), rebranded addon.xml, outline-hd import, properties + wordmark
+  present - violations fail the build before packaging.
+
+Next: Phase 2, first release + hosting (public repo, v1.0.0 release asset,
+proxy release in tony7bones.github.io).

@@ -11,15 +11,20 @@ Full phase plan + locked decisions: `docs/PLAN.md`. Project rules: `CLAUDE.md`.
       `skin_build.lock`. Proxy `request()` 302-following live-verified (plain
       release-asset URLs work). NOTE: upstream Omega head is ALREADY 21.4+omega.5 -
       the rebase to it is a deliberate exercise AFTER the baseline ships.
-- [ ] **Phase 1 - Build pipeline** (NEXT): `tools/skin_transforms.py` (anchored,
-      fail-loud transforms: rebrand to skin.estuary7, [B] sweep, Font.xml
-      Estuary-weights, the 9-file tweaks, baked defaults, in-skin shortcuts) +
-      `tools/build_skin.py` (fetch pinned tarball, transform, deterministic zip,
-      double-build byte-compare) + `tests/` (anchor tests, golden parity against
-      the shipped modv2plus 1.8.0 resources in
-      `~/Code/moquette/tony7bones.github.io/addons/script.tony7bones.modv2plus/resources/xml/`,
-      no-bold contracts).
-- [ ] **Phase 2 - First release + hosting**: public GitHub repo, `gh release`
+- [x] **Phase 1 - Build pipeline** (2026-07-10). `tools/skin_transforms.py`
+      (15 anchored fail-loud file edits + rebrand + 46-file [B] sweep +
+      Font.xml Estuary-weights + baked opt-out defaults), `tools/build_skin.py`
+      (sha256-verified fetch, transform, ship-contract checks, deterministic
+      zip; `--check` double-builds and byte-compares), `assets/` (16 shipped
+      skinshortcuts files + wordmark, seeded from the goldens), `tests/`
+      (70 passing: anchors incl. mutation/fail-loud, golden parity vs the
+      1.8.0 bytes, no-bold contracts, baked-default contracts, rebrand,
+      determinism). dist zip sha256 in `skin_build.lock`. NOTE for Phases 4/5:
+      skinshortcuts reads `<skinid>.properties` ONLY from its addon_data - the
+      re-keyed copy shipped at `shortcuts/skin.estuary7.properties` must be
+      seeded by Setup's `_install_skin` (Phase 4) / the migrator (Phase 5);
+      the DATA files ARE consumed natively as skin defaults.
+- [ ] **Phase 2 - First release + hosting** (NEXT): public GitHub repo, `gh release`
       v1.0.0 asset, hosted metadata + repository.json entry + proxy release in
       tony7bones.github.io.
 - [ ] **Phase 3 - Device verify**: Office Fire TV side-by-side skin switch,

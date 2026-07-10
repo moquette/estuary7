@@ -1,0 +1,125 @@
+<shortcuts>
+	<shortcut>
+		<defaultID>disc</defaultID>
+		<label>427</label>
+		<label2>Common Shortcut</label2>
+		<icon>icons/sidemenu/disc.png</icon>
+		<thumb />
+		<action>PlayDisc</action>
+		<visible>System.HasMediaDVD</visible>
+		</shortcut>
+	<shortcut>
+		<defaultID>movies</defaultID>
+		<label>342</label>
+		<label2>Common Shortcut</label2>
+		<icon>icons/sidemenu/movies.png</icon>
+		<thumb />
+		<action>ActivateWindow(Videos,videodb://movies/titles/,return)</action>
+		<visible>Library.HasContent(movies) + !Skin.HasSetting(hide_moviescategory)</visible>
+		</shortcut>
+	<shortcut>
+		<defaultID>movies</defaultID>
+		<label>342</label>
+		<label2>Common Shortcut</label2>
+		<icon>icons/sidemenu/movies.png</icon>
+		<thumb />
+		<action>ActivateWindow(Videos,videodb://movies/,return)</action>
+		<visible>Library.HasContent(movies) + Skin.HasSetting(hide_moviescategory)</visible>
+		</shortcut>
+	<shortcut>
+		<defaultID>movies</defaultID>
+		<label>342</label>
+		<label2>Custom item</label2>
+		<icon>icons/sidemenu/movies.png</icon>
+		<thumb />
+		<action>ActivateWindow(Videos,"plugin://plugin.video.pov/?name=32028&amp;iconImage=movies.png&amp;mode=navigator.main&amp;action=MovieList",return)</action>
+		<visible>!Library.HasContent(movies)</visible>
+		</shortcut>
+	<shortcut>
+		<defaultID>tvshows</defaultID>
+		<label>20343</label>
+		<label2>Common Shortcut</label2>
+		<icon>icons/sidemenu/tv.png</icon>
+		<thumb />
+		<action>ActivateWindow(Videos,videodb://tvshows/titles/,return)</action>
+		<visible>Library.HasContent(tvshows) + !Skin.HasSetting(hide_tvshowscategory)</visible>
+		</shortcut>
+	<shortcut>
+		<defaultID>tvshows</defaultID>
+		<label>20343</label>
+		<label2>Common Shortcut</label2>
+		<icon>icons/sidemenu/tv.png</icon>
+		<thumb />
+		<action>ActivateWindow(Videos,videodb://tvshows/,return)</action>
+		<visible>Library.HasContent(tvshows) + Skin.HasSetting(hide_tvshowscategory)</visible>
+		</shortcut>
+	<shortcut>
+		<defaultID>tvshows</defaultID>
+		<label>20343</label>
+		<label2>Custom item</label2>
+		<icon>icons/sidemenu/tv.png</icon>
+		<thumb />
+		<action>ActivateWindow(Videos,"plugin://plugin.video.pov/?name=32029&amp;iconImage=tv.png&amp;mode=navigator.main&amp;action=TVShowList",return)</action>
+		<visible>!Library.HasContent(tvshows)</visible>
+		</shortcut>
+	<shortcut>
+		<defaultID>livetv</defaultID>
+		<label>19020</label>
+		<label2>Common Shortcut</label2>
+		<icon>icons/sidemenu/livetv.png</icon>
+		<thumb />
+		<action>ActivateWindow(TVGuide)</action>
+		</shortcut>
+	<shortcut>
+		<defaultID>addons</defaultID>
+		<label>24001</label>
+		<label2>Common Shortcut</label2>
+		<icon>icons/sidemenu/addons.png</icon>
+		<thumb />
+		<action>ActivateWindow(1100)</action>
+		</shortcut>
+	<shortcut>
+		<defaultID>favorites</defaultID>
+		<label>Favorites</label>
+		<label2>Common Shortcut</label2>
+		<icon>icons/sidemenu/favourites.png</icon>
+		<thumb />
+		<action>ActivateWindow(favouritesbrowser)</action>
+		</shortcut>
+	<shortcut>
+		<defaultID>weather</defaultID>
+		<label>8</label>
+		<label2>Common Shortcut</label2>
+		<icon>icons/sidemenu/weather.png</icon>
+		<thumb />
+		<action>ActivateWindow(Weather)</action>
+		<visible>!String.IsEmpty(Weather.Plugin)</visible>
+		</shortcut>
+	<shortcut>
+		<defaultID>weather</defaultID>
+		<label>8</label>
+		<label2>Common Shortcut</label2>
+		<icon>icons/sidemenu/weather.png</icon>
+		<thumb />
+		<action>ReplaceWindow(servicesettings,weather)</action>
+		<visible>String.IsEmpty(Weather.Plugin)</visible>
+		</shortcut>
+	<shortcut>
+		<defaultID>libreelec</defaultID>
+		<label>LibreELEC</label>
+		<label2>Common Shortcut</label2>
+		<icon>icons/sidemenu/libreelec.png</icon>
+		<thumb />
+		<action>RunAddon(service.libreelec.settings)</action>
+		<visible>System.HasAddon(service.libreelec.settings)</visible>
+		</shortcut>
+	<shortcut>
+		<defaultID>coreelec</defaultID>
+		<label>CoreELEC</label>
+		<label2>Common Shortcut</label2>
+		<icon>icons/sidemenu/coreelec.png</icon>
+		<thumb />
+		<action>RunAddon(service.coreelec.settings)</action>
+		<visible>System.HasAddon(service.coreelec.settings)</visible>
+		</shortcut>
+	</shortcuts>
