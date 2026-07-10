@@ -109,7 +109,7 @@ def extract_tree(tarball: Path, dest: Path) -> Path:
 
 
 def add_assets(tree: Path) -> None:
-    """Ship the fleet's menu defaults, wordmark, and provenance docs."""
+    """Ship the fleet's menu defaults, wordmark, artwork, and provenance docs."""
     for src in sorted((ASSETS_DIR / "shortcuts").iterdir()):
         shutil.copyfile(src, tree / "shortcuts" / src.name)
     extras = tree / "media" / "extras"
@@ -118,6 +118,11 @@ def add_assets(tree: Path) -> None:
         ASSETS_DIR / "media" / "extras" / "logo-text-hires.png",
         extras / "logo-text-hires.png",
     )
+    # Skin-selection artwork: ORIGINAL Estuary's icon + fanart (Team Kodi,
+    # vendored from xbmc/xbmc Omega), replacing MOD V2's branded pair
+    # (owner decision 2026-07-10 - stock look everywhere).
+    for name in ("icon.png", "fanart.jpg"):
+        shutil.copyfile(ASSETS_DIR / "resources" / name, tree / "resources" / name)
     (tree / "README.md").write_text(SKIN_README, encoding="utf-8")
     shutil.copyfile(ROOT / "ATTRIBUTION.md", tree / "ATTRIBUTION.md")
 

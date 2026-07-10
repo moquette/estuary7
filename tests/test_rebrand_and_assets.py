@@ -78,6 +78,17 @@ def test_wordmark_ships_where_home_points(built):
     assert home.count("<texture>extras/logo-text-hires.png</texture>") == 2
 
 
+def test_skin_selection_artwork_is_stock_estuary(built):
+    """Kodi's skin chooser shows resources/icon.png + fanart.jpg - the fork
+    ships ORIGINAL Estuary's pair (vendored in assets/), not MOD V2's."""
+    from conftest import ROOT
+
+    for name in ("icon.png", "fanart.jpg"):
+        shipped = (built.tree / "resources" / name).read_bytes()
+        vendored = (ROOT / "assets" / "resources" / name).read_bytes()
+        assert shipped == vendored, name
+
+
 def test_stock_upstream_shortcuts_survive(built):
     """Our defaults OVERWRITE mainmenu/movies/tvshows and ADD submenu files;
     the rest of upstream's shortcuts dir (incl. overrides.xml + template.xml,

@@ -526,15 +526,121 @@ def _widget_toggle_invert(text: str, flag: str, path: str) -> str:
     )
 
 
+# MOD V2 prefixes its section headers ("Categories", widget titles, the info
+# dialogs' button headers) with an 11px colored chip (frame/puce.png). Stock
+# Estuary headers are plain labels (owner decision 2026-07-10: remove them
+# all); each header label then shifts left onto the chip's x so it sits flush
+# like stock.
+_PUCE_HOME = (
+    '\t\t\t<control type="image">\n'
+    "\t\t\t\t<left>2</left>\n"
+    "\t\t\t\t<top>13</top>\n"
+    "\t\t\t\t<width>11</width>\n"
+    "\t\t\t\t<height>11</height>\n"
+    '\t\t\t\t<texture colordiffuse="$VAR[SkinColorVar]">frame/puce.png</texture>\n'
+    "\t\t\t</control>\n"
+)
+_PUCE_HOME_DEEP = _PUCE_HOME.replace("\t\t\t", "\t\t\t\t")
+# (sites, header labels per indent variant - counts asserted below)
+_PUCE_HOME_PLAN = ((_PUCE_HOME, 4), (_PUCE_HOME_DEEP, 1))
+_PUCE_HOME_LABELS = 11  # of 13 <left>22</left> in the file; 2 are unrelated
+_PUCE_WINDOW = 1500  # header labels sit well inside; sites are >4000 apart
+
+_PUCE_VIDEOINFO = (
+    '\t\t\t<control type="image">\n'
+    "\t\t\t\t<left>-2</left>\n"
+    "\t\t\t\t<top>10</top>\n"
+    "\t\t\t\t<width>11</width>\n"
+    "\t\t\t\t<height>11</height>\n"
+    '\t\t\t\t<texture colordiffuse="$VAR[SkinColorVar]">frame/puce.png</texture>\n'
+    "\t\t\t\t<visible>Control.HasFocus(9004) | Control.HasFocus(5002) | "
+    "Control.HasFocus(63000) | Control.HasFocus(50) | Control.HasFocus(5100) | "
+    "Control.HasFocus(5200) | Control.HasFocus(5300) | Control.HasFocus(5400) | "
+    "Control.HasFocus(5500) | Control.HasFocus(5600) | Control.HasFocus(5700) | "
+    "Control.HasFocus(5800) | Control.HasFocus(5900) | Control.HasFocus(6000)"
+    "</visible>\n"
+    "\t\t\t</control>\n"
+)
+_PUCE_MUSICINFO = (
+    '\t\t\t<control type="image">\n'
+    "\t\t\t\t<left>-2</left>\n"
+    "\t\t\t\t<top>13</top>\n"
+    "\t\t\t\t<width>11</width>\n"
+    "\t\t\t\t<height>11</height>\n"
+    '\t\t\t\t<texture colordiffuse="$VAR[SkinColorVar]">frame/puce.png</texture>\n'
+    "\t\t\t\t<visible>Control.HasFocus(5002) | Control.HasFocus(63000) | "
+    "Control.HasFocus(50) | Control.HasFocus(5100)</visible>\n"
+    "\t\t\t</control>\n"
+)
+_PUCE_FULLSCREENINFO = (
+    '\t\t\t\t<control type="image">\n'
+    "\t\t\t\t\t<top>13</top>\n"
+    "\t\t\t\t\t<width>11</width>\n"
+    "\t\t\t\t\t<height>11</height>\n"
+    '\t\t\t\t\t<texture colordiffuse="$VAR[SkinColorVar]">frame/puce.png</texture>\n'
+    "\t\t\t\t\t<visible>Control.HasFocus(5002) | Control.HasFocus(63000) | "
+    "Control.HasFocus(50)</visible>\n"
+    "\t\t\t\t</control>\n"
+)
+
+
+def _strip_home_header_bullets(text: str, path: str) -> str:
+    relabeled = 0
+    for block, expected in _PUCE_HOME_PLAN:
+        found = text.count(block)
+        if found != expected:
+            raise TransformError(
+                "{}: {} header chips found, expected {}".format(path, found, expected)
+            )
+        for _ in range(expected):
+            i = text.index(block)
+            text = text[:i] + text[i + len(block) :]
+            window = text[i : i + _PUCE_WINDOW]
+            n = window.count("<left>22</left>")
+            if n not in (1, 3):
+                raise TransformError(
+                    "{}: {} header labels near a chip, expected 1 or 3".format(path, n)
+                )
+            text = (
+                text[:i]
+                + window.replace("<left>22</left>", "<left>2</left>")
+                + text[i + _PUCE_WINDOW :]
+            )
+            relabeled += n
+    if relabeled != _PUCE_HOME_LABELS:
+        raise TransformError(
+            "{}: shifted {} header labels, expected {}".format(
+                path, relabeled, _PUCE_HOME_LABELS
+            )
+        )
+    return text
+
+
 def _edit_includes_home(text: str, path: str) -> str:
     # Weather-icon fallback (no pack chosen) -> the Outline HD pack.
-    return _replace(
+    text = _replace(
         text,
         "resource://resource.images.weathericons.default/",
         "resource://resource.images.weathericons.outline-hd/",
         path=path,
         count=4,
     )
+    return _strip_home_header_bullets(text, path)
+
+
+def _edit_dialogvideoinfo(text: str, path: str) -> str:
+    text = _replace(text, _PUCE_VIDEOINFO, "", path=path)
+    return _replace(text, "<left>18</left>", "<left>-2</left>", path=path)
+
+
+def _edit_dialogmusicinfo(text: str, path: str) -> str:
+    text = _replace(text, _PUCE_MUSICINFO, "", path=path)
+    return _replace(text, "<left>18</left>", "<left>-2</left>", path=path)
+
+
+def _edit_dialogfullscreeninfo(text: str, path: str) -> str:
+    text = _replace(text, _PUCE_FULLSCREENINFO, "", path=path)
+    return _replace(text, "<left>20</left>", "<left>0</left>", path=path)
 
 
 # Relative path under the skin root -> edit function. Every file listed here
@@ -556,6 +662,9 @@ FILE_EDITS = {
     "xml/Custom_1129_SettingsProgramsWidgets.xml": _edit_custom_programs_widgets,
     "xml/Includes_Home.xml": _edit_includes_home,
     "xml/Includes_MediaMenu.xml": _edit_includes_mediamenu,
+    "xml/DialogVideoInfo.xml": _edit_dialogvideoinfo,
+    "xml/DialogMusicInfo.xml": _edit_dialogmusicinfo,
+    "xml/DialogFullScreenInfo.xml": _edit_dialogfullscreeninfo,
 }
 
 
