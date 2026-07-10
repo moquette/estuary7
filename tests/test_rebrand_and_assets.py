@@ -29,12 +29,25 @@ def test_addon_xml_identity(built):
     for credit in ("Guilouz", "b-jesch", "Team Kodi"):
         assert credit in addon, "addon.xml must credit {}".format(credit)
     assert built.lock["our_version"] in addon.split("<news>")[1]
-    # The helpers script must not advertise executable content - an addon
-    # with default provides lists under Program add-ons; a skin must not.
-    assert (
-        '<extension point="xbmc.python.script" library="scripts/helpers.py">\n'
-        "\t\t<provides></provides>" in addon
-    )
+    # No python.script extension: Kodi's executable browser node buckets any
+    # script-extension addon under Program add-ons regardless of <provides>;
+    # a skin must list only as a skin (like stock Estuary).
+    assert "xbmc.python.script" not in addon
+    # The service + context-menu extensions survive.
+    assert '<extension point="xbmc.service"' in addon
+    assert '<extension point="kodi.context.item">' in addon
+
+
+def test_helper_script_runs_by_path(built):
+    """The helpers bridge still ships and every caller invokes it by file
+    path (the addon-id form died with the script extension)."""
+    assert (built.tree / "scripts" / "helpers.py").is_file()
+    total = 0
+    for xml in sorted((built.tree / "xml").glob("*.xml")):
+        text = xml.read_text(encoding="utf-8")
+        assert "RunScript({},".format(SKIN_ID) not in text, xml.name
+        total += text.count("RunScript(special://skin/scripts/helpers.py,")
+    assert total == 15
 
 
 def test_upstream_id_fully_renamed(built):

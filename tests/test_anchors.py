@@ -12,7 +12,10 @@ def test_transform_tree_summary(built):
     """The pinned upstream matches every anchor; the counts are properties of
     the pin and must change only with a deliberate rebase."""
     assert len(built.summary["edited"]) == len(skin_transforms.FILE_EDITS) == 19
-    assert built.summary["renamed"] == 24
+    # 18, not 24: six files' only upstream-id references were RunScript
+    # helper calls, which now use the file path instead of the addon id.
+    assert built.summary["renamed"] == 18
+    assert built.summary["runscript"] == skin_transforms.RUNSCRIPT_SITES == 15
     assert built.summary["swept"] == 46  # the [B] sweep's known blast radius
 
 

@@ -231,6 +231,17 @@ _SYSINFO_IN_GENERAL = (
     '\t\t\t\t<control type="button" id="703">\n'
 )
 
+
+# The fork's helper invocations run the file, not the addon id (the skin
+# ships no python.script extension). Applied after the golden's id rename.
+def _runscript_rewire(count):
+    return (
+        "RunScript(skin.estuary7,",
+        "RunScript(special://skin/scripts/helpers.py,",
+        count,
+    )
+
+
 # (old, new, count) replaces that turn each GOLDEN into the expected fork
 # bytes. Counts are asserted - a golden that stops matching its own
 # normalization is itself drift and must fail.
@@ -262,9 +273,11 @@ NORMALIZE = {
             "$LOCALIZE[166] Estuary 7 • ",
             1,
         ),
+        _runscript_rewire(1),
     ],
     "Settings.xml": [
         ("Skin.SetBool(EnableSplashScreen)", "Skin.Reset(ShowSplashScreen)", 1),
+        _runscript_rewire(2),
     ],
     "Includes.xml": [
         (
@@ -297,6 +310,7 @@ NORMALIZE = {
     ]
     + _BACKGROUND_INVERSIONS,
     "SkinSettings.xml": [
+        _runscript_rewire(3),
         (_GOLDEN_T7B_GROUPLIST, "", 1),
         (_GOLDEN_T7B_ITEM11, "", 1),
         (_GOLDEN_CATEGORY_ORDER, _FORK_CATEGORY_ORDER, 1),

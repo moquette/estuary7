@@ -684,16 +684,17 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
         ),
         path=path,
     )
-    # The helpers script extension defaults to provides="executable", which
-    # lists the skin under Program add-ons. An explicitly EMPTY provides keeps
-    # RunScript(skin.estuary7,...) working while the skin lists only as a
-    # skin - like stock Estuary (owner directive 2026-07-10).
+    # A python.script extension lists the addon under Program add-ons -
+    # Kodi's addons://sources/executable/ node buckets scripts there by TYPE,
+    # ignoring <provides> (empty provides was tried and does not help). Stock
+    # Estuary has no script extension, so the fork drops it too (owner
+    # directive 2026-07-10); every RunScript caller is rewired to the file
+    # path instead (see RUNSCRIPT_OLD/NEW in transform_tree). helpers.py
+    # itself still ships - it is addon-context-free.
     text = _replace(
         text,
-        '\t<extension point="xbmc.python.script" library="scripts/helpers.py" />',
-        '\t<extension point="xbmc.python.script" library="scripts/helpers.py">\n'
-        "\t\t<provides></provides>\n"
-        "\t</extension>",
+        '\t<extension point="xbmc.python.script" library="scripts/helpers.py" />\n',
+        "",
         path=path,
     )
     # The weather-icon pack is baked into XML defaults, so it must resolve as
@@ -831,6 +832,14 @@ def font_id_inventory(text: str) -> list:
 
 RENAME_GLOBS = ("xml/*.xml", "scripts/*.py", "language/*/strings.po")
 
+# The skin's helper-script invocations run the FILE, not the addon id, so the
+# skin needs no python.script extension (which would list it under Program
+# add-ons). Rewired BEFORE the global id rename; the count is a property of
+# the pin.
+RUNSCRIPT_OLD = "RunScript({},".format(UPSTREAM_ID)
+RUNSCRIPT_NEW = "RunScript(special://skin/scripts/helpers.py,"
+RUNSCRIPT_SITES = 15
+
 
 def transform_tree(root: Path, version: str) -> dict:
     """Apply every transform to an extracted upstream tree, in place.
@@ -840,7 +849,7 @@ def transform_tree(root: Path, version: str) -> dict:
     script's job - this module only rewrites what upstream ships.
     """
     root = Path(root)
-    summary = {"edited": [], "renamed": 0, "swept": 0}
+    summary = {"edited": [], "renamed": 0, "swept": 0, "runscript": 0}
 
     # 1. Per-file anchored edits (pristine upstream bytes).
     for rel, edit in sorted(FILE_EDITS.items()):
@@ -851,6 +860,22 @@ def transform_tree(root: Path, version: str) -> dict:
         text = edit(text, rel)
         target.write_text(text, encoding="utf-8")
         summary["edited"].append(rel)
+
+    # 1b. Helper invocations run the file, not the addon id (must precede the
+    # id rename, whose output would otherwise hide these sites).
+    for target in sorted((root / "xml").glob("*.xml")):
+        text = target.read_text(encoding="utf-8")
+        if RUNSCRIPT_OLD in text:
+            summary["runscript"] += text.count(RUNSCRIPT_OLD)
+            target.write_text(
+                text.replace(RUNSCRIPT_OLD, RUNSCRIPT_NEW), encoding="utf-8"
+            )
+    if summary["runscript"] != RUNSCRIPT_SITES:
+        raise TransformError(
+            "rewired {} RunScript sites, expected {}".format(
+                summary["runscript"], RUNSCRIPT_SITES
+            )
+        )
 
     # 2. Rebrand: addon.xml identity, then the global id rename.
     addon_xml = root / "addon.xml"
