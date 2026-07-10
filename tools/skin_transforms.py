@@ -679,8 +679,27 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
         '<addon id="skin.estuary.modv2" version="21.4+omega.4" '
         'name="Estuary MOD V2 Omega" provider-name="Guilouz, K21 branch by PvD">',
         '<addon id="{sid}" version="{ver}" name="{name}" '
-        'provider-name="Tony.7.Bones, Guilouz, PvD (b-jesch), Team Kodi">'.format(
+        'provider-name="Tony.7.Bones">'.format(
             sid=SKIN_ID, ver=version, name=SKIN_NAME
+        ),
+        path=path,
+    )
+    # Screenshots: MOD V2 ships its own branded set; the fork uses ORIGINAL
+    # Estuary's 8 (Team Kodi, vendored into assets/resources/ and copied in by
+    # the build). Provenance stays in <description> as THANKS, not authorship.
+    text = _replace(
+        text,
+        "".join(
+            "\t\t\t\t<screenshot>resources/screenshots/screenshot_{}.png</screenshot>\n".format(
+                n
+            )
+            for n in (1, 2, 5, 7, 8, 9, 10, 13, 14, 15)
+        ),
+        "".join(
+            "\t\t\t\t<screenshot>resources/screenshot-{:02d}.jpg</screenshot>\n".format(
+                n
+            )
+            for n in range(1, 9)
         ),
         path=path,
     )

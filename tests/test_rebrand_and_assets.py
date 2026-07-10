@@ -28,10 +28,19 @@ def test_addon_xml_identity(built):
     # No unrelated couplings: Setup owns EZ Maintenance++ (owner decision
     # 2026-07-10 - the skin declares only what it uses).
     assert "ezmaintenanceplusplus" not in addon
-    # License + credits obligations (GPL-2.0 + CC-BY-SA-4.0).
+    # The "by" line (provider-name) is Tony.7.Bones ALONE - upstream authors
+    # never consented to authorship billing (owner directive 2026-07-10).
+    assert 'provider-name="Tony.7.Bones">' in addon
+    for name in ("Guilouz", "PvD", "b-jesch", "Team Kodi", "phil65"):
+        assert 'provider-name="{}'.format(name) not in addon
+        # ...but they ARE thanked in the description (credit, not authorship).
+    # License + credits obligations (GPL-2.0 + CC-BY-SA-4.0), as THANKS.
     assert "CC BY-SA 4.0" in addon and "GENERAL PUBLIC LICENSE" in addon
     for credit in ("Guilouz", "b-jesch", "Team Kodi"):
-        assert credit in addon, "addon.xml must credit {}".format(credit)
+        assert credit in addon.split("<description")[1].split("</description>")[0]
+    # Screenshots are original Estuary's (stock), not MOD V2's branded set.
+    assert "resources/screenshots/screenshot_" not in addon
+    assert addon.count("<screenshot>resources/screenshot-") == 8
     assert built.lock["our_version"] in addon.split("<news>")[1]
     # No python.script extension: Kodi's executable browser node buckets any
     # script-extension addon under Program add-ons regardless of <provides>;
@@ -102,14 +111,20 @@ def test_wordmark_ships_where_home_points(built):
 
 
 def test_skin_selection_artwork_is_stock_estuary(built):
-    """Kodi's skin chooser shows resources/icon.png + fanart.jpg - the fork
-    ships ORIGINAL Estuary's pair (vendored in assets/), not MOD V2's."""
+    """Kodi's skin chooser + info screen show resources/icon.png, fanart.jpg,
+    and the 8 screenshots - the fork ships ORIGINAL Estuary's set (vendored in
+    assets/), not MOD V2's branded art."""
     from conftest import ROOT
 
-    for name in ("icon.png", "fanart.jpg"):
+    names = ["icon.png", "fanart.jpg"] + [
+        "screenshot-{:02d}.jpg".format(n) for n in range(1, 9)
+    ]
+    for name in names:
         shipped = (built.tree / "resources" / name).read_bytes()
         vendored = (ROOT / "assets" / "resources" / name).read_bytes()
         assert shipped == vendored, name
+    # MOD V2's branded screenshot dir is gone.
+    assert not (built.tree / "resources" / "screenshots").exists()
 
 
 def test_stock_upstream_shortcuts_survive(built):

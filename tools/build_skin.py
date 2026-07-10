@@ -118,11 +118,16 @@ def add_assets(tree: Path) -> None:
         ASSETS_DIR / "media" / "extras" / "logo-text-hires.png",
         extras / "logo-text-hires.png",
     )
-    # Skin-selection artwork: ORIGINAL Estuary's icon + fanart (Team Kodi,
-    # vendored from xbmc/xbmc Omega), replacing MOD V2's branded pair
-    # (owner decision 2026-07-10 - stock look everywhere).
+    # Skin-selection artwork: ORIGINAL Estuary's icon + fanart + the 8
+    # screenshots (Team Kodi, vendored from xbmc/xbmc Omega), replacing MOD
+    # V2's branded set (owner decision 2026-07-10 - stock look everywhere).
+    # MOD V2's screenshots/ dir is removed; the rebranded addon.xml points at
+    # the flat resources/screenshot-0N.jpg names instead.
     for name in ("icon.png", "fanart.jpg"):
         shutil.copyfile(ASSETS_DIR / "resources" / name, tree / "resources" / name)
+    shutil.rmtree(tree / "resources" / "screenshots", ignore_errors=True)
+    for shot in sorted(ASSETS_DIR.glob("resources/screenshot-*.jpg")):
+        shutil.copyfile(shot, tree / "resources" / shot.name)
     (tree / "README.md").write_text(SKIN_README, encoding="utf-8")
     shutil.copyfile(ROOT / "ATTRIBUTION.md", tree / "ATTRIBUTION.md")
 
