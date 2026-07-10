@@ -341,6 +341,8 @@ def _edit_skinsettings(text: str, path: str) -> str:
         "".join(_category_item(i, l) for i, l in _CATEGORY_ORDER_STOCK),
         path=path,
     )
+    # No MOD V2 wordmark (stock shows nothing here).
+    text = _replace(text, _LOGO_SKINSETTINGS, "", path=path)
     # Thin category nav column (stock Estuary emphasis-by-size, not weight).
     text = _replace(
         text, "<font>font30_title</font>", "<font>font13</font>", path=path, count=2
@@ -404,6 +406,39 @@ def _edit_skinsettings(text: str, path: str) -> str:
             path=path,
         )
     return text
+
+
+# MOD V2's "ESTUARY MOD V2" wordmark (dialogs/logo.png) - a MOD V2 addition;
+# stock Estuary shows NOTHING in either spot (owner decision 2026-07-10:
+# remove both). Note Includes_MediaMenu's space-indented body is upstream's
+# own byte-exact quirk.
+_LOGO_SKINSETTINGS = (
+    '\t\t\t<control type="image">\n'
+    "\t\t\t\t<left>66.5</left>\n"
+    "\t\t\t\t<bottom>20</bottom>\n"
+    "\t\t\t\t<width>337</width>\n"
+    "\t\t\t\t<height>100</height>\n"
+    "\t\t\t\t<texture>dialogs/logo.png</texture>\n"
+    '\t\t\t\t<animation effect="slide" end="0,-70" time="0" '
+    'condition="Skin.HasSetting(touchmode)">Conditional</animation>\n'
+    "\t\t\t</control>\n"
+)
+_LOGO_MEDIAMENU = (
+    '\t\t<control type="image">\n'
+    "            <left>66.5</left>\n"
+    "            <bottom>20</bottom>\n"
+    "            <width>337</width>\n"
+    "            <height>100</height>\n"
+    "            <texture>dialogs/logo.png</texture>\n"
+    '            <animation effect="slide" end="0,-70" time="0" '
+    'condition="Window.Isvisible(AddonBrowser.xml)">Conditional</animation>\n'
+    "\t\t\t<visible>!Player.HasMedia</visible>\n"
+    "        </control>\n"
+)
+
+
+def _edit_includes_mediamenu(text: str, path: str) -> str:
+    return _replace(text, _LOGO_MEDIAMENU, "", path=path)
 
 
 def _edit_settingscategory(text: str, path: str) -> str:
@@ -520,6 +555,7 @@ FILE_EDITS = {
     "xml/Custom_1127_SettingsTVWidgets.xml": _edit_custom_tv_widgets,
     "xml/Custom_1129_SettingsProgramsWidgets.xml": _edit_custom_programs_widgets,
     "xml/Includes_Home.xml": _edit_includes_home,
+    "xml/Includes_MediaMenu.xml": _edit_includes_mediamenu,
 }
 
 

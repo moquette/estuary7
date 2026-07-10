@@ -202,6 +202,19 @@ _FORK_CATEGORY_ORDER = "".join(
     )
 )
 
+# MOD V2's SkinSettings wordmark - removed in the fork (stock shows nothing).
+_GOLDEN_SKINSETTINGS_LOGO = (
+    '\t\t\t<control type="image">\n'
+    "\t\t\t\t<left>66.5</left>\n"
+    "\t\t\t\t<bottom>20</bottom>\n"
+    "\t\t\t\t<width>337</width>\n"
+    "\t\t\t\t<height>100</height>\n"
+    "\t\t\t\t<texture>dialogs/logo.png</texture>\n"
+    '\t\t\t\t<animation effect="slide" end="0,-70" time="0" '
+    'condition="Skin.HasSetting(touchmode)">Conditional</animation>\n'
+    "\t\t\t</control>\n"
+)
+
 _GOLDEN_SCROLLBAR_WIRING = (
     '\t\t\t\t<onleft condition="Container(9000).HasFocus(11)">1100</onleft>\n'
     '\t\t\t\t<onright condition="Container(9000).HasFocus(11)">1100</onright>\n'
@@ -287,6 +300,7 @@ NORMALIZE = {
         (_GOLDEN_T7B_GROUPLIST, "", 1),
         (_GOLDEN_T7B_ITEM11, "", 1),
         (_GOLDEN_CATEGORY_ORDER, _FORK_CATEGORY_ORDER, 1),
+        (_GOLDEN_SKINSETTINGS_LOGO, "", 1),
         (_GOLDEN_SCROLLBAR_WIRING, "", 1),
         (
             "\t\t\t\t<width>470</width>\n\t\t\t\t<height>770</height>",
