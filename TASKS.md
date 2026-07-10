@@ -58,6 +58,16 @@ Full phase plan + locked decisions: `docs/PLAN.md`. Project rules: `CLAUDE.md`.
 - [ ] **Phase 6 - Retirement + docs**: retire modv2plus, correct the playbook's
       wrong "MIT" license note (upstream = GPL-2.0 code + CC-BY-SA-4.0 art).
 
+## Bench state (Office Fire TV 192.168.7.162)
+
+- Since 2026-07-10 (1.0.1 tweak round): Estuary 7 ACTIVE with
+  `script.tony7bones.modv2plus` DISABLED (deliberate end-state soak - the
+  skin standing with zero overlay machinery). modv2plus stays INSTALLED at
+  1.8.0 for the Phase 5 migrator. Caveat while disabled: a Kodinerds MOD V2
+  skin update would clobber the on-disk overlay with nothing re-applying it,
+  so a rollback to MOD V2 after such an update renders stock until modv2plus
+  is re-enabled. The other six boxes keep it enabled until Phase 5.
+
 ## Deferred / revisit later
 
 - **Skin Settings category order**: revisit in a future round. The 1.0.1
