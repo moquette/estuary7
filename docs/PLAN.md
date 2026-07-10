@@ -1,0 +1,213 @@
+# Estuary 7 - fork-by-build the MOD V2 skin as a standalone project
+
+## Context
+
+Today the fleet installs the third-party skin `skin.estuary.modv2` (b-jesch/Kodinerds,
+~94MB, auto-updated on boxes DIRECTLY from repo.kodinerds.net) and our add-on
+`script.tony7bones.modv2plus` rewrites 50+ of its files at runtime (9 shipped XMLs +
+a 42-file `[B]` sweep + Font.xml), with a boot service, markers, version sentinels,
+and a wedge-defense shell to survive upstream clobbers. After the 1.8.0 bold sweep,
+"patch" is a fiction: we maintain a fork and apply it on every box at boot.
+
+The original patch-vs-fork decision (recorded in
+`docs/playbooks/modv2plus-dev-cycle-and-lessons.md:24-42`) was right at the time, but
+two facts have flipped it:
+
+1. **Divergence**: 50+ files rewritten, one opinionated look, master switch rarely used.
+2. **Upstream is dormant for our fleet**: b-jesch's development moved to Kodi 22
+   ("Piers"); the Omega branch our Kodi-21 fleet tracks is maintenance-only. "Ride
+   upstream for free" now mostly delivers unreviewed changes landing on the fleet with
+   a stock-flash window: risk, not fixes.
+
+The playbook itself names the chosen path: "Fork-by-build (the hybrid to remember if
+we ever reconsider): keep our changes as deltas, apply them at build time to the
+latest MOD V2, ship the result as our own rebranded skin."
+
+**Owner decision (2026-07-10):** fork-by-build, as a NEW standalone repository at
+`~/Code/moquette/estuary7` - a learning project that owns the skin build end-to-end.
+tony7bones.github.io remains the distribution channel. End state: all runtime patch
+machinery deleted; skin updates come only from us.
+
+**Verified enablers** (do not re-litigate):
+
+- The proxy engine already supports large external zips: `release_asset://` handling at
+  `addons/repository.tony7bones/lib/repository.py:137,322-334` + plain-https asset URLs,
+  streamed in 16KB chunks - so the ~94MB zip lives in GitHub Release assets, never in git.
+- License: upstream is **GPL-2.0 (code) + CC-BY-SA-4.0 (artwork)** - a rebranded fork is
+  permitted with attribution + license retained. (The playbook's "MIT" note at line 42
+  is WRONG and gets corrected in Phase 6.)
+- `repository.kodinerds` must stay installed on boxes (pinned in the base closure,
+  `_tools/test_modular_setup.py:542`, and serves script.skinshortcuts +
+  image.resource.select), so keeping the same skin id would be a permanent version race.
+  **New id: `skin.estuary7`** (from the project name; display "Estuary 7", provider
+  credits b-jesch / Guilouz / Team Kodi).
+
+## What does NOT change during this project
+
+The fleet keeps running overlay 1.8.0 (just shipped, hardware-verified). Nothing
+regresses while phases 0-4 proceed; boxes are only touched in Phase 5, one at a time,
+each with a one-command rollback.
+
+---
+
+## Phase 0 - Scaffold the estuary7 project (first work session there)
+
+Create `~/Code/moquette/estuary7`:
+
+- `git init` (branch `main`), `.gitignore` (`build/`, `upstream-cache/`, `__pycache__/`,
+  `.pytest_cache/`, `dist/`)
+- `CLAUDE.md` - project instructions: what the repo is, the build contract, the
+  relationship to tony7bones.github.io (distribution) and the fleet, the license
+  obligations (GPL-2.0 + CC-BY-SA-4.0, attribution file), pin-by-SHA policy
+- `docs/PLAN.md` - this plan carried over as the project's phase log (the repo is where
+  planning continues, per owner)
+- `LICENSE` / `ATTRIBUTION.md` - GPL-2.0 text + credits (b-jesch, Guilouz, Team Kodi)
+- `README.md` - what Estuary 7 is, honest provenance
+- Groundwork checks (read-only):
+  - Pin the upstream: identify the exact commit SHA on b-jesch/skin.estuary.modv2
+    `Omega` branch that matches the live skin (diff against the Office box copy at
+    `/sdcard/.../addons/skin.estuary.modv2/`); record in `skin_build.lock`
+  - Verify the proxy's `request()` (`addons/repository.tony7bones/lib/utils.py`)
+    follows GitHub's 302 redirect for release-asset downloads; if not, use the
+    `release_asset://` API form instead of plain URLs
+
+## Phase 1 - Build pipeline (the heart of the project, ~2-3 days)
+
+In estuary7:
+
+- `tools/skin_transforms.py` - every customization as an **anchored transform** that
+  FAILS LOUD when its anchor is missing (upstream drift = build error, not silent
+  wrongness - this kills the recorded "Nexus-era Home.xml shipped onto Omega" bug class):
+  1. Rebrand: addon.xml (id `skin.estuary7`, our version scheme starting 1.0.0, news,
+     provider, keep the `<requires>` closure + add outline-hd weather icons); global
+     rename of `skin.estuary.modv2` in `RunScript(...)`/paths
+  2. Bold sweep: port `sweep_bold_markup` (tony7bones.github.io
+     `addons/script.tony7bones.modv2plus/default.py:164-206`) over ALL XMLs at build time
+  3. Font.xml: the Estuary-weight rewrite (NotoSans-Bold to Regular for `*_title` +
+     `font_MainMenu`; RobotoCondensed-Bold to Light flags; `<style>bold</style>`
+     neutralized on UI ids) - regenerated from stock each build
+  4. The 9-file tweaks (overlay gate, wordmark, gear-menu order, clock, our Skin
+     Settings category with per-item toggles - the master Apply/Restore toggle is
+     REMOVED; revert UX = switch skin to stock MOD V2 from Kodinerds)
+  5. Bake defaults into XML conditions (the opt-out `!Skin.HasSetting()` house pattern)
+     so a fresh box needs ZERO settings writes; retarget the weather-icon fallback to
+     Outline HD
+  6. Ship the 17 skinshortcuts menu files inside the skin's `shortcuts/` dir
+     (skin-provided defaults; they are skin-agnostic except the one `.properties` file);
+     loose media into `media/extras/`
+- `tools/build_skin.py` - fetch pinned upstream tarball (verify sha256 against
+  `skin_build.lock`), run transforms, package **deterministically** (reuse the zip
+  discipline from tony7bones.github.io `_tools/generate_repo.py:121-160`: sorted paths,
+  1980 timestamps; build twice + byte-compare; record `zip_sha256` in the lock)
+- `tests/` - pytest: per-transform anchor tests, golden-parity check (the transformed
+  9 files must be semantically identical to the currently shipped modv2plus copies,
+  modulo id rename + removed master-toggle plumbing - copy those goldens in as
+  fixtures), determinism test, no-`[B]`/no-style-bold sweep contracts (port from
+  `_tools/test_modv2plus.py`)
+- Rebase story, made real: bump the SHA in `skin_build.lock`, rebuild; anchor failures
+  enumerate exactly what upstream changed.
+
+## Phase 2 - First release + hosting (~1 day)
+
+- Create the public GitHub repo (`tony7bones/estuary7`; public is required for GPL
+  source availability AND anonymous asset downloads), push
+- `gh release create v1.0.0` + upload `skin.estuary7-1.0.0.zip` as the asset
+- In tony7bones.github.io: `addons/hosted/skin.estuary7/{addon.xml,icon.png,fanart.jpg}`
+  (small, in-tree) + `repository.json` entry (asset_prefix pointing at the raw hosted
+  path; zip pointing at the estuary7 release-asset URL) - the manifest is baked, so
+  this is a **proxy release via `release.py --proxy`**
+- Verify end-to-end: the zip 200s through a local proxy instance
+
+## Phase 3 - Device verify (~1-2 days)
+
+Office Fire TV (192.168.7.162): install Estuary 7 ALONGSIDE the overlaid MOD V2,
+switch with the hardened `activate_skin`
+(`addons/script.module.tony7bones/lib/tony7bones/system.py:145` - reuse verbatim, do
+not reimplement), screencap-parity every documented tweak (gate overlay, wordmark,
+clock, fonts incl. PVR headers, six-item menu, weather icons, gear order, our
+category). Reboot cycles. ATV2 by eye (tvOS cannot screenshot).
+Rollback: switch back to `skin.estuary.modv2` - the overlay is still installed and its
+service still re-applies.
+
+## Phase 4 - Setup/library/tests in tony7bones.github.io (~2-3 days)
+
+- Flip `SKIN_ID` at `setup/skin.py:55` + `bootstrap/default.py:247` (probes import from
+  skin.py); `_install_skin` direct-extracts the Estuary 7 zip from the release URL
+  (proxy-invisible to the closure resolver, same pattern as modv2plus today), then
+  installs skinshortcuts/image.resource.select/outline-hd/pvr.artwork as now; the
+  activate-LAST orchestrator seam stays untouched
+- Probes simplify: `skin_done` = installed + active (drop `_modv2plus_fully_applied`)
+- Tests: `test_setup_skin.py`, `test_setup_probes.py`, `EXPECTED_NET_INSTALLED`
+  (`test_modular_setup.py:532`), `test_no_fork.py`, `modular_setup_snapshot.json`
+- Library + bootstrap ship via `release.py` lockstep as usual
+
+## Phase 5 - Fleet migration (~1-2 days elapsed, box-by-box)
+
+- Ship `script.tony7bones.modv2plus` **2.0.0** as a one-shot MIGRATOR (boxes already
+  auto-update it): if Estuary 7 active, stay inert; else download+extract the fork zip,
+  rescan+settle+enable, copy `addon_data/skin.estuary.modv2/settings.xml` to
+  `addon_data/skin.estuary7/`, write the re-keyed skinshortcuts `.properties`, restore
+  stock MOD V2 files from `.bak`s, remove sentinels, then `activate_skin(skin.estuary7)`
+  gated on GUI-idle
+- Stage it: 2.0.0 ships DISARMED (manual `migrate` argv only); drive each box via
+  ADB/JSON-RPC (tvOS via devicectl + the RunScript bridge), verify per box; then 2.1.0
+  arms auto-migrate as the sweep-up net
+- Rollback per box: one skin-switch back to stock MOD V2 (Kodinerds still serves it);
+  2.0.0 keeps the overlay apply code intact as the escape hatch until all 7 confirm
+
+## Phase 6 - Retirement + docs (~1-2 days)
+
+- Retire modv2plus (proxy manifest removal via proxy release; `EXPECTED_NET_INSTALLED`
+  - `test_no_fork.py` updated)
+- tony7bones.github.io docs: rewrite the playbook decision record (patch to fork, WHY,
+  and the license correction MIT to GPL-2.0 + CC-BY-SA-4.0), CLAUDE.md skin section,
+  TASKS.md track record; estuary7 `docs/PLAN.md` phase log kept current throughout
+- New release loop documented: estuary7 `build_skin.py`, then `gh release`, then bump
+  the hosted addon.xml in tony7bones.github.io, then boxes auto-update
+
+## Verification (per the house workflow, every phase)
+
+- estuary7: its own pytest suite green + double-build determinism before any release
+- tony7bones.github.io: full `pytest _tools/ -q` + ruff + regen gates on every change
+- Real-device verify before every fleet-facing step (Office box first, always);
+  screenshots + kodi.log; no "fixed in code" claims without hardware proof
+- Phase 5 is the only fleet-exposed phase; one box at a time, rollback = one skin switch
+
+## Key decisions locked
+
+| Decision                    | Choice                                                                    |
+| --------------------------- | ------------------------------------------------------------------------- |
+| Architecture                | Fork-by-build (deltas applied at build time to pinned upstream)           |
+| Home                        | NEW standalone repo `~/Code/moquette/estuary7` (owner directive)          |
+| Skin id / name              | `skin.estuary7` / "Estuary 7" (new id - no Kodinerds version race)        |
+| Upstream pin                | Commit SHA on b-jesch Omega branch, in `skin_build.lock` (no usable tags) |
+| Hosting                     | GitHub Release assets on the estuary7 repo (no git bloat, no 100MB limit) |
+| Versioning                  | Ours, from 1.0.0                                                          |
+| Master switch               | Removed; revert = switch to stock MOD V2 via Kodi's skin chooser          |
+| Runtime machinery end state | Deleted (service, markers, sentinels, sweep, shell)                       |
+
+Estimated total: ~8-12 working days across both repos, fleet exposed only in Phase 5.
+First concrete step on approval: Phase 0 scaffold of `~/Code/moquette/estuary7`.
+
+---
+
+## Phase 0 - COMPLETE (2026-07-10)
+
+Scaffold created (git, CLAUDE.md, LICENSE verbatim from upstream, ATTRIBUTION,
+README, this plan). Groundwork results:
+
+- **Upstream pinned:** `8d9b2c7c304c6f0226cd40e24819061c6165a6ec` = 21.4+omega.4.
+  Evidence: addon.xml + the stock `.bak` snapshots of Home.xml, Font.xml,
+  Includes_PVR.xml, DialogPVRChannelGuide.xml on the Office Fire TV all
+  md5-match this commit. Tarball sha256 in `skin_build.lock` (97MB).
+- **Upstream has already moved:** Omega head is 21.4+omega.5 (`15e10710`).
+  The fleet has NOT received it yet - live proof of the unreviewed-update
+  hazard the fork eliminates. The omega.4->omega.5 rebase is the fork's first
+  deliberate exercise AFTER the baseline ships, not part of the baseline.
+- **Redirect check PASSED:** the proxy's `request()`
+  (tony7bones.github.io `addons/repository.tony7bones/lib/utils.py:50`)
+  follows GitHub's cross-host 302 (github.com -> codeload.github.com, status
+  200, streaming read OK). Plain https release-asset URLs are usable in
+  `repository.json`; `release_asset://` stays as fallback.
+
+Next: Phase 1, the build pipeline (`tools/skin_transforms.py` + `tools/build_skin.py` + tests).
