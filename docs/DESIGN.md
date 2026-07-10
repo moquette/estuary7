@@ -91,3 +91,15 @@ revert toward stock - flag it during transform work, ask the owner:
 
 One opinionated look, no look toggles (the runtime master switch dies with
 the overlay; revert = switch skins).
+
+## Flagged deviations awaiting an owner decision
+
+Found during transform/verify work per the rule above (flag, ask, never
+silently keep):
+
+- **Upstream "ESTUARY MOD V2" logo artwork in the SkinSettings window**
+  (bottom-left wordmark texture; also elsewhere upstream binds it). Found in
+  Phase 3 device verify - see
+  `docs/verification/phase3/FINDINGS.md` Finding 3. MOD V2 branding, not on
+  the deviation list. Options: swap for an Estuary 7 mark, revert to stock
+  Estuary's artwork, or drop the image. Candidate 1.0.1 transform.
