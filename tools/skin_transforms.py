@@ -923,8 +923,8 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
     text = _replace(
         text,
         '<summary lang="en_GB">Estuary MOD V2 skin by Guilouz, adapted for Omega by PvD</summary>',
-        '<summary lang="en_GB">Estuary 7 - the Tony.7.Bones fleet skin, '
-        "a fork-by-build of Estuary MOD V2 (Omega)</summary>",
+        '<summary lang="en_GB">A modern, customizable take on '
+        "Kodi's Estuary.</summary>",
         path=path,
     )
     text = _replace(
@@ -932,9 +932,10 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
         '<description lang="en_GB">Estuary MOD V2 is a mod from Estuary by Guilouz '
         "for Kodi 18 and adapted for Kodi 21 (Omega) by PvD from Kodinerds Community. "
         "It attempts to be easy for first time Kodi users to understand and use.</description>",
-        '<description lang="en_GB">Estuary 7 - the Tony.7.Bones fleet skin. '
-        "Keeps the look and feel of original Estuary with thin fonts everywhere. "
-        "Code GPL-2.0, artwork CC-BY-SA-4.0 (see ATTRIBUTION.md).</description>",
+        '<description lang="en_GB">Estuary 7 brings Kodi\'s classic Estuary '
+        "into the present: a clean, modern interface with rich skin settings, "
+        "smart home widgets, and a light, uncluttered layout that stays fast "
+        "and familiar. Yours to shape.</description>",
         path=path,
     )
     text = _replace(
@@ -947,11 +948,11 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
         text,
         "        <news>\nFor a complete view of changes visit "
         "https://github.com/b-jesch/skin.estuary.modv2/tree/Omega\n        </news>",
-        "        <news>\nv{}: System page rebuilt as stock Estuary's grid - Skin "
-        "Settings takes the Games slot, Media sources moves into Skin Settings > "
-        "Extras. Keeps the look and feel of original Estuary with thin fonts "
-        "everywhere. Base: fork-by-build of Estuary MOD V2 21.4+omega.4, no bold "
-        "anywhere, baked Tony.7.Bones defaults.\n"
+        "        <news>\nv{}: fresh look - the Estuary 7 icon gets a superscript "
+        "7 for differentiation and the store copy is modernized. Recent: System "
+        "page rebuilt as stock Estuary's grid (Skin Settings in the Games slot; "
+        "Media sources moved into Skin Settings > Extras). Base: fork-by-build of "
+        "Estuary MOD V2 21.4+omega.4.\n"
         "        </news>".format(version),
         path=path,
     )
