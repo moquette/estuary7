@@ -184,7 +184,10 @@ _CATEGORY_ORDER_STOCK = (
     (7, 14204),  # PVR & Live TV
     (4, 31219),  # Colors
     (6, 31266),  # Extras
-    (8, 31273),  # Necessary add-ons
+    # (8, 31273) "Necessary add-ons" tab removed (owner directive): the
+    # fleet installs deps via Setup, not MOD V2's in-skin installer. Its
+    # pane (grouplist 300) stays in the XML but is unreachable now that no
+    # list item focuses HasFocus(8).
 )
 
 
@@ -948,10 +951,11 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
         text,
         "        <news>\nFor a complete view of changes visit "
         "https://github.com/b-jesch/skin.estuary.modv2/tree/Omega\n        </news>",
-        "        <news>\nv{}: fresh look - the Estuary 7 icon gets a superscript "
-        "7 for differentiation and the store copy is modernized. Recent: System "
+        "        <news>\nv{}: removed the 'Necessary add-ons' tab from Skin "
+        "Settings (the fleet installs add-ons via Setup, not the in-skin "
+        "installer). Recent: superscript-7 icon, modernized store copy, System "
         "page rebuilt as stock Estuary's grid (Skin Settings in the Games slot; "
-        "Media sources moved into Skin Settings > Extras). Base: fork-by-build of "
+        "Media sources in Skin Settings > Extras). Base: fork-by-build of "
         "Estuary MOD V2 21.4+omega.4.\n"
         "        </news>".format(version),
         path=path,
