@@ -90,6 +90,18 @@ revert toward stock - flag it during transform work, ask the owner:
 - Gear-menu reorder. HOME MENU: reverted to upstream MOD V2's default
   (owner directive 2026-07-10) - the fork ships NO custom skinshortcuts
   menu, so the fleet's old trimmed six-item menu is no longer a deviation.
+- System page (Settings.xml) redesigned back toward stock Estuary (owner
+  directive 2026-07-10, bench-verified on the Office Fire TV): upstream's
+  single scrolling 5-column panel becomes a stock-style 4x3 grid - a fixed
+  top utility row (File manager, Add-ons, System info, Event log), a
+  "Settings" divider, then one non-scrolling block of eight tiles. Skin
+  Settings takes the slot upstream gave Games (games are unused on the
+  fleet and stock only shows that tile conditionally). No scrollbar.
+- MOD V2's "Media sources" quick-launcher leaves the System page and moves
+  into Skin Settings > Extras as an "Add media sources" section (header +
+  Videos/Music/Pictures/Games file-browser buttons) directly above the
+  Debug section. The Custom_1120 dialog is now unreferenced (harmless dead
+  weight; the buttons open the file browsers directly).
 - MOD V2's FUNCTIONAL mods (PVR integration, widgets, custom windows) stay -
   the mandate is about look and feel, not features
 

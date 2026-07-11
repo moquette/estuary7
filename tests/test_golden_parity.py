@@ -6,7 +6,16 @@ The normalization applied to each golden below IS the divergence record:
   every file   - XML comments stripped from both sides (the goldens carry
                  patch-era marker comments; the fork needs none), and the
                  golden's skin id renamed (the fork is skin.estuary7).
-  Settings.xml - the splash auto-disable writes the fork's opt-in flag.
+  Settings.xml - the System page is FORK-AUTHORED (owner directive
+                 2026-07-10, bench-verified on the Office Fire TV): upstream's
+                 single scrolling 5-column panel is replaced by a stock-style
+                 4x3 grid - a fixed top utility row (File manager, Add-ons,
+                 System info, Event log), a "Settings" divider, then one
+                 non-scrolling block of eight tiles where Skin Settings takes
+                 the slot upstream gave Games and the MOD V2 "Media sources"
+                 tile is gone. The golden here is that design in golden form
+                 (upstream runscripts + Skin.SetBool splash); its normalization
+                 is only the splash opt-in flip and the runscript rewire.
   Includes.xml / Variables.xml / SkinSettings.xml / Home.xml
                - the runtime-written skin settings are baked as inverted
                  opt-out conditions (see skin_transforms module docstring).
@@ -19,7 +28,10 @@ The normalization applied to each golden below IS the divergence record:
                  General > Top Bar above "Show date"; the category nav column
                  is UNCONDITIONALLY thin (the golden carried a dual thin/bold
                  label pair driven by the runtime t7b_patch_on mirror -
-                 plumbing the fork does not need).
+                 plumbing the fork does not need); the Extras pane gains an
+                 "Add media sources" launcher (header + Videos/Music/Pictures/
+                 Games file-browser buttons) above the Debug section - the
+                 relocated home for the System page's old Media sources tile.
 
 Anything NOT normalized here that differs from the golden fails the test.
 """
@@ -265,6 +277,25 @@ _BACKGROUND_INVERSIONS = [
     for f in ("power", "settings", "search")
 ]
 
+# The fork's "Add media sources" launcher block (a section header + Videos/
+# Music/Pictures/Games file-browser buttons) is inserted into the Extras
+# category pane, directly above the Debug section header (id 900014). Pure
+# fork addition - the golden gains it verbatim (owner directive 2026-07-10:
+# the System page's old Media sources tile relocates here).
+_MEDIA_SOURCES_BLOCK = (
+    '\t\t\t\t<control type="label" id="900020">\n'
+    "\t\t\t\t\t<textoffsetx>45</textoffsetx>\n\t\t\t\t\t<top>0</top>\n\t\t\t\t\t<height>80</height>\n"
+    "\t\t\t\t\t<label>$LOCALIZE[31201]</label>\n\t\t\t\t\t<align>center</align>\n\t\t\t\t\t<aligny>center</aligny>\n"
+    "\t\t\t\t\t<font>font28_title</font>\n\t\t\t\t\t<textcolor>grey</textcolor>\n\t\t\t\t\t<shadowcolor>black</shadowcolor>\n"
+    "\t\t\t\t</control>\n"
+    '\t\t\t\t<control type="button" id="520">\n\t\t\t\t\t<label>$LOCALIZE[3]</label>\n\t\t\t\t\t<include>DefaultSettingButton</include>\n\t\t\t\t\t<onclick>ActivateWindow(Videos,Files,return)</onclick>\n\t\t\t\t</control>\n'
+    '\t\t\t\t<control type="button" id="521">\n\t\t\t\t\t<label>$LOCALIZE[2]</label>\n\t\t\t\t\t<include>DefaultSettingButton</include>\n\t\t\t\t\t<onclick>ActivateWindow(Music,Files,return)</onclick>\n\t\t\t\t</control>\n'
+    '\t\t\t\t<control type="button" id="522">\n\t\t\t\t\t<label>$LOCALIZE[1]</label>\n\t\t\t\t\t<include>DefaultSettingButton</include>\n\t\t\t\t\t<onclick>ActivateWindow(pictures,root)</onclick>\n\t\t\t\t</control>\n'
+    '\t\t\t\t<control type="button" id="523">\n\t\t\t\t\t<label>$LOCALIZE[15016]</label>\n\t\t\t\t\t<include>DefaultSettingButton</include>\n\t\t\t\t\t<onclick>ActivateWindow(games,root)</onclick>\n\t\t\t\t\t<visible>System.GetBool(gamesgeneral.enable)</visible>\n\t\t\t\t</control>\n'
+)
+_DEBUG_HEADER = '\t\t\t\t<control type="label" id="900014">'
+
+
 NORMALIZE = {
     "Home.xml": _WIDGET_INVERSIONS
     + [
@@ -335,6 +366,7 @@ NORMALIZE = {
     + _BACKGROUND_INVERSIONS,
     "SkinSettings.xml": [
         _runscript_rewire(3),
+        (_DEBUG_HEADER, _MEDIA_SOURCES_BLOCK + _DEBUG_HEADER, 1),
         (_GOLDEN_T7B_GROUPLIST, "", 1),
         (_GOLDEN_T7B_ITEM11, "", 1),
         (_GOLDEN_CATEGORY_ORDER, _FORK_CATEGORY_ORDER, 1),

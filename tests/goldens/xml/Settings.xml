@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- T7B-MODV2PLUS-PATCHED -->
 <window>
 	<onunload>RunScript(skin.estuary.modv2,getKodiSetting,lookandfeel.startupaction)</onunload>
 	<onunload condition="!String.IsEmpty(Window(home).property(lookandfeel.startupaction)) + !String.IsEqual(Window(home).property(lookandfeel.startupaction),0)">Skin.SetBool(EnableSplashScreen)</onunload>
@@ -10,24 +9,18 @@
 		<include>DefaultBackground</include>
 		<control type="group">
 			<centerleft>50%</centerleft>
-			<width>1900</width>
+			<width>1600</width>
 			<top>0</top>
 			<bottom>0</bottom>
 			<include>OpenClose_Right</include>
 			<control type="panel" id="9000">
 				<left>0</left>
 				<width>100%</width>
-				<top>160</top>
-				<pagecontrol>60</pagecontrol>
-				<onright>60</onright>
-				<onleft>60</onleft>
+				<top>120</top>
+				<height>300</height>
+				<ondown>9001</ondown>
 				<include>SettingsPanel</include>
 				<content>
-					<item>
-						<label>$LOCALIZE[10035]</label>
-						<onclick>ActivateWindow(SkinSettings)</onclick>
-						<icon>icons/settings/skin.png</icon>
-					</item>
 					<item>
 						<label>$LOCALIZE[10003]</label>
 						<onclick>ActivateWindow(filemanager)</onclick>
@@ -43,26 +36,40 @@
 						<onclick>ActivateWindow(systeminfo)</onclick>
 						<icon>icons/settings/sysinfo.png</icon>
 					</item>
-
 					<item>
-						<label>$LOCALIZE[20094]</label>
-						<onclick>ActivateWindow(1120)</onclick>
-						<icon>icons/settings/sources.png</icon>
+						<label>$LOCALIZE[31067]</label>
+						<onclick>ActivateWindow(eventlog)</onclick>
+						<icon>icons/settings/eventlog.png</icon>
 					</item>
+				</content>
+			</control>
+			<control type="label">
+				<left>0</left>
+				<right>0</right>
+				<top>420</top>
+				<height>50</height>
+				<label>$LOCALIZE[5]</label>
+				<align>center</align>
+				<font>font37</font>
+				<textcolor>grey</textcolor>
+			</control>
+			<control type="panel" id="9001">
+				<left>0</left>
+				<width>100%</width>
+				<top>490</top>
+				<bottom>0</bottom>
+				<onup>9000</onup>
+				<include>SettingsPanel</include>
+				<content>
 					<item>
-						<label>$LOCALIZE[14206]</label>
-						<onclick>ActivateWindow(InterfaceSettings)</onclick>
-						<icon>icons/settings/interface.png</icon>
+						<label>$LOCALIZE[14200]</label>
+						<onclick>ActivateWindow(PlayerSettings)</onclick>
+						<icon>icons/settings/player.png</icon>
 					</item>
 					<item>
 						<label>$LOCALIZE[14211]</label>
 						<onclick>ActivateWindow(MediaSettings)</onclick>
 						<icon>icons/settings/media.png</icon>
-					</item>
-					<item>
-						<label>$LOCALIZE[14200]</label>
-						<onclick>ActivateWindow(PlayerSettings)</onclick>
-						<icon>icons/settings/player.png</icon>
 					</item>
 					<item>
 						<label>$LOCALIZE[14204]</label>
@@ -75,10 +82,14 @@
 						<icon>icons/settings/network.png</icon>
 					</item>
 					<item>
-						<label>$LOCALIZE[15016]</label>
-						<visible>System.GetBool(gamesgeneral.enable)</visible>
-						<onclick>ActivateWindow(GameSettings)</onclick>
-						<icon>icons/settings/games.png</icon>
+						<label>$LOCALIZE[10035]</label>
+						<onclick>ActivateWindow(SkinSettings)</onclick>
+						<icon>icons/settings/skin.png</icon>
+					</item>
+					<item>
+						<label>$LOCALIZE[14206]</label>
+						<onclick>ActivateWindow(InterfaceSettings)</onclick>
+						<icon>icons/settings/interface.png</icon>
 					</item>
 					<item>
 						<label>$LOCALIZE[13200]</label>
@@ -92,24 +103,19 @@
 					</item>
 					<item>
 						<label>LibreELEC</label>
+						<visible>System.HasAddon(service.libreelec.settings)</visible>
 						<onclick>RunAddon(service.libreelec.settings)</onclick>
 						<icon>icons/settings/libreelec.png</icon>
-						<visible>System.HasAddon(service.libreelec.settings)</visible>
 					</item>
 					<item>
 						<label>CoreELEC</label>
+						<visible>System.HasAddon(service.coreelec.settings)</visible>
 						<onclick>RunAddon(service.coreelec.settings)</onclick>
 						<icon>icons/settings/coreelec.png</icon>
-						<visible>System.HasAddon(service.coreelec.settings)</visible>
 					</item>
 				</content>
 			</control>
 		</control>
-		<include content="SettingsScrollbar">
-			<param name="top">140</param>
-			<param name="height">920</param>
-			<param name="leftright">9000</param>
-		</include>
 		<include content="TopBar">
 			<param name="breadcrumbs_label" value="$LOCALIZE[5]" />
 		</include>

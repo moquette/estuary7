@@ -269,32 +269,193 @@ def _edit_home(text: str, path: str) -> str:
     return text
 
 
+_SYSTEM_PAGE = (
+    '<?xml version="1.0" encoding="UTF-8"?>\n'
+    "<window>\n"
+    "\t<onunload>RunScript(skin.estuary.modv2,getKodiSetting,lookandfeel.startupaction)</onunload>\n"
+    '\t<onunload condition="!String.IsEmpty(Window(home).property(lookandfeel.startupaction)) + !String.IsEqual(Window(home).property(lookandfeel.startupaction),0)">Skin.Reset(ShowSplashScreen)</onunload>\n'
+    "\t<onunload>RunScript(skin.estuary.modv2,getKodiSetting,videolibrary.showunwatchedplots)</onunload>\n"
+    "\t<defaultcontrol>9000</defaultcontrol>\n"
+    "\t<backgroundcolor>background</backgroundcolor>\n"
+    "\t<controls>\n"
+    "\t\t<include>DefaultBackground</include>\n"
+    '\t\t<control type="group">\n'
+    "\t\t\t<centerleft>50%</centerleft>\n"
+    "\t\t\t<width>1600</width>\n"
+    "\t\t\t<top>0</top>\n"
+    "\t\t\t<bottom>0</bottom>\n"
+    "\t\t\t<include>OpenClose_Right</include>\n"
+    '\t\t\t<control type="panel" id="9000">\n'
+    "\t\t\t\t<left>0</left>\n"
+    "\t\t\t\t<width>100%</width>\n"
+    "\t\t\t\t<top>120</top>\n"
+    "\t\t\t\t<height>300</height>\n"
+    "\t\t\t\t<ondown>9001</ondown>\n"
+    "\t\t\t\t<include>SettingsPanel</include>\n"
+    "\t\t\t\t<content>\n"
+    "\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t<label>$LOCALIZE[10003]</label>\n"
+    "\t\t\t\t\t\t<onclick>ActivateWindow(filemanager)</onclick>\n"
+    "\t\t\t\t\t\t<icon>icons/settings/filemanager.png</icon>\n"
+    "\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t<label>$LOCALIZE[24001]</label>\n"
+    "\t\t\t\t\t\t<onclick>ActivateWindow(addonbrowser)</onclick>\n"
+    "\t\t\t\t\t\t<icon>icons/settings/addons.png</icon>\n"
+    "\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t<label>$LOCALIZE[138]</label>\n"
+    "\t\t\t\t\t\t<onclick>ActivateWindow(systeminfo)</onclick>\n"
+    "\t\t\t\t\t\t<icon>icons/settings/sysinfo.png</icon>\n"
+    "\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t<label>$LOCALIZE[31067]</label>\n"
+    "\t\t\t\t\t\t<onclick>ActivateWindow(eventlog)</onclick>\n"
+    "\t\t\t\t\t\t<icon>icons/settings/eventlog.png</icon>\n"
+    "\t\t\t\t\t</item>\n"
+    "\t\t\t\t</content>\n"
+    "\t\t\t</control>\n"
+    '\t\t\t<control type="label">\n'
+    "\t\t\t\t<left>0</left>\n"
+    "\t\t\t\t<right>0</right>\n"
+    "\t\t\t\t<top>420</top>\n"
+    "\t\t\t\t<height>50</height>\n"
+    "\t\t\t\t<label>$LOCALIZE[5]</label>\n"
+    "\t\t\t\t<align>center</align>\n"
+    "\t\t\t\t<font>font37</font>\n"
+    "\t\t\t\t<textcolor>grey</textcolor>\n"
+    "\t\t\t</control>\n"
+    '\t\t\t<control type="panel" id="9001">\n'
+    "\t\t\t\t<left>0</left>\n"
+    "\t\t\t\t<width>100%</width>\n"
+    "\t\t\t\t<top>490</top>\n"
+    "\t\t\t\t<bottom>0</bottom>\n"
+    "\t\t\t\t<onup>9000</onup>\n"
+    "\t\t\t\t<include>SettingsPanel</include>\n"
+    "\t\t\t\t<content>\n"
+    "\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t<label>$LOCALIZE[14200]</label>\n"
+    "\t\t\t\t\t\t<onclick>ActivateWindow(PlayerSettings)</onclick>\n"
+    "\t\t\t\t\t\t<icon>icons/settings/player.png</icon>\n"
+    "\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t<label>$LOCALIZE[14211]</label>\n"
+    "\t\t\t\t\t\t<onclick>ActivateWindow(MediaSettings)</onclick>\n"
+    "\t\t\t\t\t\t<icon>icons/settings/media.png</icon>\n"
+    "\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t<label>$LOCALIZE[14204]</label>\n"
+    "\t\t\t\t\t\t<onclick>ActivateWindow(PVRSettings)</onclick>\n"
+    "\t\t\t\t\t\t<icon>icons/settings/livetv.png</icon>\n"
+    "\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t<label>$LOCALIZE[14036]</label>\n"
+    "\t\t\t\t\t\t<onclick>ActivateWindow(ServiceSettings)</onclick>\n"
+    "\t\t\t\t\t\t<icon>icons/settings/network.png</icon>\n"
+    "\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t<label>$LOCALIZE[10035]</label>\n"
+    "\t\t\t\t\t\t<onclick>ActivateWindow(SkinSettings)</onclick>\n"
+    "\t\t\t\t\t\t<icon>icons/settings/skin.png</icon>\n"
+    "\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t<label>$LOCALIZE[14206]</label>\n"
+    "\t\t\t\t\t\t<onclick>ActivateWindow(InterfaceSettings)</onclick>\n"
+    "\t\t\t\t\t\t<icon>icons/settings/interface.png</icon>\n"
+    "\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t<label>$LOCALIZE[13200]</label>\n"
+    "\t\t\t\t\t\t<onclick>ActivateWindow(Profiles)</onclick>\n"
+    "\t\t\t\t\t\t<icon>icons/settings/profiles.png</icon>\n"
+    "\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t<label>$LOCALIZE[13000]</label>\n"
+    "\t\t\t\t\t\t<onclick>ActivateWindow(SystemSettings)</onclick>\n"
+    "\t\t\t\t\t\t<icon>icons/settings/system.png</icon>\n"
+    "\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t<label>LibreELEC</label>\n"
+    "\t\t\t\t\t\t<visible>System.HasAddon(service.libreelec.settings)</visible>\n"
+    "\t\t\t\t\t\t<onclick>RunAddon(service.libreelec.settings)</onclick>\n"
+    "\t\t\t\t\t\t<icon>icons/settings/libreelec.png</icon>\n"
+    "\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t<label>CoreELEC</label>\n"
+    "\t\t\t\t\t\t<visible>System.HasAddon(service.coreelec.settings)</visible>\n"
+    "\t\t\t\t\t\t<onclick>RunAddon(service.coreelec.settings)</onclick>\n"
+    "\t\t\t\t\t\t<icon>icons/settings/coreelec.png</icon>\n"
+    "\t\t\t\t\t</item>\n"
+    "\t\t\t\t</content>\n"
+    "\t\t\t</control>\n"
+    "\t\t</control>\n"
+    '\t\t<include content="TopBar">\n'
+    '\t\t\t<param name="breadcrumbs_label" value="$LOCALIZE[5]" />\n'
+    "\t\t</include>\n"
+    "\t\t<include>BottomBar</include>\n"
+    "\t</controls>\n"
+    "</window>\n"
+)
+
+_MEDIA_SOURCES_BLOCK = (
+    '\t\t\t\t<control type="label" id="900020">\n'
+    "\t\t\t\t\t<textoffsetx>45</textoffsetx>\n"
+    "\t\t\t\t\t<top>0</top>\n"
+    "\t\t\t\t\t<height>80</height>\n"
+    "\t\t\t\t\t<label>$LOCALIZE[31201]</label>\n"
+    "\t\t\t\t\t<align>center</align>\n"
+    "\t\t\t\t\t<aligny>center</aligny>\n"
+    "\t\t\t\t\t<font>font28_title</font>\n"
+    "\t\t\t\t\t<textcolor>grey</textcolor>\n"
+    "\t\t\t\t\t<shadowcolor>black</shadowcolor>\n"
+    "\t\t\t\t</control>\n"
+    '\t\t\t\t<control type="button" id="520">\n'
+    "\t\t\t\t\t<label>$LOCALIZE[3]</label>\n"
+    "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+    "\t\t\t\t\t<onclick>ActivateWindow(Videos,Files,return)</onclick>\n"
+    "\t\t\t\t</control>\n"
+    '\t\t\t\t<control type="button" id="521">\n'
+    "\t\t\t\t\t<label>$LOCALIZE[2]</label>\n"
+    "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+    "\t\t\t\t\t<onclick>ActivateWindow(Music,Files,return)</onclick>\n"
+    "\t\t\t\t</control>\n"
+    '\t\t\t\t<control type="button" id="522">\n'
+    "\t\t\t\t\t<label>$LOCALIZE[1]</label>\n"
+    "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+    "\t\t\t\t\t<onclick>ActivateWindow(pictures,root)</onclick>\n"
+    "\t\t\t\t</control>\n"
+    '\t\t\t\t<control type="button" id="523">\n'
+    "\t\t\t\t\t<label>$LOCALIZE[15016]</label>\n"
+    "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+    "\t\t\t\t\t<onclick>ActivateWindow(games,root)</onclick>\n"
+    "\t\t\t\t\t<visible>System.GetBool(gamesgeneral.enable)</visible>\n"
+    "\t\t\t\t</control>\n"
+)
+
+_DEBUG_HEADER_ANCHOR = '\t\t\t\t<control type="label" id="900014">'
+
+
 def _edit_settings(text: str, path: str) -> str:
-    """Gear-menu reorder via placeholder rotation (the two items swap slots,
-    so plain replace would collide with its own output)."""
-    sources_item = (
-        "\t\t\t\t\t\t<label>$LOCALIZE[20094]</label>\n"
-        "\t\t\t\t\t\t<onclick>ActivateWindow(1120)</onclick>\n"
-        "\t\t\t\t\t\t<icon>icons/settings/sources.png</icon>"
-    )
-    skin_item = (
-        "\t\t\t\t\t\t<label>$LOCALIZE[10035]</label>\n"
-        "\t\t\t\t\t\t<onclick>ActivateWindow(SkinSettings)</onclick>\n"
-        "\t\t\t\t\t\t<icon>icons/settings/skin.png</icon>"
-    )
-    placeholder = "\x00T7B-SWAP\x00"
-    text = _replace(text, sources_item, placeholder, path=path)
-    text = _replace(text, skin_item, sources_item, path=path)
-    text = _replace(text, placeholder, skin_item, path=path)
-    # Splash is opt-in now; the "startup window is not Home" auto-disable
-    # becomes a reset of the new flag.
-    text = _replace(
-        text,
-        "Skin.SetBool(EnableSplashScreen)",
-        "Skin.Reset(ShowSplashScreen)",
-        path=path,
-    )
-    return text
+    """Replace upstream's single scrolling 5-column System page with the
+    owner-approved stock-style 4x3 grid (see _SYSTEM_PAGE): a fixed top
+    utility row (File manager, Add-ons, System info, Event log), a "Settings"
+    divider, then one non-scrolling block of eight category tiles. Skin
+    Settings takes the slot upstream gave Games (unused on the fleet; stock
+    only shows Games conditionally); the MOD V2 "Media sources" tile is gone,
+    relocated into Skin Settings > Extras (see _MEDIA_SOURCES_BLOCK). The two
+    onunload RunScripts keep upstream's addon-id form so the global rewiring
+    converts them (the count-15 contract); the splash onunload is baked to the
+    opt-in Reset form. Fail loud if the upstream page is not the shape we
+    redesigned from."""
+    for anchor in (
+        "<onclick>ActivateWindow(1120)</onclick>",  # MOD V2 "Media sources" tile
+        "<width>1900</width>",  # the single 5-column panel group
+        "RunScript(skin.estuary.modv2,getKodiSetting,lookandfeel.startupaction)",
+    ):
+        if anchor not in text:
+            raise TransformError(
+                "{}: upstream System page drifted (missing {!r})".format(path, anchor)
+            )
+    return _SYSTEM_PAGE
 
 
 def _edit_includes(text: str, path: str) -> str:
@@ -353,6 +514,11 @@ def _edit_skinsettings(text: str, path: str) -> str:
         _SYSINFO_TOGGLE,
         path=path,
     )
+    # "Add media sources" launcher (Videos/Music/Pictures/Games file
+    # browsers) in the Extras category pane, directly above the Debug
+    # section - the relocated home for the System page's old Media sources
+    # tile (owner directive). Anchored on upstream's Debug header label.
+    text = _insert_before(text, _DEBUG_HEADER_ANCHOR, _MEDIA_SOURCES_BLOCK, path=path)
     # Categories in stock Estuary's order.
     text = _replace(
         text,
@@ -781,10 +947,11 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
         text,
         "        <news>\nFor a complete view of changes visit "
         "https://github.com/b-jesch/skin.estuary.modv2/tree/Omega\n        </news>",
-        "        <news>\nv{}: stock-Estuary alignment - no custom settings tab, "
-        "stock category order and artwork, MOD V2 branding and header chips removed, "
-        "skin lists only as a skin. Base: fork-by-build of Estuary MOD V2 "
-        "21.4+omega.4, no bold anywhere, baked Tony.7.Bones defaults.\n"
+        "        <news>\nv{}: System page rebuilt as stock Estuary's grid - Skin "
+        "Settings takes the Games slot, Media sources moves into Skin Settings > "
+        "Extras. Keeps the look and feel of original Estuary with thin fonts "
+        "everywhere. Base: fork-by-build of Estuary MOD V2 21.4+omega.4, no bold "
+        "anywhere, baked Tony.7.Bones defaults.\n"
         "        </news>".format(version),
         path=path,
     )
