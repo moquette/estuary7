@@ -366,6 +366,9 @@ NORMALIZE = {
     "SkinSettings.xml": [
         _runscript_rewire(3),
         (_DEBUG_HEADER, _MEDIA_SOURCES_BLOCK + _DEBUG_HEADER, 1),
+        ("\t\t\t\t\t<label>$LOCALIZE[31468]</label>", "\t\t\t\t\t<label>Show labeled tiles</label>", 1),
+        ("\t\t\t\t\t<selected>!Skin.HasSetting(HideWidgetLabels)</selected>", "\t\t\t\t\t<selected>Skin.HasSetting(HideWidgetLabels)</selected>", 1),
+        ("\t\t\t\t\t<visible>!Skin.HasSetting(HideWidgetLabels)</visible>", "\t\t\t\t\t<visible>Skin.HasSetting(HideWidgetLabels)</visible>", 1),
         (_GOLDEN_T7B_GROUPLIST, "", 1),
         (_GOLDEN_T7B_ITEM11, "", 1),
         (_GOLDEN_CATEGORY_ORDER, _FORK_CATEGORY_ORDER, 1),
@@ -442,6 +445,20 @@ NORMALIZE = {
 }
 
 
+def _invert_widget_labels(text: str) -> str:
+    """Mirror skin_transforms.invert_widget_labels for golden parity."""
+    ph = "\x00T7B-TILELABELS\x00"
+    text = text.replace("!Skin.HasSetting(HideWidgetLabels)", ph)
+    text = text.replace(
+        "Skin.HasSetting(HideWidgetLabels)", "!Skin.HasSetting(hide_tile_labels)"
+    )
+    text = text.replace(ph, "Skin.HasSetting(hide_tile_labels)")
+    text = text.replace(
+        "Skin.ToggleSetting(HideWidgetLabels)", "Skin.ToggleSetting(hide_tile_labels)"
+    )
+    return text
+
+
 def _normalize_golden(name: str, text: str) -> str:
     text = text.replace(UPSTREAM_ID, SKIN_ID)
     for old, new, count in NORMALIZE.get(name, []):
@@ -452,6 +469,7 @@ def _normalize_golden(name: str, text: str) -> str:
             )
         )
         text = text.replace(old, new)
+    text = _invert_widget_labels(text)
     return _COMMENT_RE.sub("", text)
 
 

@@ -522,6 +522,33 @@ def _edit_skinsettings(text: str, path: str) -> str:
     # section - the relocated home for the System page's old Media sources
     # tile (owner directive). Anchored on upstream's Debug header label.
     text = _insert_before(text, _DEBUG_HEADER_ANCHOR, _MEDIA_SOURCES_BLOCK, path=path)
+    # Rename the garbled upstream widget-labels toggle (id 10021,
+    # "Show media names with widgets names" - doubled "names", reads
+    # backwards) to a clear "Show labeled tiles". Wiring is already correct:
+    # checked = labels shown (selected = !HasSetting(HideWidgetLabels)).
+    text = _replace(
+        text,
+        "\t\t\t\t\t<label>$LOCALIZE[31468]</label>",
+        "\t\t\t\t\t<label>Show labeled tiles</label>",
+        path=path,
+    )
+    # The flag is inverted vs its name (HideWidgetLabels=true SHOWS labels,
+    # bench-proven), so upstream's selected=!HasSetting rendered the switch
+    # BACKWARDS (OFF while labels shown - owner caught it). Flip selected so
+    # "Show labeled tiles" ON = labels shown, and the PVR sub-option shows
+    # when the parent is on.
+    text = _replace(
+        text,
+        "\t\t\t\t\t<selected>!Skin.HasSetting(HideWidgetLabels)</selected>",
+        "\t\t\t\t\t<selected>Skin.HasSetting(HideWidgetLabels)</selected>",
+        path=path,
+    )
+    text = _replace(
+        text,
+        "\t\t\t\t\t<visible>!Skin.HasSetting(HideWidgetLabels)</visible>",
+        "\t\t\t\t\t<visible>Skin.HasSetting(HideWidgetLabels)</visible>",
+        path=path,
+    )
     # Categories in stock Estuary's order.
     text = _replace(
         text,
@@ -951,12 +978,11 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
         text,
         "        <news>\nFor a complete view of changes visit "
         "https://github.com/b-jesch/skin.estuary.modv2/tree/Omega\n        </news>",
-        "        <news>\nv{}: removed the 'Necessary add-ons' tab from Skin "
-        "Settings (the fleet installs add-ons via Setup, not the in-skin "
-        "installer). Recent: superscript-7 icon, modernized store copy, System "
-        "page rebuilt as stock Estuary's grid (Skin Settings in the Games slot; "
-        "Media sources in Skin Settings > Extras). Base: fork-by-build of "
-        "Estuary MOD V2 21.4+omega.4.\n"
+        "        <news>\nv{}: home widget tiles show their names by default, and "
+        "the 'Show labeled tiles' toggle now works the right way round (upstream "
+        "had it inverted). Recent: removed the Necessary add-ons tab, "
+        "superscript-7 icon, System page rebuilt as stock Estuary's grid. Base: "
+        "fork-by-build of Estuary MOD V2 21.4+omega.4.\n"
         "        </news>".format(version),
         path=path,
     )
@@ -966,6 +992,27 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
 def rename_skin_id(text: str) -> str:
     """Global rename; used for every text file that mentions the upstream id."""
     return text.replace(UPSTREAM_ID, SKIN_ID)
+
+
+def invert_widget_labels(text: str) -> str:
+    """Flip the upstream HideWidgetLabels flag to hide_tile_labels with a
+    polarity swap. Upstream misnamed it (SET = SHOW labels) and defaults it
+    unset = UNLABELED; the swap makes a fresh box default to LABELED tiles
+    (owner directive) while preserving every layout's behavior. The Skin
+    Settings toggle was already re-aligned to the layouts' polarity in
+    _edit_skinsettings, so this single swap corrects the toggle AND the
+    default with no special case. Forms are uniform (verified): plain and
+    negated Skin.HasSetting, plus the one Skin.ToggleSetting."""
+    ph = "\x00T7B-TILELABELS\x00"
+    text = text.replace("!Skin.HasSetting(HideWidgetLabels)", ph)
+    text = text.replace(
+        "Skin.HasSetting(HideWidgetLabels)", "!Skin.HasSetting(hide_tile_labels)"
+    )
+    text = text.replace(ph, "Skin.HasSetting(hide_tile_labels)")
+    text = text.replace(
+        "Skin.ToggleSetting(HideWidgetLabels)", "Skin.ToggleSetting(hide_tile_labels)"
+    )
+    return text
 
 
 # ---------------------------------------------------------------------------
@@ -1097,6 +1144,20 @@ def transform_tree(root: Path, version: str) -> dict:
                 summary["runscript"], RUNSCRIPT_SITES
             )
         )
+
+    # 1c. Widget-label default: HideWidgetLabels is upstream-misnamed (SET =
+    # SHOW) and defaults unlabeled; flip it to hide_tile_labels with a
+    # polarity swap so a fresh box shows LABELED tiles (owner directive).
+    for target in sorted((root / "xml").glob("*.xml")):
+        text = target.read_text(encoding="utf-8")
+        if "HideWidgetLabels" in text:
+            new = invert_widget_labels(text)
+            if "HideWidgetLabels" in new:
+                raise TransformError(
+                    "{}: HideWidgetLabels survived the label flip".format(target.name)
+                )
+            target.write_text(new, encoding="utf-8")
+            summary["labelflip"] = summary.get("labelflip", 0) + 1
 
     # 2. Rebrand: addon.xml identity, then the global id rename.
     addon_xml = root / "addon.xml"
