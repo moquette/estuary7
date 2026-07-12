@@ -307,6 +307,11 @@ _RESET_MENU_ACTION = (
     "                    if name.endswith('.DATA.xml') and xbmcvfs.copy(defaults + name, profile + name):\n"
     "                        copied += 1\n"
     "                report.append('copied=%i' % copied)\n"
+    "                try:\n"
+    "                    xbmcaddon.Addon('script.skinshortcuts').setSetting('donthidepvr', 'true')\n"
+    "                    report.append('donthidepvr=true')\n"
+    "                except Exception as e:\n"
+    "                    report.append('donthidepvr_err=%s' % e)\n"
     "                home.setProperty('skinshortcuts-reloadmainmenu', 'True')\n"
     "                home.setProperty('t7b_resetmenu', 'reset: ' + ' '.join(report))\n"
     "                xbmc.log('resetMenu: ' + ' '.join(report), xbmc.LOGINFO)\n"
@@ -918,21 +923,17 @@ def _edit_dialogfullscreeninfo(text: str, path: str) -> str:
 
 # Relative path under the skin root -> edit function. Every file listed here
 # MUST exist in upstream; a vanished file is upstream drift and fails loudly.
-# Stock Estuary (Kodi's Home.xml) shows Live TV and Radio ALWAYS by default -
-# they are gated only by an opt-out skin setting, NOT by PVR presence. But
-# skinshortcuts' datafunctions.check_visibility() INJECTS System.HasPVRAddon
-# onto any action starting with 'activatewindow(tv'/'(radio' (its donthidepvr
-# setting is off by default and is a skinshortcuts addon setting a skin cannot
-# ship), ANDing it onto our own <visible> so it cannot be overridden - which
-# would HIDE them without a PVR client. That is a MOD V2 deviation from stock.
-# The numeric window ids (10700 = TVChannels, 10705 = RadioChannels) open the
-# exact same windows but carry no 'tv'/'radio' prefix, so skinshortcuts injects
-# nothing and the tiles stay always-visible like stock. DO NOT 'fix' these to
-# the named windows - that reintroduces the MOD V2 hide-without-PVR behavior.
-_MAINMENU_TV_OLD = "        <action>ActivateWindow(TVChannels)</action>\n"
-_MAINMENU_TV_NEW = "        <action>ActivateWindow(10700)</action>\n"
-_MAINMENU_RADIO_OLD = "        <action>ActivateWindow(RadioChannels)</action>\n"
-_MAINMENU_RADIO_NEW = "        <action>ActivateWindow(10705)</action>\n"
+# Live TV/Radio keep stock's named windows (TVChannels/RadioChannels). Stock
+# Estuary shows both tiles ALWAYS (gated only by an opt-out skin setting, not
+# by PVR). skinshortcuts otherwise INJECTS System.HasPVRAddon onto any action
+# starting with 'activatewindow(tv'/'(radio', hiding them without a PVR client
+# (a MOD V2 deviation). Numeric window ids do NOT dodge this: hardware-verified
+# on the ATV, skinshortcuts NORMALISES ActivateWindow(10700) back to
+# ActivateWindow(TVChannels) at build time, then injects the condition anyway.
+# The only real lever is skinshortcuts' own 'donthidepvr' setting - when true,
+# check_visibility() injects nothing. We seed donthidepvr=true from the boot
+# service and the reset helper (see _edit_services / _edit_helpers), so the
+# named-window tiles stay always-visible like stock.
 
 _MAINMENU_DISC = (
     "    <shortcut>\n"
@@ -982,15 +983,13 @@ _MAINMENU_COREELEC = (
 def _edit_mainmenu(text: str, path: str) -> str:
     """Ship STOCK Estuary's menu out of the box (owner directive).
 
-    Anchored edits: keep Live TV/Radio always-visible like stock by using the
-    numeric window ids (see the FILE_EDITS comment - named ids would let
-    skinshortcuts hide them without PVR, a MOD V2 deviation), move Disc into
-    stock's slot (after Music, before Music videos), and drop the
-    LibreELEC/CoreELEC entries stock has no notion of (and which can never show
-    on the Fire TV / Apple TV fleet anyway). The library-aware action variants
-    MOD V2 uses are kept - they are strictly better than stock's."""
-    text = _replace(text, _MAINMENU_TV_OLD, _MAINMENU_TV_NEW, path=path)
-    text = _replace(text, _MAINMENU_RADIO_OLD, _MAINMENU_RADIO_NEW, path=path)
+    Anchored edits: move Disc into stock's slot (after Music, before Music
+    videos) and drop the LibreELEC/CoreELEC entries stock has no notion of (and
+    which can never show on the Fire TV / Apple TV fleet anyway). Live TV/Radio
+    keep stock's named windows and stay always-visible because we seed
+    skinshortcuts' donthidepvr=true (see the FILE_EDITS comment). The
+    library-aware action variants MOD V2 uses are kept - they are strictly
+    better than stock's."""
     text = _replace(text, _MAINMENU_DISC, "", path=path)
     text = _insert_before(text, _MAINMENU_MUSICVIDEOS_FIRST, _MAINMENU_DISC, path=path)
     text = _replace(text, _MAINMENU_LIBREELEC, "", path=path)
@@ -1018,6 +1017,54 @@ def _edit_helpers(text: str, path: str) -> str:
     return _insert_before(text, _HELPERS_ELSE, _RESET_MENU_ACTION, path=path)
 
 
+_SERVICES_IMPORT_OLD = "import xbmc\n\n# view switcher\n"
+_SERVICES_IMPORT_NEW = (
+    "import xbmc\nimport xbmcaddon\nimport xbmcvfs\nimport xbmcgui\n\n# view switcher\n"
+)
+
+# Anchor: the service's own startup log line (inside __main__, 4-space indent).
+_SERVICES_START_ANCHOR = (
+    "    xbmc.log('Estuary MOD V2 Nexus service handler started', level=xbmc.LOGINFO)\n"
+)
+
+# Seed skinshortcuts' donthidepvr=true once, so it never injects System.HasPVRAddon
+# onto the Live TV/Radio menu items - the only reliable way to keep them
+# always-visible like stock (numeric window ids are normalised back to the named
+# windows and injected anyway; hardware-verified). On the first boot that flips
+# the setting, drop the generated includes and rebuild so the change takes effect.
+_SERVICES_SEED = (
+    "    try:\n"
+    "        _ss = xbmcaddon.Addon('script.skinshortcuts')\n"
+    "        if _ss.getSetting('donthidepvr') != 'true':\n"
+    "            _ss.setSetting('donthidepvr', 'true')\n"
+    "            _inc = 'special://skin/xml/script-skinshortcuts-includes.xml'\n"
+    "            if xbmcvfs.exists(_inc):\n"
+    "                xbmcvfs.delete(_inc)\n"
+    "            xbmcgui.Window(10000).setProperty('skinshortcuts-reloadmainmenu', 'True')\n"
+    "            xbmc.executebuiltin('RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')\n"
+    "            xbmc.log('estuary7: seeded skinshortcuts donthidepvr=true, rebuilding menu', level=xbmc.LOGINFO)\n"
+    "    except Exception as _pvr_e:\n"
+    "        xbmc.log('estuary7: donthidepvr seed failed: %s' % _pvr_e, level=xbmc.LOGWARNING)\n"
+)
+
+
+def _edit_services(text: str, path: str) -> str:
+    """Seed skinshortcuts' donthidepvr=true at boot.
+
+    Stock Estuary shows Live TV/Radio always; skinshortcuts hides them without a
+    PVR client by injecting System.HasPVRAddon. Its donthidepvr setting is the
+    only switch that suppresses that (a skin cannot ship the setting file, but the
+    boot service can set it via the addon API). Runs once - on the boot that flips
+    the setting it forces a menu rebuild so the tiles appear immediately."""
+    text = _replace(text, _SERVICES_IMPORT_OLD, _SERVICES_IMPORT_NEW, path=path)
+    return _replace(
+        text,
+        _SERVICES_START_ANCHOR,
+        _SERVICES_START_ANCHOR + _SERVICES_SEED,
+        path=path,
+    )
+
+
 FILE_EDITS = {
     "xml/Home.xml": _edit_home,
     "xml/Settings.xml": _edit_settings,
@@ -1025,6 +1072,7 @@ FILE_EDITS = {
     "xml/Variables.xml": _edit_variables,
     "xml/SkinSettings.xml": _edit_skinsettings,
     "scripts/helpers.py": _edit_helpers,
+    "scripts/services.py": _edit_services,
     "shortcuts/mainmenu.DATA.xml": _edit_mainmenu,
     "xml/SettingsCategory.xml": _edit_settingscategory,
     "xml/DialogAddonSettings.xml": _edit_dialogaddonsettings,

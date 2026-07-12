@@ -165,26 +165,27 @@ def check_contracts(tree: Path) -> None:
     if "resource.images.weathericons.outline-hd" not in addon:
         problems.append("addon.xml: missing outline-hd dependency")
     # The home menu ships STOCK ESTUARY's item set/order (owner directive).
-    # Live TV/Radio use numeric window ids so they stay always-visible like
-    # stock Estuary. skinshortcuts injects System.HasPVRAddon for any
-    # "activatewindow(tv"/"(radio" action and ANDs it onto our <visible>, which
-    # would HIDE them on a box with no PVR client (a MOD V2 deviation). The
-    # numeric ids (10700/10705) open the same windows without the prefix.
+    # Live TV/Radio keep stock's named windows (TVChannels/RadioChannels) and
+    # stay always-visible like stock because the boot service + reset helper seed
+    # skinshortcuts' donthidepvr=true (numeric window ids do NOT help - they are
+    # normalised back to the named windows at build time and injected anyway).
     menu = tree / "shortcuts" / "mainmenu.DATA.xml"
     if not menu.is_file():
         problems.append("shortcuts: mainmenu.DATA.xml missing")
     else:
         menu_text = menu.read_text(encoding="utf-8")
-        for needed in ("ActivateWindow(10700)", "ActivateWindow(10705)"):
+        for needed in ("ActivateWindow(TVChannels)", "ActivateWindow(RadioChannels)"):
             if needed not in menu_text:
-                problems.append(
-                    "mainmenu: {} missing (PVR items would hide)".format(needed)
-                )
-        for banned in ("ActivateWindow(TVChannels)", "ActivateWindow(RadioChannels)"):
+                problems.append("mainmenu: {} missing (stock PVR item)".format(needed))
+        for banned in ("ActivateWindow(10700)", "ActivateWindow(10705)"):
             if banned in menu_text:
-                problems.append(
-                    "mainmenu: {} would be PVR-gated by skinshortcuts".format(banned)
-                )
+                problems.append("mainmenu: {} - use the named window".format(banned))
+    # donthidepvr must be seeded so the named-window PVR items are not hidden
+    services = tree / "scripts" / "services.py"
+    if not services.is_file():
+        problems.append("scripts: services.py missing")
+    elif "donthidepvr" not in services.read_text(encoding="utf-8"):
+        problems.append("services.py: donthidepvr seed missing (PVR items would hide)")
     if (tree / "shortcuts" / "{}.properties".format(SKIN_ID)).is_file():
         problems.append("shortcuts: fork properties shipped (menu must be stock)")
     if not (tree / "media" / "extras" / "logo-text-hires.png").is_file():

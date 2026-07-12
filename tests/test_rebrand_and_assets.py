@@ -101,13 +101,12 @@ def test_home_menu_is_stock_estuary(built):
     Add-ons, Pictures, Videos, Favourites, Weather.
 
     Stock Estuary shows Live TV / Radio ALWAYS (gated only by an opt-out skin
-    setting, not by PVR). Live TV / Radio therefore use the numeric window ids:
-    skinshortcuts' datafunctions.check_visibility() injects System.HasPVRAddon
-    for any action starting with "activatewindow(tv"/"(radio" (its donthidepvr
-    setting is off by default and is a skinshortcuts addon setting a skin cannot
-    ship), ANDing it onto our own <visible> - which would hide them without PVR,
-    a MOD V2 deviation. The numeric ids dodge the prefix so the tiles stay
-    always-visible like stock. Do NOT "fix" them back to the named windows.
+    setting, not by PVR). They keep stock's named windows (TVChannels/
+    RadioChannels); the boot service + reset helper seed skinshortcuts'
+    donthidepvr=true so its check_visibility() never injects System.HasPVRAddon,
+    keeping the tiles always-visible like stock. Numeric window ids do NOT help
+    (hardware-verified: skinshortcuts normalises them back to the named windows
+    at build time and injects the PVR condition anyway).
     """
     import xml.etree.ElementTree as ET
 
@@ -139,11 +138,17 @@ def test_home_menu_is_stock_estuary(built):
         "weather",
     ], order
 
-    # PVR items use numeric window ids so they stay always-visible like stock;
-    # named windows would let skinshortcuts hide them without a PVR backend
-    assert "ActivateWindow(10700)" in text and "ActivateWindow(10705)" in text
-    assert "ActivateWindow(TVChannels)" not in text
-    assert "ActivateWindow(RadioChannels)" not in text
+    # PVR items keep stock's named windows; donthidepvr (seeded at boot) keeps
+    # them visible. Numeric ids are normalised back at build time, so don't ship them.
+    assert (
+        "ActivateWindow(TVChannels)" in text and "ActivateWindow(RadioChannels)" in text
+    )
+    assert "ActivateWindow(10700)" not in text
+    assert "ActivateWindow(10705)" not in text
+
+    # the boot service seeds skinshortcuts donthidepvr=true so PVR tiles stay visible
+    services = (built.tree / "scripts" / "services.py").read_text(encoding="utf-8")
+    assert "donthidepvr" in services and "setSetting" in services
 
     # stock has no LibreELEC/CoreELEC entries
     assert "service.libreelec.settings" not in text
