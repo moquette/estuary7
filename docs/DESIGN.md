@@ -87,9 +87,16 @@ revert toward stock - flag it during transform work, ask the owner:
 - Thin side navigation (font13/font12 on all four left-hand nav columns)
 - Outline HD weather icons; top-bar weather
 - Plain Power/Settings/Search backgrounds
-- Gear-menu reorder. HOME MENU: reverted to upstream MOD V2's default
-  (owner directive 2026-07-10) - the fork ships NO custom skinshortcuts
-  menu, so the fleet's old trimmed six-item menu is no longer a deviation.
+- Gear-menu reorder. HOME MENU (owner directive 2026-07-12): ships STOCK
+  Estuary's default item set/order and stays fully editable (skinshortcuts).
+  The shipped default (shortcuts/mainmenu.DATA.xml) keeps Live TV/Radio
+  ALWAYS-visible like stock by seeding skinshortcuts' `donthidepvr=true` (boot
+  service + reset helper); numeric window ids do NOT work (skinshortcuts
+  normalises them back and injects System.HasPVRAddon). The Videos labelID icon
+  override was repointed from the blank DefaultAddonVideo.png to the real
+  icons/sidemenu/videos.png. "Reset main menu settings" restores this default -
+  see docs/playbooks/skinshortcuts-reset-tvos-vfs-split.md for the tvOS reset
+  fix.
 - System page (Settings.xml) redesigned back toward stock Estuary (owner
   directive 2026-07-10, bench-verified on the Office Fire TV): upstream's
   single scrolling 5-column panel becomes a stock-style 4x3 grid - a fixed

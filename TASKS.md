@@ -69,6 +69,29 @@ Full phase plan + locked decisions: `docs/PLAN.md`. Project rules: `CLAUDE.md`.
 - [ ] **Phase 6 - Retirement + docs**: retire modv2plus, correct the playbook's
       wrong "MIT" license note (upstream = GPL-2.0 code + CC-BY-SA-4.0 art).
 
+## Menu-reset incident (1.0.2x, RESOLVED 2026-07-12)
+
+"Reset main menu settings" did not restore items the user had disabled/hidden in
+the Customize main menu editor - only a full Apple TV reboot did. Root-caused and
+fixed on the bench ATV (192.168.1.162) after a multi-session, ~2-day dig. Two
+independent bugs:
+
+1. **tvOS xbmcvfs vs real-path split** - the reset cleaned menu files via
+   `xbmcvfs` on `special://` paths, but skinshortcuts reads/writes them with
+   real `translatePath` + Python `open`/`ETree`, and on tvOS the two APIs see
+   different bytes in-session. The reset now uses real-path `os`/`open`.
+2. **Stuck `skinshortcuts-isrunning` on Window(10000)** - survives ReloadSkin
+   and addon toggles, only a reboot clears it; a stale True makes every rebuild a
+   no-op. The reset now clears it.
+
+Fixed in 1.0.23 (reset), 1.0.24 (blank Videos editor/tile icon: overrides
+`videos` labelID was `DefaultAddonVideo.png` -> `icons/sidemenu/videos.png`),
+1.0.25 (removed the temporary diagnostics). Live TV/Radio kept visible via
+seeded `donthidepvr=true`. FULL WRITEUP + prevention checklist:
+`docs/playbooks/skinshortcuts-reset-tvos-vfs-split.md`. Also captured in
+`CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
+6-box fleet is untouched (still Phase 5-gated).
+
 ## Bench state (Office Fire TV 192.168.7.162)
 
 - Since 2026-07-10 (1.0.1 tweak round): Estuary 7 ACTIVE; BOTH

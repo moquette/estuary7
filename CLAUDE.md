@@ -69,6 +69,33 @@ python3 tools/build_skin.py --check    # build twice, byte-compare (determinism 
 python3 -m pytest tests/ -q            # transform anchors, golden parity, sweep contracts
 ```
 
+## Runtime gotchas (skinshortcuts + tvOS) - READ BEFORE TOUCHING THE RESET
+
+The skin ships a `scripts/helpers.py` `resetMenu` action (injected by
+`tools/skin_transforms.py`) that restores the stock skinshortcuts menu. Two
+hard-won lessons, fully written up in
+`docs/playbooks/skinshortcuts-reset-tvos-vfs-split.md` (resolved 1.0.23/1.0.24):
+
+- **tvOS `xbmcvfs` vs real-path split.** On Apple TV, `xbmcvfs` operations on
+  `special://` paths do NOT reliably affect the same bytes that Python
+  `open()`/`ElementTree` on the `translatePath`'d real path sees, IN-SESSION.
+  `script.skinshortcuts` reads/writes its menu data with real paths, so any
+  skin-side file work that skinshortcuts must observe (delete/copy/write of
+  `addon_data/script.skinshortcuts/*` or the generated
+  `xml/script-skinshortcuts-includes.xml`) MUST use `xbmcvfs.translatePath(...)`
+  plus `os`/`open`, never `xbmcvfs` on `special://`. Verify with the SAME API the
+  consumer uses. `xbmcvfs.delete` can return True on a file that still exists;
+  `xbmcvfs.copy` may not overwrite. This cost ~2 days across multiple sessions.
+- **Stuck `skinshortcuts-isrunning` guard.** `build_menu` no-ops if
+  `Window(10000).Property(skinshortcuts-isrunning)=="True"`. That property
+  survives `ReloadSkin()` and an addon disable/enable; only a reboot (or explicit
+  `clearProperty`) clears it. A menu that "won't rebuild until a reboot" is this.
+  Clear it before firing a build.
+
+Also: `donthidepvr=true` (seeded by the boot service + reset) is the only lever
+that keeps Live TV/Radio visible like stock - numeric window ids do NOT work
+(skinshortcuts normalises them back and injects `System.HasPVRAddon`).
+
 ## House rules (inherited from the fleet's workflow)
 
 - implement -> TEST -> gate -> adversarial QA -> REAL-DEVICE verify -> document
