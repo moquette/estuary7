@@ -278,22 +278,41 @@ _RESET_MENU_ACTION = '''        elif sys.argv[1] == 'resetMenu':
             \'\'\'
                 reset the main menu to the skin's shipped defaults
 
-                skinshortcuts 2.0.3's own type=resetall cannot do this:
-                _reset_all_shortcuts() only deletes files whose name STARTS
-                WITH the skin id, yet it SAVES the menu unprefixed
-                (mainmenu.DATA.xml) whenever its "shared menu" setting is
-                on - so the delete matches nothing and the customised menu
-                survives every reset.
+                skinshortcuts 2.0.3 cannot do this itself: its resetall
+                deletes data but NEVER rebuilds or reloads, leaving the
+                generated menu (special://skin/xml/script-skinshortcuts-
+                includes.xml, hard-referenced by Includes.xml) stale - so the
+                old menu keeps rendering.
 
-                Work on the special:// path directly: xbmcvfs.exists() on a
-                directory needs a trailing slash and translatePath() can
-                drop it, which silently skipped the whole delete. The
-                outcome is mirrored into a Home window property so it can be
-                read back on boxes where the log is unreachable (tvOS).
+                Three things matter here:
+                  * build_menu() returns IMMEDIATELY when the home window's
+                    skinshortcuts-isrunning guard is set, so a stuck flag
+                    makes every rebuild a silent no-op. Clear it first.
+                  * Never delete the generated includes: Includes.xml
+                    references it, so a reload before the rebuild would leave
+                    the home screen with no menu at all.
+                  * Never call ReloadSkin() here: RunScript is async and the
+                    reload could beat the rebuild. build_menu() writes the
+                    file and then reloads itself, so rebuild INLINE (blocking)
+                    and let it do that.
             \'\'\'
             if xbmcgui.Dialog().yesno('Reset main menu',
                                       'Reset the main menu back to the skin defaults?'):
+                skin = xbmc.getSkinDir()
                 data = 'special://profile/addon_data/script.skinshortcuts/'
+                master = 'special://masterprofile/addon_data/script.skinshortcuts/'
+                home = xbmcgui.Window(10000)
+
+                # a stuck guard makes build_menu() a silent no-op
+                home.clearProperty('skinshortcuts-isrunning')
+                home.clearProperty('skinshortcuts-loading')
+                for prop in ('skinshortcuts-mainmenu', 'skinshortcutsWidgets',
+                             'skinshortcutsCustomProperties',
+                             'skinshortcutsBackgrounds'):
+                    home.clearProperty(prop)
+                # force shouldwerun() -> True, whatever the hashes say
+                home.setProperty('skinshortcuts-reloadmainmenu', 'True')
+
                 try:
                     files = xbmcvfs.listdir(data)[1]
                 except Exception as e:
@@ -301,18 +320,38 @@ _RESET_MENU_ACTION = '''        elif sys.argv[1] == 'resetMenu':
                     xbmc.log('resetMenu: listdir failed: %s' % e, xbmc.LOGERROR)
                 deleted = []
                 for name in files:
-                    if name == 'settings.xml':
-                        continue
-                    if name.endswith('.DATA.xml') or name.endswith('.properties') \\
-                            or name.endswith('.hash') \\
-                            or name.startswith('script-skinshortcuts-includes'):
+                    if name.endswith('.DATA.xml') \\
+                            or name == skin + '.properties' \\
+                            or name == skin + '.hash':
                         if xbmcvfs.delete(data + name):
                             deleted.append(name)
+                # HASH_FILE lives under masterprofile, DATA_PATH under profile
+                if xbmcvfs.exists(master + skin + '.hash'):
+                    if xbmcvfs.delete(master + skin + '.hash'):
+                        deleted.append('master:' + skin + '.hash')
+
+                # written BEFORE the rebuild: the reload kills this script
                 report = 'seen=%i deleted=%i [%s]' % (
                     len(files), len(deleted), ','.join(deleted))
-                xbmcgui.Window(10000).setProperty('t7b_resetmenu', report)
+                home.setProperty('t7b_resetmenu', report)
                 xbmc.log('resetMenu: %s' % report, xbmc.LOGINFO)
-                xbmc.executebuiltin('RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')
+
+                rebuilt = False
+                try:
+                    lib = xbmcvfs.translatePath(xbmcaddon.Addon(
+                        'script.skinshortcuts').getAddonInfo('path'))
+                    lib = os.path.join(lib, 'resources', 'lib')
+                    if lib not in sys.path:
+                        sys.path.insert(0, lib)
+                    from skinshorcuts import xmlfunctions
+                    xmlfunctions.XMLFunctions().build_menu(
+                        '9000', 'mainmenu', '0', None, [''], 0)
+                    rebuilt = True
+                except Exception as e:
+                    xbmc.log('resetMenu: inline rebuild failed: %s' % e,
+                             xbmc.LOGERROR)
+                if not rebuilt:
+                    xbmc.executebuiltin('RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')
 '''
 
 _SYSTEM_PAGE = (
@@ -911,6 +950,83 @@ def _edit_dialogfullscreeninfo(text: str, path: str) -> str:
 
 # Relative path under the skin root -> edit function. Every file listed here
 # MUST exist in upstream; a vanished file is upstream drift and fails loudly.
+# Stock Estuary shows Live TV and Radio out of the box. skinshortcuts hides
+# them: datafunctions.check_visibility() INJECTS System.HasPVRAddon for any
+# action starting with 'activatewindow(tv' or 'activatewindow(radio' (its
+# donthidepvr setting is off by default and is a skinshortcuts addon setting,
+# so a skin cannot ship it). The injected condition is ANDed onto the DATA
+# file's own <visible>, so it cannot be overridden from our side. The numeric
+# window ids carry no such prefix, so nothing is injected and the items behave
+# exactly like stock. DO NOT 'fix' these back to the named windows.
+_MAINMENU_TV_OLD = "        <action>ActivateWindow(TVChannels)</action>\n"
+_MAINMENU_TV_NEW = "        <action>ActivateWindow(10700)</action>\n"
+_MAINMENU_RADIO_OLD = "        <action>ActivateWindow(RadioChannels)</action>\n"
+_MAINMENU_RADIO_NEW = "        <action>ActivateWindow(10705)</action>\n"
+
+_MAINMENU_DISC = (
+    '    <shortcut>\n'
+    '        <label>427</label>\n'
+    '        <label2>Common Shortcut</label2>\n'
+    '        <defaultID>disc</defaultID>\n'
+    '        <icon>icons/sidemenu/disc.png</icon>\n'
+    '        <action>PlayDisc</action>\n'
+    '        <visible>System.HasMediaDVD</visible>\n'
+    '    </shortcut>\n'
+)
+
+_MAINMENU_MUSICVIDEOS_FIRST = (
+    '    <shortcut>\n'
+    '        <label>20389</label>\n'
+    '        <label2>Common Shortcut</label2>\n'
+    '        <defaultID>musicvideos</defaultID>\n'
+    '        <icon>icons/sidemenu/musicvideos.png</icon>\n'
+    '        <action>ActivateWindow(Videos,videodb://musicvideos/titles/,return)</action>\n'
+    '        <visible>Library.HasContent(musicvideos) + !Skin.HasSetting(hide_musicvideocategory)</visible>\n'
+    '    </shortcut>\n'
+)
+
+_MAINMENU_LIBREELEC = (
+    '    <shortcut>\n'
+    '        <label>LibreELEC</label>\n'
+    '        <label2>Common Shortcut</label2>\n'
+    '        <defaultID>libreelec</defaultID>\n'
+    '        <icon>icons/sidemenu/libreelec.png</icon>\n'
+    '        <action>RunAddon(service.libreelec.settings)</action>\n'
+    '        <visible>System.HasAddon(service.libreelec.settings)</visible>\n'
+    '    </shortcut>\n'
+)
+
+_MAINMENU_COREELEC = (
+    '    <shortcut>\n'
+    '        <label>CoreELEC</label>\n'
+    '        <label2>Common Shortcut</label2>\n'
+    '        <defaultID>coreelec</defaultID>\n'
+    '        <icon>icons/sidemenu/coreelec.png</icon>\n'
+    '        <action>RunAddon(service.coreelec.settings)</action>\n'
+    '        <visible>System.HasAddon(service.coreelec.settings)</visible>\n'
+    '    </shortcut>\n'
+)
+
+
+def _edit_mainmenu(text: str, path: str) -> str:
+    """Ship STOCK Estuary's menu out of the box (owner directive).
+
+    Three anchored edits: un-hide Live TV/Radio (see _MAINMENU_TV_OLD), move
+    Disc into stock's slot (after Music, before Music videos), and drop the
+    LibreELEC/CoreELEC entries stock has no notion of (and which can never
+    show on the Fire TV / Apple TV fleet anyway). The library-aware action
+    variants MOD V2 uses are kept - they are strictly better than stock's."""
+    text = _replace(text, _MAINMENU_TV_OLD, _MAINMENU_TV_NEW, path=path)
+    text = _replace(text, _MAINMENU_RADIO_OLD, _MAINMENU_RADIO_NEW, path=path)
+    text = _replace(text, _MAINMENU_DISC, "", path=path)
+    text = _insert_before(
+        text, _MAINMENU_MUSICVIDEOS_FIRST, _MAINMENU_DISC, path=path
+    )
+    text = _replace(text, _MAINMENU_LIBREELEC, "", path=path)
+    text = _replace(text, _MAINMENU_COREELEC, "", path=path)
+    return text
+
+
 def _edit_helpers(text: str, path: str) -> str:
     """Add a resetMenu action that actually resets the main menu.
 
@@ -922,6 +1038,12 @@ def _edit_helpers(text: str, path: str) -> str:
     2.0.3's own source). We delete BOTH naming conventions plus the generated
     includes, then rebuild from the skin's shipped shortcuts/ defaults.
     """
+    text = _replace(
+        text,
+        "import xbmc\nimport xbmcvfs\nimport xbmcgui\nimport sys\nimport json\n",
+        "import xbmc\nimport xbmcaddon\nimport xbmcvfs\nimport xbmcgui\nimport os\nimport sys\nimport json\n",
+        path=path,
+    )
     return _insert_before(text, _HELPERS_ELSE, _RESET_MENU_ACTION, path=path)
 
 
@@ -932,6 +1054,7 @@ FILE_EDITS = {
     "xml/Variables.xml": _edit_variables,
     "xml/SkinSettings.xml": _edit_skinsettings,
     "scripts/helpers.py": _edit_helpers,
+    "shortcuts/mainmenu.DATA.xml": _edit_mainmenu,
     "xml/SettingsCategory.xml": _edit_settingscategory,
     "xml/DialogAddonSettings.xml": _edit_dialogaddonsettings,
     "xml/SettingsProfile.xml": _edit_settingsprofile,

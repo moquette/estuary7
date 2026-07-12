@@ -164,11 +164,21 @@ def check_contracts(tree: Path) -> None:
         problems.append("addon.xml: missing rebranded id")
     if "resource.images.weathericons.outline-hd" not in addon:
         problems.append("addon.xml: missing outline-hd dependency")
-    # The home menu is upstream MOD V2's default: our custom menu + its
-    # re-keyed properties must NOT ship (owner directive 2026-07-10). Verify
-    # upstream's default mainmenu survives and no fork properties leaked in.
-    if not (tree / "shortcuts" / "mainmenu.DATA.xml").is_file():
-        problems.append("shortcuts: upstream default mainmenu.DATA.xml missing")
+    # The home menu ships STOCK ESTUARY's item set/order (owner directive).
+    # Live TV/Radio MUST use the numeric window ids: skinshortcuts injects
+    # System.HasPVRAddon for any "activatewindow(tv"/"(radio" action and ANDs it
+    # onto our own <visible>, which would hide them on a box with no PVR client.
+    menu = tree / "shortcuts" / "mainmenu.DATA.xml"
+    if not menu.is_file():
+        problems.append("shortcuts: mainmenu.DATA.xml missing")
+    else:
+        menu_text = menu.read_text(encoding="utf-8")
+        for needed in ("ActivateWindow(10700)", "ActivateWindow(10705)"):
+            if needed not in menu_text:
+                problems.append("mainmenu: {} missing (PVR items would hide)".format(needed))
+        for banned in ("ActivateWindow(TVChannels)", "ActivateWindow(RadioChannels)"):
+            if banned in menu_text:
+                problems.append("mainmenu: {} would be PVR-gated by skinshortcuts".format(banned))
     if (tree / "shortcuts" / "{}.properties".format(SKIN_ID)).is_file():
         problems.append("shortcuts: fork properties shipped (menu must be stock)")
     if not (tree / "media" / "extras" / "logo-text-hires.png").is_file():

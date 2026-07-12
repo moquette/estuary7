@@ -95,26 +95,60 @@ def test_license_and_attribution_ship_in_the_zip_tree(built):
         assert credit in attribution
 
 
-def test_home_menu_is_upstream_default(built):
-    """The home menu is UPSTREAM MOD V2's default (owner directive 2026-07-10):
-    the fork ships NO custom skinshortcuts menu. Upstream's mainmenu.DATA.xml
-    stands unmodified, and NO fork-keyed properties ship (skinshortcuts builds
-    the menu from upstream's DATA + overrides.xml widget defaults - no seed)."""
+def test_home_menu_is_stock_estuary(built):
+    """The shipped main menu is STOCK ESTUARY's item set and order (owner
+    directive): Movies, TV shows, Music, Disc, Music videos, TV, Radio, Games,
+    Add-ons, Pictures, Videos, Favourites, Weather.
+
+    Live TV / Radio MUST use the numeric window ids. skinshortcuts'
+    datafunctions.check_visibility() injects System.HasPVRAddon for any action
+    starting with "activatewindow(tv"/"(radio" (its donthidepvr setting is off
+    by default and is a skinshortcuts addon setting a skin cannot ship), and
+    that condition is ANDed onto our own <visible> - so it cannot be overridden.
+    The numeric ids dodge the prefix entirely. Do NOT "fix" them back.
+    """
+    import xml.etree.ElementTree as ET
+
     from conftest import ROOT
 
-    lock = built.lock
+    data = built.tree / "shortcuts" / "mainmenu.DATA.xml"
+    text = data.read_text(encoding="utf-8")
+    root = ET.fromstring(text)
+
+    order, seen = [], set()
+    for sc in root.findall("shortcut"):
+        did = sc.findtext("defaultID")
+        if did and did not in seen:
+            seen.add(did)
+            order.append(did)
+    assert order == [
+        "movies", "tvshows", "music", "disc", "musicvideos", "livetv",
+        "radio", "games", "addons", "pictures", "video", "favorites",
+        "weather",
+    ], order
+
+    # PVR items must not carry the named-window form (skinshortcuts would hide them)
+    assert "ActivateWindow(10700)" in text and "ActivateWindow(10705)" in text
+    assert "ActivateWindow(TVChannels)" not in text
+    assert "ActivateWindow(RadioChannels)" not in text
+
+    # stock has no LibreELEC/CoreELEC entries
+    assert "service.libreelec.settings" not in text
+    assert "service.coreelec.settings" not in text
+
+    # MOD V2's library-aware action variants survive (3 movie shortcuts)
+    assert sum(1 for sc in root.findall("shortcut")
+               if sc.findtext("defaultID") == "movies") == 3
+
+    # and it deliberately DIFFERS from upstream now (regression guard)
     upstream = (
-        ROOT
-        / "upstream-cache"
-        / lock["upstream_sha"]
-        / "shortcuts"
-        / "mainmenu.DATA.xml"
+        ROOT / "upstream-cache" / built.lock["upstream_sha"]
+        / "shortcuts" / "mainmenu.DATA.xml"
     )
-    shipped = built.tree / "shortcuts" / "mainmenu.DATA.xml"
-    assert shipped.read_bytes() == upstream.read_bytes(), (
-        "mainmenu must be upstream's default, not the fleet trim"
-    )
-    # No fork properties, and the fleet's trimmed menu is NOT shipped.
+    if upstream.is_file():
+        assert data.read_bytes() != upstream.read_bytes()
+
+    # still no fork/upstream skinshortcuts properties shipped
     assert not (built.tree / "shortcuts" / "{}.properties".format(SKIN_ID)).exists()
     assert not (built.tree / "shortcuts" / "{}.properties".format(UPSTREAM_ID)).exists()
 
