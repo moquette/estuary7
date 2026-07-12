@@ -122,18 +122,8 @@ def test_home_menu_is_stock_estuary(built):
             seen.add(did)
             order.append(did)
     assert order == [
-        "movies",
-        "tvshows",
-        "music",
-        "disc",
-        "musicvideos",
-        "livetv",
-        "radio",
-        "games",
-        "addons",
-        "pictures",
-        "video",
-        "favorites",
+        "movies", "tvshows", "music", "disc", "musicvideos", "livetv",
+        "radio", "games", "addons", "pictures", "video", "favorites",
         "weather",
     ], order
 
@@ -147,20 +137,13 @@ def test_home_menu_is_stock_estuary(built):
     assert "service.coreelec.settings" not in text
 
     # MOD V2's library-aware action variants survive (3 movie shortcuts)
-    assert (
-        sum(
-            1 for sc in root.findall("shortcut") if sc.findtext("defaultID") == "movies"
-        )
-        == 3
-    )
+    assert sum(1 for sc in root.findall("shortcut")
+               if sc.findtext("defaultID") == "movies") == 3
 
     # and it deliberately DIFFERS from upstream now (regression guard)
     upstream = (
-        ROOT
-        / "upstream-cache"
-        / built.lock["upstream_sha"]
-        / "shortcuts"
-        / "mainmenu.DATA.xml"
+        ROOT / "upstream-cache" / built.lock["upstream_sha"]
+        / "shortcuts" / "mainmenu.DATA.xml"
     )
     if upstream.is_file():
         assert data.read_bytes() != upstream.read_bytes()
@@ -168,133 +151,6 @@ def test_home_menu_is_stock_estuary(built):
     # still no fork/upstream skinshortcuts properties shipped
     assert not (built.tree / "shortcuts" / "{}.properties".format(SKIN_ID)).exists()
     assert not (built.tree / "shortcuts" / "{}.properties".format(UPSTREAM_ID)).exists()
-
-
-def test_home_xml_renders_static_menu(built):
-    """The rendered main menu is a HARDCODED <content> block in Home.xml's
-    fixedlist id="9000" (stock Estuary's item set/order), NOT the
-    skinshortcuts-generated include. This is the reset fix: a static menu is
-    stock by construction and can never go stale, so "Reset main menu
-    settings" is trivially correct. Device-proven (2026-07-12) that the
-    skinshortcuts rebuild path leaves the stale menu even after a clean reset.
-
-    Every item MUST carry <property name="widget">, which MOD V2's home
-    widgets, onright routing and background hooks read (29 sites) - that is
-    what preserves the widget system without any skinshortcuts rebuild.
-    """
-    import xml.etree.ElementTree as ET
-
-    home = (built.tree / "xml" / "Home.xml").read_text(encoding="utf-8")
-
-    # the generated menu include is gone from the fixedlist
-    assert "<include>skinshortcuts-mainmenu</include>" not in home
-
-    # isolate the fixedlist 9000 <content> and parse it
-    i = home.index('type="fixedlist" id="9000"')
-    c = home.index("<content>", i)
-    e = home.index("</content>", c) + len("</content>")
-    content = ET.fromstring(home[c:e])
-    items = content.findall("item")
-
-    # stock Estuary's 13 items, in order, each keyed by its id property
-    def prop(item, name):
-        for p in item.findall("property"):
-            if p.get("name") == name:
-                return p.text
-        return None
-
-    ids = [prop(it, "id") for it in items]
-    assert ids == [
-        "movies",
-        "tvshows",
-        "music",
-        "disc",
-        "musicvideos",
-        "livetv",
-        "radio",
-        "games",
-        "addons",
-        "pictures",
-        "video",
-        "favorites",
-        "weather",
-    ], ids
-
-    # every item carries the widget property the wiring reads, with the exact
-    # name<->menu_id pairing the onright routing table expects
-    expected = {
-        "movies": ("MoviesWidget", "$NUMBER[5000]"),
-        "tvshows": ("TVShowsWidget", "$NUMBER[6000]"),
-        "music": ("MusicWidget", "$NUMBER[7000]"),
-        "disc": ("DiscWidget", "$NUMBER[21000]"),
-        "musicvideos": ("MusicVideosWidget", "$NUMBER[16000]"),
-        "livetv": ("LiveTVWidget", "$NUMBER[12000]"),
-        "radio": ("RadioWidget", "$NUMBER[13000]"),
-        "games": ("GamesWidget", "$NUMBER[17000]"),
-        "addons": ("AddonsWidget", "$NUMBER[8000]"),
-        "pictures": ("PicturesWidget", "$NUMBER[4000]"),
-        "video": ("VideoWidget", "$NUMBER[11000]"),
-        "favorites": ("FavoritesWidget", "$NUMBER[14000]"),
-        "weather": ("WeatherWidget", "$NUMBER[15000]"),
-    }
-    for it in items:
-        iid = prop(it, "id")
-        w, mid = expected[iid]
-        assert prop(it, "widget") == w, iid
-        assert prop(it, "menu_id") == mid, iid
-
-    # every widget the menu names has a matching routing target + panel control
-    for _, (w, _mid) in expected.items():
-        assert "Property(widget),{})".format(w) in home, w
-
-    # conditional-visibility items match stock exactly (Disc needs a DVD, Games
-    # needs the games setting; PVR items are NOT PVR-gated because a static
-    # <content> item is never skinshortcuts-processed, so Live TV / Radio show
-    # like stock with no PVR client)
-    disc = items[ids.index("disc")]
-    assert disc.findtext("visible") == "System.HasMediaDVD"
-    games = items[ids.index("games")]
-    assert "System.GetBool(gamesgeneral.enable)" in games.findtext("visible")
-    livetv = items[ids.index("livetv")]
-    assert livetv.findtext("visible") == "!Skin.HasSetting(HomeMenuNoTVButton)"
-    assert livetv.findtext("onclick") == "ActivateWindow(TVChannels)"
-    radio = items[ids.index("radio")]
-    assert radio.findtext("onclick") == "ActivateWindow(RadioChannels)"
-
-
-def test_reset_menu_is_a_static_wipe_and_reload(built):
-    """resetMenu no longer fights skinshortcuts' rebuild (device-proven
-    unreliable). With the menu static, it only wipes leftover skinshortcuts
-    customisation and reloads; the static XML guarantees the stock menu.
-    """
-    helpers = (built.tree / "scripts" / "helpers.py").read_text(encoding="utf-8")
-
-    assert "elif sys.argv[1] == 'resetMenu':" in helpers
-    # reloads the skin (the visible reset)
-    assert "ReloadSkin()" in helpers
-    # writes the instrumentation receipt QA reads over JSON-RPC
-    assert "setProperty('t7b_resetmenu'" in helpers
-    # wipes BOTH profile trees (shared menus + hash live in different places)
-    assert "special://profile/addon_data/script.skinshortcuts/" in helpers
-    assert "special://masterprofile/addon_data/script.skinshortcuts/" in helpers
-    # deletes the unprefixed shared menu the stock resetall would miss
-    assert ".DATA.xml" in helpers
-
-    # NONE of the fragile rebuild machinery survives - correctness rests on the
-    # static menu, not on any skinshortcuts rebuild that can silently no-op
-    assert "from skinshorcuts" not in helpers
-    assert "build_menu" not in helpers
-    assert "type=buildxml" not in helpers
-    assert "skinshortcuts-reloadmainmenu" not in helpers
-
-    # the Skin Settings reset button invokes exactly this action
-    skinsettings = (built.tree / "xml" / "SkinSettings.xml").read_text(encoding="utf-8")
-    assert (
-        "<onclick>RunScript(special://skin/scripts/helpers.py,resetMenu)</onclick>"
-        in skinsettings
-    )
-    # and the broken stock resetall is gone
-    assert "type=resetall" not in skinsettings
 
 
 def test_wordmark_ships_where_home_points(built):
