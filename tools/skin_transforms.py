@@ -272,6 +272,40 @@ def _edit_home(text: str, path: str) -> str:
     return text
 
 
+_HELPERS_ELSE = "        else:\n            xbmc.log('unknown parameter', xbmc.LOGERROR)\n"
+
+_RESET_MENU_ACTION = '''        elif sys.argv[1] == 'resetMenu':
+            \'\'\'
+                reset the main menu to the skin's shipped defaults
+
+                skinshortcuts 2.0.3's own type=resetall cannot do this:
+                _reset_all_shortcuts() only deletes files whose name STARTS
+                WITH the skin id, yet it SAVES the menu unprefixed
+                (mainmenu.DATA.xml) whenever its "shared menu" setting is
+                on - so the delete matches nothing and the customised menu
+                survives. Delete both naming conventions plus the generated
+                includes, then rebuild from the skin's shortcuts/ defaults.
+            \'\'\'
+            if xbmcgui.Dialog().yesno('Reset main menu',
+                                      'Reset the main menu back to the skin defaults?'):
+                data = xbmcvfs.translatePath(
+                    'special://profile/addon_data/script.skinshortcuts/')
+                removed = 0
+                if xbmcvfs.exists(data):
+                    for name in xbmcvfs.listdir(data)[1]:
+                        if name == 'settings.xml':
+                            continue
+                        if name.endswith('.DATA.xml') or name.endswith('.properties') \\
+                                or name.endswith('.hash') \\
+                                or name.startswith('script-skinshortcuts-includes'):
+                            if xbmcvfs.delete(data + name):
+                                removed += 1
+                xbmc.log('resetMenu: deleted %i skinshortcuts file(s)' % removed,
+                         xbmc.LOGINFO)
+                xbmc.executebuiltin(
+                    'RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')
+'''
+
 _SYSTEM_PAGE = (
     '<?xml version="1.0" encoding="UTF-8"?>\n'
     "<window>\n"
@@ -522,6 +556,14 @@ def _edit_skinsettings(text: str, path: str) -> str:
     # section - the relocated home for the System page's old Media sources
     # tile (owner directive). Anchored on upstream's Debug header label.
     text = _insert_before(text, _DEBUG_HEADER_ANCHOR, _MEDIA_SOURCES_BLOCK, path=path)
+    # The reset button calls OUR helper: skinshortcuts 2.0.3's resetall is
+    # broken for this skin (see _edit_helpers) and silently deletes nothing.
+    text = _replace(
+        text,
+        "\t\t\t\t\t<onclick>RunScript(script.skinshortcuts,type=resetall)</onclick>",
+        "\t\t\t\t\t<onclick>RunScript(special://skin/scripts/helpers.py,resetMenu)</onclick>",
+        path=path,
+    )
     # Rename the garbled upstream widget-labels toggle (id 10021,
     # "Show media names with widgets names" - doubled "names", reads
     # backwards) to a clear "Show labeled tiles". Wiring is already correct:
@@ -860,12 +902,27 @@ def _edit_dialogfullscreeninfo(text: str, path: str) -> str:
 
 # Relative path under the skin root -> edit function. Every file listed here
 # MUST exist in upstream; a vanished file is upstream drift and fails loudly.
+def _edit_helpers(text: str, path: str) -> str:
+    """Add a resetMenu action that actually resets the main menu.
+
+    skinshortcuts 2.0.3 CANNOT do this itself: _reset_all_shortcuts() only
+    deletes files whose name STARTS WITH the skin id, yet it SAVES the menu
+    unprefixed (mainmenu.DATA.xml) whenever its "shared menu" setting is on -
+    so the delete matches nothing and the customised menu survives every
+    reset (owner-reported, root-caused on the ATV2 against skinshortcuts
+    2.0.3's own source). We delete BOTH naming conventions plus the generated
+    includes, then rebuild from the skin's shipped shortcuts/ defaults.
+    """
+    return _insert_before(text, _HELPERS_ELSE, _RESET_MENU_ACTION, path=path)
+
+
 FILE_EDITS = {
     "xml/Home.xml": _edit_home,
     "xml/Settings.xml": _edit_settings,
     "xml/Includes.xml": _edit_includes,
     "xml/Variables.xml": _edit_variables,
     "xml/SkinSettings.xml": _edit_skinsettings,
+    "scripts/helpers.py": _edit_helpers,
     "xml/SettingsCategory.xml": _edit_settingscategory,
     "xml/DialogAddonSettings.xml": _edit_dialogaddonsettings,
     "xml/SettingsProfile.xml": _edit_settingsprofile,
@@ -978,11 +1035,12 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
         text,
         "        <news>\nFor a complete view of changes visit "
         "https://github.com/b-jesch/skin.estuary.modv2/tree/Omega\n        </news>",
-        "        <news>\nv{}: home widget tiles show their names by default, and "
-        "the 'Show labeled tiles' toggle now works the right way round (upstream "
-        "had it inverted). Recent: removed the Necessary add-ons tab, "
-        "superscript-7 icon, System page rebuilt as stock Estuary's grid. Base: "
-        "fork-by-build of Estuary MOD V2 21.4+omega.4.\n"
+        "        <news>\nv{}: 'Reset main menu settings' now actually works. "
+        "skinshortcuts' own reset only deletes files prefixed with the skin id, "
+        "but saves the menu unprefixed - so it silently deleted nothing and your "
+        "customised menu survived every reset. The skin now does the reset itself "
+        "and rebuilds from the shipped defaults. Recent: labeled widget tiles by "
+        "default, superscript-7 icon, stock-style System page.\n"
         "        </news>".format(version),
         path=path,
     )
@@ -992,6 +1050,8 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
 def rename_skin_id(text: str) -> str:
     """Global rename; used for every text file that mentions the upstream id."""
     return text.replace(UPSTREAM_ID, SKIN_ID)
+
+
 
 
 def invert_widget_labels(text: str) -> str:

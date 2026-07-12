@@ -11,7 +11,7 @@ from skin_transforms import TransformError
 def test_transform_tree_summary(built):
     """The pinned upstream matches every anchor; the counts are properties of
     the pin and must change only with a deliberate rebase."""
-    assert len(built.summary["edited"]) == len(skin_transforms.FILE_EDITS) == 19
+    assert len(built.summary["edited"]) == len(skin_transforms.FILE_EDITS) == 20
     # 18, not 24: six files' only upstream-id references were RunScript
     # helper calls, which now use the file path instead of the addon id.
     assert built.summary["renamed"] == 18

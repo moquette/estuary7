@@ -68,7 +68,7 @@ def test_helper_script_runs_by_path(built):
         text = xml.read_text(encoding="utf-8")
         assert "RunScript({},".format(SKIN_ID) not in text, xml.name
         total += text.count("RunScript(special://skin/scripts/helpers.py,")
-    assert total == 15
+    assert total == 16
 
 
 def test_upstream_id_fully_renamed(built):

@@ -366,6 +366,7 @@ NORMALIZE = {
     "SkinSettings.xml": [
         _runscript_rewire(3),
         (_DEBUG_HEADER, _MEDIA_SOURCES_BLOCK + _DEBUG_HEADER, 1),
+        ("\t\t\t\t\t<onclick>RunScript(script.skinshortcuts,type=resetall)</onclick>", "\t\t\t\t\t<onclick>RunScript(special://skin/scripts/helpers.py,resetMenu)</onclick>", 1),
         ("\t\t\t\t\t<label>$LOCALIZE[31468]</label>", "\t\t\t\t\t<label>Show labeled tiles</label>", 1),
         ("\t\t\t\t\t<selected>!Skin.HasSetting(HideWidgetLabels)</selected>", "\t\t\t\t\t<selected>Skin.HasSetting(HideWidgetLabels)</selected>", 1),
         ("\t\t\t\t\t<visible>!Skin.HasSetting(HideWidgetLabels)</visible>", "\t\t\t\t\t<visible>Skin.HasSetting(HideWidgetLabels)</visible>", 1),
