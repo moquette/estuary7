@@ -27,6 +27,7 @@ contains [B] or the upstream id must therefore never be added after step 1.
 from __future__ import annotations
 
 import re
+import struct  # noqa: F401 - used by the Textures.xbt shadow (offsets below)
 from pathlib import Path
 
 UPSTREAM_ID = "skin.estuary.modv2"
@@ -998,24 +999,78 @@ _MAINMENU_COREELEC = (
 )
 
 
-_OVERRIDES_VIDEO_ICON_OLD = '    <icon labelID="videos">DefaultAddonVideo.png</icon>\n'
-_OVERRIDES_VIDEO_ICON_NEW = (
-    '    <icon labelID="videos">icons/sidemenu/videos.png</icon>\n'
-)
+_OVERRIDES_VIDEO_ICON_LINE = '    <icon labelID="videos">DefaultAddonVideo.png</icon>\n'
 
 
 def _edit_overrides(text: str, path: str) -> str:
-    """Fix the Videos main-menu icon.
+    """Remove upstream's "videos" labelID icon override entirely.
 
-    Upstream's skinshortcuts overrides force the "videos" labelID icon to
-    DefaultAddonVideo.png, which renders BLANK in the menu editor and on the
-    Videos tile (unlike the livetv/radio overrides, whose Default* icons do
-    exist). The build applies this override on top of the DATA icon, so the
-    shipped icons/sidemenu/videos.png (present in Textures.xbt) never shows.
-    Point the override at that real sidemenu icon so Videos looks like every
-    other item."""
-    return _replace(
-        text, _OVERRIDES_VIDEO_ICON_OLD, _OVERRIDES_VIDEO_ICON_NEW, path=path
+    ANY <icon labelID="videos"> override that resolves to a SKIN image makes the
+    skinshortcuts editor render the Videos entry BLANK: its gui.py sets
+    setArt({'icon': 'icon'}) - the literal string 'icon', not the resolved path -
+    whenever an override's icon is a skin image (skinHasImage=True). Hardware
+    root-caused on the ATV and reproduced on local Kodi; livetv/radio survive
+    only because their Default* overrides are NOT skin images.
+
+    Removing the override lets Videos fall back to the DATA icon
+    icons/sidemenu/videos.png. That path exists in MOD V2's Textures.xbt as a
+    REDRAWN film-reel (a deviation from stock Estuary's film-strip). To honour
+    THE FIRST MANDATE (match stock), the build shadows that bundle entry - see
+    shadow_videos_texture - so Kodi falls back to the loose stock Estuary
+    videos.png the build ships at media/icons/sidemenu/videos.png. Net: the
+    editor icon is fixed AND the Videos glyph matches original Estuary, with no
+    override in play."""
+    return _replace(text, _OVERRIDES_VIDEO_ICON_LINE, "", path=path)
+
+
+# --- Textures.xbt: shadow the MOD V2 videos.png so stock's loose copy wins ----
+#
+# Kodi's texture loader checks Textures.xbt BEFORE loose media files (bundle
+# wins - verified on local Kodi: a loose same-name file is a no-op). MOD V2's
+# bundle redrew icons/sidemenu/videos.png into a film-reel, unlike stock
+# Estuary's film-strip. Rename that ONE directory entry in place (same 256-byte
+# name field, null-padded; every frame offset untouched, no offset math) so
+# HasFile("icons/sidemenu/videos.png") misses and Kodi falls back to the loose
+# stock videos.png the build ships. In-place rewrite keeps the build
+# deterministic. See _edit_overrides for the why.
+_XBT_VIDEOS_PATH = b"icons/sidemenu/videos.png"
+_XBT_VIDEOS_SHADOW = b"icons/sidemenu/__videos_shadowed__.png"
+
+
+def _xbt_entry_offsets(data: bytes):
+    """Yield (name_bytes, name_field_offset) for every file entry in an XBTF.
+
+    XBTF v3 layout: b"XBTF" magic, version byte, uint32 nofFiles, then per file:
+    256-byte path, uint32 loop, uint32 nofFrames, then nofFrames x 40-byte frame
+    records (w,h,fmt: uint32; packed,unpacked: uint64; duration: uint32;
+    offset: uint64)."""
+    if data[:4] != b"XBTF":
+        raise TransformError("media/Textures.xbt: not an XBTF bundle")
+    nof = struct.unpack_from("<I", data, 5)[0]
+    off = 9
+    for _ in range(nof):
+        name = bytes(data[off : off + 256]).split(b"\x00", 1)[0]
+        yield name, off
+        p = off + 256 + 4  # skip path + loop
+        nframes = struct.unpack_from("<I", data, p)[0]
+        off = p + 4 + nframes * 40
+
+
+def shadow_videos_texture(xbt: Path) -> None:
+    """Rename the icons/sidemenu/videos.png entry in Textures.xbt in place.
+
+    Fail-loud anchor: the entry MUST exist (a rebase that renamed or dropped it
+    is a build error, never a silent ship of MOD V2's film-reel)."""
+    data = bytearray(xbt.read_bytes())
+    for name, off in _xbt_entry_offsets(data):
+        if name == _XBT_VIDEOS_PATH:
+            data[off : off + 256] = b"\x00" * 256
+            data[off : off + len(_XBT_VIDEOS_SHADOW)] = _XBT_VIDEOS_SHADOW
+            xbt.write_bytes(bytes(data))
+            return
+    raise TransformError(
+        "media/Textures.xbt: '{}' entry not found - cannot shadow it for the "
+        "stock Videos icon".format(_XBT_VIDEOS_PATH.decode())
     )
 
 
@@ -1435,4 +1490,10 @@ def transform_tree(root: Path, version: str) -> dict:
         transform_font_xml(font_xml.read_text(encoding="utf-8")),
         encoding="utf-8",
     )
+
+    # 5. Shadow MOD V2's videos.png in Textures.xbt so the loose stock Estuary
+    #    videos.png the build ships (add_assets) renders instead - matching
+    #    original Estuary's Videos glyph. Fail-loud if the entry is gone.
+    shadow_videos_texture(root / "media" / "Textures.xbt")
+    summary["xbt_shadowed"] = "icons/sidemenu/videos.png"
     return summary

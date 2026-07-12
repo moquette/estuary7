@@ -92,11 +92,18 @@ revert toward stock - flag it during transform work, ask the owner:
   The shipped default (shortcuts/mainmenu.DATA.xml) keeps Live TV/Radio
   ALWAYS-visible like stock by seeding skinshortcuts' `donthidepvr=true` (boot
   service + reset helper); numeric window ids do NOT work (skinshortcuts
-  normalises them back and injects System.HasPVRAddon). The Videos labelID icon
-  override was repointed from the blank DefaultAddonVideo.png to the real
-  icons/sidemenu/videos.png. "Reset main menu settings" restores this default -
-  see docs/playbooks/skinshortcuts-reset-tvos-vfs-split.md for the tvOS reset
-  fix.
+  normalises them back and injects System.HasPVRAddon). The Videos item uses
+  ORIGINAL Estuary's film-strip icon, not MOD V2's redrawn film-reel (1.0.27):
+  upstream's `<icon labelID="videos">` override is REMOVED (any skinshortcuts
+  icon override that resolves to a skin image draws BLANK in the menu editor -
+  its gui.py setArt uses the literal string 'icon'; livetv/radio survive because
+  their Default* overrides are not skin images), and because Kodi's loader
+  checks Textures.xbt BEFORE loose files, the build renames the bundled
+  icons/sidemenu/videos.png entry in place (shadow_videos_texture) so Kodi falls
+  back to the loose stock videos.png the build ships at
+  media/icons/sidemenu/videos.png (vendored from xbmc/xbmc). "Reset main menu
+  settings" restores this default - see
+  docs/playbooks/skinshortcuts-reset-tvos-vfs-split.md for the tvOS reset fix.
 - System page (Settings.xml) redesigned back toward stock Estuary (owner
   directive 2026-07-10, bench-verified on the Office Fire TV): upstream's
   single scrolling 5-column panel becomes a stock-style 4x3 grid - a fixed

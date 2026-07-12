@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from conftest import GOLDENS
+from conftest import GOLDENS, ROOT
 from skin_transforms import SKIN_ID, SKIN_NAME, UPSTREAM_ID
 
 TEXT_SUFFIXES = (".xml", ".py", ".po", ".md", ".properties")
@@ -110,8 +110,6 @@ def test_home_menu_is_stock_estuary(built):
     """
     import xml.etree.ElementTree as ET
 
-    from conftest import ROOT
-
     data = built.tree / "shortcuts" / "mainmenu.DATA.xml"
     text = data.read_text(encoding="utf-8")
     root = ET.fromstring(text)
@@ -190,7 +188,6 @@ def test_skin_selection_artwork_is_stock_estuary(built):
     """Kodi's skin chooser + info screen show resources/icon.png, fanart.jpg,
     and the 8 screenshots - the fork ships ORIGINAL Estuary's set (vendored in
     assets/), not MOD V2's branded art."""
-    from conftest import ROOT
 
     names = ["icon.png", "fanart.jpg"] + [
         "screenshot-{:02d}.jpg".format(n) for n in range(1, 9)
@@ -216,3 +213,39 @@ def test_stock_upstream_shortcuts_survive(built):
         "addons.DATA.xml",
     ):
         assert (built.tree / "shortcuts" / name).is_file(), name
+
+
+def test_videos_override_removed(built, upstream_tree):
+    """Upstream ships a videos labelID override; the build must REMOVE it.
+
+    Any <icon labelID="videos"> override that resolves to a skin image makes the
+    skinshortcuts editor draw the Videos entry blank (its gui.py setArt uses the
+    literal 'icon' string). Removing it is the fix - re-adding ANY skin-image
+    override reintroduces the blank."""
+    pristine = (upstream_tree / "shortcuts" / "overrides.xml").read_text("utf-8")
+    assert 'labelID="videos"' in pristine, "upstream lost the videos override anchor"
+    built_overrides = (built.tree / "shortcuts" / "overrides.xml").read_text("utf-8")
+    assert 'labelID="videos"' not in built_overrides
+    # livetv/radio overrides must stay (their Default* icons are not skin images).
+    assert 'labelID="livetv"' in built_overrides
+    assert 'labelID="radio"' in built_overrides
+
+
+def test_stock_videos_icon_shadows_the_bundle(built):
+    """The Videos glyph must match ORIGINAL Estuary, not MOD V2's film-reel.
+
+    Kodi's loader checks Textures.xbt before loose files (bundle wins), so the
+    build (a) shadows the bundled icons/sidemenu/videos.png entry and (b) ships
+    stock's videos.png loose at that path for Kodi to fall back to."""
+    from skin_transforms import _XBT_VIDEOS_PATH, _xbt_entry_offsets
+
+    xbt = built.tree / "media" / "Textures.xbt"
+    names = {name for name, _ in _xbt_entry_offsets(xbt.read_bytes())}
+    assert _XBT_VIDEOS_PATH not in names, (
+        "MOD V2 videos.png still bundled (film-reel wins)"
+    )
+
+    loose = built.tree / "media" / "icons" / "sidemenu" / "videos.png"
+    assert loose.is_file(), "stock videos.png not shipped loose"
+    vendored = ROOT / "assets" / "media" / "icons" / "sidemenu" / "videos.png"
+    assert loose.read_bytes() == vendored.read_bytes()

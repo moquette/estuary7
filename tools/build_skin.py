@@ -131,6 +131,15 @@ def add_assets(tree: Path) -> None:
     # the flat resources/screenshot-0N.jpg names instead.
     for name in ("icon.png", "fanart.jpg"):
         shutil.copyfile(ASSETS_DIR / "resources" / name, tree / "resources" / name)
+    # Stock Estuary's Videos glyph (Team Kodi, vendored from xbmc/xbmc): a loose
+    # media file that Kodi falls back to because the transform shadows MOD V2's
+    # redrawn videos.png entry inside Textures.xbt. THE FIRST MANDATE (match
+    # stock) + no skinshortcuts editor blank (see _edit_overrides).
+    stock_videos_dst = tree / "media" / "icons" / "sidemenu" / "videos.png"
+    stock_videos_dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(
+        ASSETS_DIR / "media" / "icons" / "sidemenu" / "videos.png", stock_videos_dst
+    )
     shutil.rmtree(tree / "resources" / "screenshots", ignore_errors=True)
     for shot in sorted(ASSETS_DIR.glob("resources/screenshot-*.jpg")):
         shutil.copyfile(shot, tree / "resources" / shot.name)
@@ -190,6 +199,22 @@ def check_contracts(tree: Path) -> None:
         problems.append("shortcuts: fork properties shipped (menu must be stock)")
     if not (tree / "media" / "extras" / "logo-text-hires.png").is_file():
         problems.append("media/extras: missing wordmark")
+    # The stock Videos glyph must ship loose AND the MOD V2 bundle entry must be
+    # shadowed, or Kodi renders the film-reel (bundle wins over loose files).
+    loose_videos = tree / "media" / "icons" / "sidemenu" / "videos.png"
+    if not loose_videos.is_file():
+        problems.append("media/icons/sidemenu: missing stock videos.png")
+    xbt = tree / "media" / "Textures.xbt"
+    if not xbt.is_file():
+        problems.append("media: Textures.xbt missing")
+    elif any(
+        name == skin_transforms._XBT_VIDEOS_PATH
+        for name, _ in skin_transforms._xbt_entry_offsets(xbt.read_bytes())
+    ):
+        problems.append(
+            "Textures.xbt: icons/sidemenu/videos.png still bundled "
+            "(shadow failed - MOD V2 film-reel would win over the loose stock icon)"
+        )
     if problems:
         raise SystemExit("FATAL: ship contracts violated:\n  " + "\n  ".join(problems))
 

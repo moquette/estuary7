@@ -84,10 +84,17 @@ independent bugs:
    and addon toggles, only a reboot clears it; a stale True makes every rebuild a
    no-op. The reset now clears it.
 
-Fixed in 1.0.23 (reset), 1.0.24 (blank Videos editor/tile icon: overrides
-`videos` labelID was `DefaultAddonVideo.png` -> `icons/sidemenu/videos.png`),
-1.0.25 (removed the temporary diagnostics). Live TV/Radio kept visible via
-seeded `donthidepvr=true`. FULL WRITEUP + prevention checklist:
+Fixed in 1.0.23 (reset), 1.0.24 (first attempt at the blank Videos editor/tile
+icon: repointed the overrides `videos` labelID to `icons/sidemenu/videos.png` -
+WRONG, ANY skin-image override still draws blank), 1.0.25 (removed the temporary
+diagnostics), 1.0.27 (the real Videos-icon fix, local-Kodi-verified: REMOVE the
+override entirely - the skinshortcuts editor blanks any skin-image override
+because gui.py setArt uses the literal string 'icon' - AND ship ORIGINAL
+Estuary's film-strip `videos.png` by shadowing MOD V2's bundled `Textures.xbt`
+entry in place so Kodi falls back to the loose stock copy; Kodi checks the xbt
+bundle BEFORE loose files, so a same-name loose override alone is a no-op).
+Live TV/Radio kept visible via seeded `donthidepvr=true`. FULL WRITEUP +
+prevention checklist:
 `docs/playbooks/skinshortcuts-reset-tvos-vfs-split.md`. Also captured in
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
