@@ -1093,6 +1093,27 @@ _MAINMENU_COREELEC = (
 )
 
 
+_OVERRIDES_VIDEO_ICON_OLD = '    <icon labelID="videos">DefaultAddonVideo.png</icon>\n'
+_OVERRIDES_VIDEO_ICON_NEW = (
+    '    <icon labelID="videos">icons/sidemenu/videos.png</icon>\n'
+)
+
+
+def _edit_overrides(text: str, path: str) -> str:
+    """Fix the Videos main-menu icon.
+
+    Upstream's skinshortcuts overrides force the "videos" labelID icon to
+    DefaultAddonVideo.png, which renders BLANK in the menu editor and on the
+    Videos tile (unlike the livetv/radio overrides, whose Default* icons do
+    exist). The build applies this override on top of the DATA icon, so the
+    shipped icons/sidemenu/videos.png (present in Textures.xbt) never shows.
+    Point the override at that real sidemenu icon so Videos looks like every
+    other item."""
+    return _replace(
+        text, _OVERRIDES_VIDEO_ICON_OLD, _OVERRIDES_VIDEO_ICON_NEW, path=path
+    )
+
+
 def _edit_mainmenu(text: str, path: str) -> str:
     """Ship STOCK Estuary's menu out of the box (owner directive).
 
@@ -1187,6 +1208,7 @@ FILE_EDITS = {
     "scripts/helpers.py": _edit_helpers,
     "scripts/services.py": _edit_services,
     "shortcuts/mainmenu.DATA.xml": _edit_mainmenu,
+    "shortcuts/overrides.xml": _edit_overrides,
     "xml/SettingsCategory.xml": _edit_settingscategory,
     "xml/DialogAddonSettings.xml": _edit_dialogaddonsettings,
     "xml/SettingsProfile.xml": _edit_settingsprofile,
