@@ -283,27 +283,36 @@ _RESET_MENU_ACTION = '''        elif sys.argv[1] == 'resetMenu':
                 WITH the skin id, yet it SAVES the menu unprefixed
                 (mainmenu.DATA.xml) whenever its "shared menu" setting is
                 on - so the delete matches nothing and the customised menu
-                survives. Delete both naming conventions plus the generated
-                includes, then rebuild from the skin's shortcuts/ defaults.
+                survives every reset.
+
+                Work on the special:// path directly: xbmcvfs.exists() on a
+                directory needs a trailing slash and translatePath() can
+                drop it, which silently skipped the whole delete. The
+                outcome is mirrored into a Home window property so it can be
+                read back on boxes where the log is unreachable (tvOS).
             \'\'\'
             if xbmcgui.Dialog().yesno('Reset main menu',
                                       'Reset the main menu back to the skin defaults?'):
-                data = xbmcvfs.translatePath(
-                    'special://profile/addon_data/script.skinshortcuts/')
-                removed = 0
-                if xbmcvfs.exists(data):
-                    for name in xbmcvfs.listdir(data)[1]:
-                        if name == 'settings.xml':
-                            continue
-                        if name.endswith('.DATA.xml') or name.endswith('.properties') \\
-                                or name.endswith('.hash') \\
-                                or name.startswith('script-skinshortcuts-includes'):
-                            if xbmcvfs.delete(data + name):
-                                removed += 1
-                xbmc.log('resetMenu: deleted %i skinshortcuts file(s)' % removed,
-                         xbmc.LOGINFO)
-                xbmc.executebuiltin(
-                    'RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')
+                data = 'special://profile/addon_data/script.skinshortcuts/'
+                try:
+                    files = xbmcvfs.listdir(data)[1]
+                except Exception as e:
+                    files = []
+                    xbmc.log('resetMenu: listdir failed: %s' % e, xbmc.LOGERROR)
+                deleted = []
+                for name in files:
+                    if name == 'settings.xml':
+                        continue
+                    if name.endswith('.DATA.xml') or name.endswith('.properties') \\
+                            or name.endswith('.hash') \\
+                            or name.startswith('script-skinshortcuts-includes'):
+                        if xbmcvfs.delete(data + name):
+                            deleted.append(name)
+                report = 'seen=%i deleted=%i [%s]' % (
+                    len(files), len(deleted), ','.join(deleted))
+                xbmcgui.Window(10000).setProperty('t7b_resetmenu', report)
+                xbmc.log('resetMenu: %s' % report, xbmc.LOGINFO)
+                xbmc.executebuiltin('RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')
 '''
 
 _SYSTEM_PAGE = (
