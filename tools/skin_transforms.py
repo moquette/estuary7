@@ -276,7 +276,51 @@ _HELPERS_ELSE = (
     "        else:\n            xbmc.log('unknown parameter', xbmc.LOGERROR)\n"
 )
 
-_RESET_MENU_ACTION = "        elif sys.argv[1] == 'resetMenu':\n            if xbmcgui.Dialog().yesno('Reset main menu', 'Reset the main menu back to the skin defaults?'):\n                skin = xbmc.getSkinDir()\n                data = 'special://profile/addon_data/script.skinshortcuts/'\n                master = 'special://masterprofile/addon_data/script.skinshortcuts/'\n                defaults = 'special://skin/shortcuts/'\n                home = xbmcgui.Window(10000)\n                log = []\n                home.clearProperty('skinshortcuts-isrunning')\n                home.clearProperty('skinshortcuts-loading')\n                for prop in ('skinshortcuts-mainmenu', 'skinshortcutsWidgets', 'skinshortcutsCustomProperties', 'skinshortcutsBackgrounds'):\n                    home.clearProperty(prop)\n                if not xbmcvfs.exists(data):\n                    xbmcvfs.mkdirs(data)\n                wiped = 0\n                for name in (xbmcvfs.listdir(data)[1] or []):\n                    if name != 'settings.xml' and name.endswith(('.DATA.xml', '.properties', '.hash')):\n                        if xbmcvfs.delete(data + name):\n                            wiped += 1\n                if xbmcvfs.exists(master + skin + '.hash'):\n                    xbmcvfs.delete(master + skin + '.hash')\n                log.append('wiped=%i' % wiped)\n                copied = 0\n                for name in (xbmcvfs.listdir(defaults)[1] or []):\n                    if name.endswith('.DATA.xml') and xbmcvfs.copy(defaults + name, data + name):\n                        copied += 1\n                log.append('copied=%i' % copied)\n                home.setProperty('skinshortcuts-reloadmainmenu', 'True')\n                home.setProperty('t7b_resetmenu', 'reset: ' + ' '.join(log))\n                xbmc.log('resetMenu: ' + ' '.join(log), xbmc.LOGINFO)\n                xbmc.executebuiltin('RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')\n        elif sys.argv[1] == 'fileHas':\n            try:\n                fh = xbmcvfs.File(sys.argv[2])\n                blob = fh.read()\n                fh.close()\n                present = str(sys.argv[3] in blob)\n            except Exception as e:\n                present = 'ERR:%s' % e\n            xbmcgui.Window(10000).setProperty('t7b_filehas', '%s|%s' % (sys.argv[2].split('/')[-1], present))\n"
+_RESET_MENU_ACTION = (
+    "        elif sys.argv[1] == 'resetMenu':\n"
+    "            if xbmcgui.Dialog().yesno('Reset main menu', 'Reset the main menu back to the skin defaults?'):\n"
+    "                profile = 'special://profile/addon_data/script.skinshortcuts/'\n"
+    "                master = 'special://masterprofile/addon_data/script.skinshortcuts/'\n"
+    "                defaults = 'special://skin/shortcuts/'\n"
+    "                includes = 'special://skin/xml/script-skinshortcuts-includes.xml'\n"
+    "                home = xbmcgui.Window(10000)\n"
+    "                report = []\n"
+    "                home.clearProperty('skinshortcuts-isrunning')\n"
+    "                home.clearProperty('skinshortcuts-loading')\n"
+    "                for prop in ('skinshortcuts-mainmenu', 'skinshortcutsWidgets', 'skinshortcutsCustomProperties', 'skinshortcutsBackgrounds'):\n"
+    "                    home.clearProperty(prop)\n"
+    "                wiped = 0\n"
+    "                for base in (profile, master):\n"
+    "                    if not xbmcvfs.exists(base):\n"
+    "                        continue\n"
+    "                    for name in (xbmcvfs.listdir(base)[1] or []):\n"
+    "                        if name != 'settings.xml' and name.endswith(('.DATA.xml', '.properties', '.hash')):\n"
+    "                            if xbmcvfs.delete(base + name):\n"
+    "                                wiped += 1\n"
+    "                report.append('wiped=%i' % wiped)\n"
+    "                gone = bool(xbmcvfs.exists(includes)) and bool(xbmcvfs.delete(includes))\n"
+    "                report.append('includes_deleted=%s' % gone)\n"
+    "                if not xbmcvfs.exists(profile):\n"
+    "                    xbmcvfs.mkdirs(profile)\n"
+    "                copied = 0\n"
+    "                for name in (xbmcvfs.listdir(defaults)[1] or []):\n"
+    "                    if name.endswith('.DATA.xml') and xbmcvfs.copy(defaults + name, profile + name):\n"
+    "                        copied += 1\n"
+    "                report.append('copied=%i' % copied)\n"
+    "                home.setProperty('skinshortcuts-reloadmainmenu', 'True')\n"
+    "                home.setProperty('t7b_resetmenu', 'reset: ' + ' '.join(report))\n"
+    "                xbmc.log('resetMenu: ' + ' '.join(report), xbmc.LOGINFO)\n"
+    "                xbmc.executebuiltin('RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')\n"
+    "        elif sys.argv[1] == 'fileHas':\n"
+    "            try:\n"
+    "                fh = xbmcvfs.File(sys.argv[2])\n"
+    "                blob = fh.read()\n"
+    "                fh.close()\n"
+    "                present = str(sys.argv[3] in blob)\n"
+    "            except Exception as e:\n"
+    "                present = 'ERR:%s' % e\n"
+    "            xbmcgui.Window(10000).setProperty('t7b_filehas', '%s|%s' % (sys.argv[2].split('/')[-1], present))\n"
+)
 
 _SYSTEM_PAGE = (
     '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -874,14 +918,17 @@ def _edit_dialogfullscreeninfo(text: str, path: str) -> str:
 
 # Relative path under the skin root -> edit function. Every file listed here
 # MUST exist in upstream; a vanished file is upstream drift and fails loudly.
-# Stock Estuary shows Live TV and Radio out of the box. skinshortcuts hides
-# them: datafunctions.check_visibility() INJECTS System.HasPVRAddon for any
-# action starting with 'activatewindow(tv' or 'activatewindow(radio' (its
-# donthidepvr setting is off by default and is a skinshortcuts addon setting,
-# so a skin cannot ship it). The injected condition is ANDed onto the DATA
-# file's own <visible>, so it cannot be overridden from our side. The numeric
-# window ids carry no such prefix, so nothing is injected and the items behave
-# exactly like stock. DO NOT 'fix' these back to the named windows.
+# Stock Estuary (Kodi's Home.xml) shows Live TV and Radio ALWAYS by default -
+# they are gated only by an opt-out skin setting, NOT by PVR presence. But
+# skinshortcuts' datafunctions.check_visibility() INJECTS System.HasPVRAddon
+# onto any action starting with 'activatewindow(tv'/'(radio' (its donthidepvr
+# setting is off by default and is a skinshortcuts addon setting a skin cannot
+# ship), ANDing it onto our own <visible> so it cannot be overridden - which
+# would HIDE them without a PVR client. That is a MOD V2 deviation from stock.
+# The numeric window ids (10700 = TVChannels, 10705 = RadioChannels) open the
+# exact same windows but carry no 'tv'/'radio' prefix, so skinshortcuts injects
+# nothing and the tiles stay always-visible like stock. DO NOT 'fix' these to
+# the named windows - that reintroduces the MOD V2 hide-without-PVR behavior.
 _MAINMENU_TV_OLD = "        <action>ActivateWindow(TVChannels)</action>\n"
 _MAINMENU_TV_NEW = "        <action>ActivateWindow(10700)</action>\n"
 _MAINMENU_RADIO_OLD = "        <action>ActivateWindow(RadioChannels)</action>\n"
@@ -935,11 +982,13 @@ _MAINMENU_COREELEC = (
 def _edit_mainmenu(text: str, path: str) -> str:
     """Ship STOCK Estuary's menu out of the box (owner directive).
 
-    Three anchored edits: un-hide Live TV/Radio (see _MAINMENU_TV_OLD), move
-    Disc into stock's slot (after Music, before Music videos), and drop the
-    LibreELEC/CoreELEC entries stock has no notion of (and which can never
-    show on the Fire TV / Apple TV fleet anyway). The library-aware action
-    variants MOD V2 uses are kept - they are strictly better than stock's."""
+    Anchored edits: keep Live TV/Radio always-visible like stock by using the
+    numeric window ids (see the FILE_EDITS comment - named ids would let
+    skinshortcuts hide them without PVR, a MOD V2 deviation), move Disc into
+    stock's slot (after Music, before Music videos), and drop the
+    LibreELEC/CoreELEC entries stock has no notion of (and which can never show
+    on the Fire TV / Apple TV fleet anyway). The library-aware action variants
+    MOD V2 uses are kept - they are strictly better than stock's."""
     text = _replace(text, _MAINMENU_TV_OLD, _MAINMENU_TV_NEW, path=path)
     text = _replace(text, _MAINMENU_RADIO_OLD, _MAINMENU_RADIO_NEW, path=path)
     text = _replace(text, _MAINMENU_DISC, "", path=path)

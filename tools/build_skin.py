@@ -165,9 +165,11 @@ def check_contracts(tree: Path) -> None:
     if "resource.images.weathericons.outline-hd" not in addon:
         problems.append("addon.xml: missing outline-hd dependency")
     # The home menu ships STOCK ESTUARY's item set/order (owner directive).
-    # Live TV/Radio MUST use the numeric window ids: skinshortcuts injects
-    # System.HasPVRAddon for any "activatewindow(tv"/"(radio" action and ANDs it
-    # onto our own <visible>, which would hide them on a box with no PVR client.
+    # Live TV/Radio use numeric window ids so they stay always-visible like
+    # stock Estuary. skinshortcuts injects System.HasPVRAddon for any
+    # "activatewindow(tv"/"(radio" action and ANDs it onto our <visible>, which
+    # would HIDE them on a box with no PVR client (a MOD V2 deviation). The
+    # numeric ids (10700/10705) open the same windows without the prefix.
     menu = tree / "shortcuts" / "mainmenu.DATA.xml"
     if not menu.is_file():
         problems.append("shortcuts: mainmenu.DATA.xml missing")
@@ -175,10 +177,14 @@ def check_contracts(tree: Path) -> None:
         menu_text = menu.read_text(encoding="utf-8")
         for needed in ("ActivateWindow(10700)", "ActivateWindow(10705)"):
             if needed not in menu_text:
-                problems.append("mainmenu: {} missing (PVR items would hide)".format(needed))
+                problems.append(
+                    "mainmenu: {} missing (PVR items would hide)".format(needed)
+                )
         for banned in ("ActivateWindow(TVChannels)", "ActivateWindow(RadioChannels)"):
             if banned in menu_text:
-                problems.append("mainmenu: {} would be PVR-gated by skinshortcuts".format(banned))
+                problems.append(
+                    "mainmenu: {} would be PVR-gated by skinshortcuts".format(banned)
+                )
     if (tree / "shortcuts" / "{}.properties".format(SKIN_ID)).is_file():
         problems.append("shortcuts: fork properties shipped (menu must be stock)")
     if not (tree / "media" / "extras" / "logo-text-hires.png").is_file():

@@ -100,12 +100,14 @@ def test_home_menu_is_stock_estuary(built):
     directive): Movies, TV shows, Music, Disc, Music videos, TV, Radio, Games,
     Add-ons, Pictures, Videos, Favourites, Weather.
 
-    Live TV / Radio MUST use the numeric window ids. skinshortcuts'
-    datafunctions.check_visibility() injects System.HasPVRAddon for any action
-    starting with "activatewindow(tv"/"(radio" (its donthidepvr setting is off
-    by default and is a skinshortcuts addon setting a skin cannot ship), and
-    that condition is ANDed onto our own <visible> - so it cannot be overridden.
-    The numeric ids dodge the prefix entirely. Do NOT "fix" them back.
+    Stock Estuary shows Live TV / Radio ALWAYS (gated only by an opt-out skin
+    setting, not by PVR). Live TV / Radio therefore use the numeric window ids:
+    skinshortcuts' datafunctions.check_visibility() injects System.HasPVRAddon
+    for any action starting with "activatewindow(tv"/"(radio" (its donthidepvr
+    setting is off by default and is a skinshortcuts addon setting a skin cannot
+    ship), ANDing it onto our own <visible> - which would hide them without PVR,
+    a MOD V2 deviation. The numeric ids dodge the prefix so the tiles stay
+    always-visible like stock. Do NOT "fix" them back to the named windows.
     """
     import xml.etree.ElementTree as ET
 
@@ -122,12 +124,23 @@ def test_home_menu_is_stock_estuary(built):
             seen.add(did)
             order.append(did)
     assert order == [
-        "movies", "tvshows", "music", "disc", "musicvideos", "livetv",
-        "radio", "games", "addons", "pictures", "video", "favorites",
+        "movies",
+        "tvshows",
+        "music",
+        "disc",
+        "musicvideos",
+        "livetv",
+        "radio",
+        "games",
+        "addons",
+        "pictures",
+        "video",
+        "favorites",
         "weather",
     ], order
 
-    # PVR items must not carry the named-window form (skinshortcuts would hide them)
+    # PVR items use numeric window ids so they stay always-visible like stock;
+    # named windows would let skinshortcuts hide them without a PVR backend
     assert "ActivateWindow(10700)" in text and "ActivateWindow(10705)" in text
     assert "ActivateWindow(TVChannels)" not in text
     assert "ActivateWindow(RadioChannels)" not in text
@@ -137,13 +150,20 @@ def test_home_menu_is_stock_estuary(built):
     assert "service.coreelec.settings" not in text
 
     # MOD V2's library-aware action variants survive (3 movie shortcuts)
-    assert sum(1 for sc in root.findall("shortcut")
-               if sc.findtext("defaultID") == "movies") == 3
+    assert (
+        sum(
+            1 for sc in root.findall("shortcut") if sc.findtext("defaultID") == "movies"
+        )
+        == 3
+    )
 
     # and it deliberately DIFFERS from upstream now (regression guard)
     upstream = (
-        ROOT / "upstream-cache" / built.lock["upstream_sha"]
-        / "shortcuts" / "mainmenu.DATA.xml"
+        ROOT
+        / "upstream-cache"
+        / built.lock["upstream_sha"]
+        / "shortcuts"
+        / "mainmenu.DATA.xml"
     )
     if upstream.is_file():
         assert data.read_bytes() != upstream.read_bytes()
