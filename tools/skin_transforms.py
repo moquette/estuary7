@@ -191,6 +191,177 @@ _CATEGORY_ORDER_STOCK = (
 )
 
 
+# ---------------------------------------------------------------------------
+# Static main menu (the reset fix, owner directive 2026-07-12).
+#
+# Upstream MOD V2 renders the fixedlist id="9000" from a skinshortcuts-
+# GENERATED include (<include>skinshortcuts-mainmenu</include>), rebuilt on
+# every Home load by the onload RunScript(type=buildxml). That indirection is
+# the entire bug class the owner hit: the rendered menu is decoupled from the
+# shipped default DATA and is driven by skinshortcuts' own caches (user
+# DATA_PATH copy, the shared-menu copy, home-window properties, a hash file).
+# On the ATV2 the "Reset main menu settings" action deletes those caches and
+# forces a rebuild, yet the menu keeps rendering the OLD customised items -
+# device-proven on 1.0.15 (2026-07-12): the confirm fired, the delete
+# succeeded (receipt seen=26 deleted=26), ReloadSkin ran, and the menu was
+# still the stale 9-item set. skinshortcuts' rebuild reads a resurrected/
+# shared source faster than any reset can win.
+#
+# Fix: render the menu the way STOCK ESTUARY does - a hardcoded fixedlist
+# <content> block. It is byte-for-byte stock's item set/order and visibility,
+# so the default menu IS stock by construction and can NEVER go stale or get
+# stuck; the reset is then trivially correct (there is nothing to rebuild).
+# Each item carries the <property name="widget"> that MOD V2's home widgets,
+# onright routing and background hooks read (29 sites), so the whole widget
+# system keeps working with ZERO skinshortcuts rebuild dependency (the default
+# widget panels MoviesWidget..WeatherWidget are STATIC controls in Home.xml,
+# gated on that property; only the unused PersonalWidget path needs generation).
+#
+# Trade-off (flagged to the owner): the skinshortcuts EDITOR no longer changes
+# the rendered main menu - editing writes DATA + regenerates the now-unused
+# skinshortcuts-mainmenu include. Submenus and widgets are unaffected. Stock
+# Estuary has no main-menu editor either, so this is on-mandate.
+#
+# PVR note: the skinshortcuts System.HasPVRAddon injection that hid Live TV /
+# Radio only happens when skinshortcuts BUILDS the menu from DATA. A static
+# <content> item is never processed, so Live TV / Radio render exactly like
+# stock (no PVR client required) with stock's own onclick - no numeric-id
+# workaround needed here.
+_HOME_MENU_INCLUDE_ANCHOR = (
+    "\t\t\t\t\t<content>\n"
+    "\t\t\t\t\t\t<include>skinshortcuts-mainmenu</include>\n"
+    "\t\t\t\t\t</content>\n"
+)
+_HOME_MENU_CONTENT = (
+    "\t\t\t\t\t<content>\n"
+    "\t\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t\t<label>$LOCALIZE[342]</label>\n"
+    '\t\t\t\t\t\t\t<onclick condition="Library.HasContent(movies) + Skin.HasSetting(home_no_categories_widget) + !System.GetBool(myvideos.flatten)">ActivateWindow(Videos,videodb://movies/,return)</onclick>\n'
+    '\t\t\t\t\t\t\t<onclick condition="Library.HasContent(movies) + Skin.HasSetting(home_no_categories_widget) + System.GetBool(myvideos.flatten)">ActivateWindow(Videos,videodb://movies/titles/,return)</onclick>\n'
+    '\t\t\t\t\t\t\t<onclick condition="Library.HasContent(movies) + !Skin.HasSetting(home_no_categories_widget)">ActivateWindow(Videos,videodb://movies/titles/,return)</onclick>\n'
+    '\t\t\t\t\t\t\t<onclick condition="!Library.HasContent(movies)">ActivateWindow(Videos,sources://video/,return)</onclick>\n'
+    '\t\t\t\t\t\t\t<property name="menu_id">$NUMBER[5000]</property>\n'
+    "\t\t\t\t\t\t\t<thumb>icons/sidemenu/movies.png</thumb>\n"
+    '\t\t\t\t\t\t\t<property name="id">movies</property>\n'
+    '\t\t\t\t\t\t\t<property name="widget">MoviesWidget</property>\n'
+    "\t\t\t\t\t\t\t<visible>!Skin.HasSetting(HomeMenuNoMovieButton)</visible>\n"
+    "\t\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t\t<label>$LOCALIZE[20343]</label>\n"
+    '\t\t\t\t\t\t\t<onclick condition="Library.HasContent(tvshows) + Skin.HasSetting(home_no_categories_widget) + !System.GetBool(myvideos.flatten)">ActivateWindow(Videos,videodb://tvshows/,return)</onclick>\n'
+    '\t\t\t\t\t\t\t<onclick condition="Library.HasContent(tvshows) + Skin.HasSetting(home_no_categories_widget) + System.GetBool(myvideos.flatten)">ActivateWindow(Videos,videodb://tvshows/titles/,return)</onclick>\n'
+    '\t\t\t\t\t\t\t<onclick condition="Library.HasContent(tvshows) + !Skin.HasSetting(home_no_categories_widget)">ActivateWindow(Videos,videodb://tvshows/titles/,return)</onclick>\n'
+    '\t\t\t\t\t\t\t<onclick condition="!Library.HasContent(tvshows)">ActivateWindow(Videos,sources://video/,return)</onclick>\n'
+    '\t\t\t\t\t\t\t<property name="menu_id">$NUMBER[6000]</property>\n'
+    "\t\t\t\t\t\t\t<thumb>icons/sidemenu/tv.png</thumb>\n"
+    '\t\t\t\t\t\t\t<property name="id">tvshows</property>\n'
+    '\t\t\t\t\t\t\t<property name="widget">TVShowsWidget</property>\n'
+    "\t\t\t\t\t\t\t<visible>!Skin.HasSetting(HomeMenuNoTVShowButton)</visible>\n"
+    "\t\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t\t<label>$LOCALIZE[2]</label>\n"
+    "\t\t\t\t\t\t\t<onclick>ActivateWindow(Music,root,return)</onclick>\n"
+    '\t\t\t\t\t\t\t<property name="menu_id">$NUMBER[7000]</property>\n'
+    "\t\t\t\t\t\t\t<thumb>icons/sidemenu/music.png</thumb>\n"
+    '\t\t\t\t\t\t\t<property name="id">music</property>\n'
+    '\t\t\t\t\t\t\t<property name="widget">MusicWidget</property>\n'
+    "\t\t\t\t\t\t\t<visible>!Skin.HasSetting(HomeMenuNoMusicButton)</visible>\n"
+    "\t\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t\t<label>$LOCALIZE[427]</label>\n"
+    "\t\t\t\t\t\t\t<onclick>PlayDisc</onclick>\n"
+    '\t\t\t\t\t\t\t<property name="menu_id">$NUMBER[21000]</property>\n'
+    "\t\t\t\t\t\t\t<thumb>icons/sidemenu/disc.png</thumb>\n"
+    '\t\t\t\t\t\t\t<property name="id">disc</property>\n'
+    '\t\t\t\t\t\t\t<property name="widget">DiscWidget</property>\n'
+    "\t\t\t\t\t\t\t<visible>System.HasMediaDVD</visible>\n"
+    "\t\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t\t<label>$LOCALIZE[20389]</label>\n"
+    '\t\t\t\t\t\t\t<property name="menu_id">$NUMBER[16000]</property>\n'
+    "\t\t\t\t\t\t\t<onclick>ActivateWindow(Videos,musicvideos,return)</onclick>\n"
+    "\t\t\t\t\t\t\t<thumb>icons/sidemenu/musicvideos.png</thumb>\n"
+    '\t\t\t\t\t\t\t<property name="id">musicvideos</property>\n'
+    '\t\t\t\t\t\t\t<property name="widget">MusicVideosWidget</property>\n'
+    "\t\t\t\t\t\t\t<visible>!Skin.HasSetting(HomeMenuNoMusicVideoButton)</visible>\n"
+    "\t\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t\t<label>$LOCALIZE[19020]</label>\n"
+    '\t\t\t\t\t\t\t<property name="menu_id">$NUMBER[12000]</property>\n'
+    "\t\t\t\t\t\t\t<onclick>ActivateWindow(TVChannels)</onclick>\n"
+    "\t\t\t\t\t\t\t<thumb>icons/sidemenu/livetv.png</thumb>\n"
+    '\t\t\t\t\t\t\t<property name="id">livetv</property>\n'
+    '\t\t\t\t\t\t\t<property name="widget">LiveTVWidget</property>\n'
+    "\t\t\t\t\t\t\t<visible>!Skin.HasSetting(HomeMenuNoTVButton)</visible>\n"
+    "\t\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t\t<label>$LOCALIZE[19021]</label>\n"
+    '\t\t\t\t\t\t\t<property name="menu_id">$NUMBER[13000]</property>\n'
+    "\t\t\t\t\t\t\t<onclick>ActivateWindow(RadioChannels)</onclick>\n"
+    "\t\t\t\t\t\t\t<thumb>icons/sidemenu/radio.png</thumb>\n"
+    '\t\t\t\t\t\t\t<property name="id">radio</property>\n'
+    '\t\t\t\t\t\t\t<property name="widget">RadioWidget</property>\n'
+    "\t\t\t\t\t\t\t<visible>!Skin.HasSetting(HomeMenuNoRadioButton)</visible>\n"
+    "\t\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t\t<label>$LOCALIZE[15016]</label>\n"
+    '\t\t\t\t\t\t\t<property name="menu_id">$NUMBER[17000]</property>\n'
+    "\t\t\t\t\t\t\t<onclick>ActivateWindow(Games)</onclick>\n"
+    "\t\t\t\t\t\t\t<thumb>icons/sidemenu/games.png</thumb>\n"
+    '\t\t\t\t\t\t\t<property name="id">games</property>\n'
+    '\t\t\t\t\t\t\t<property name="widget">GamesWidget</property>\n'
+    "\t\t\t\t\t\t\t<visible>System.GetBool(gamesgeneral.enable) + !Skin.HasSetting(HomeMenuNoGamesButton)</visible>\n"
+    "\t\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t\t<label>$LOCALIZE[24001]</label>\n"
+    '\t\t\t\t\t\t\t<property name="menu_id">$NUMBER[8000]</property>\n'
+    "\t\t\t\t\t\t\t<onclick>ActivateWindow(1100)</onclick>\n"
+    "\t\t\t\t\t\t\t<thumb>icons/sidemenu/addons.png</thumb>\n"
+    '\t\t\t\t\t\t\t<property name="id">addons</property>\n'
+    '\t\t\t\t\t\t\t<property name="widget">AddonsWidget</property>\n'
+    "\t\t\t\t\t\t\t<visible>!Skin.HasSetting(HomeMenuNoProgramsButton)</visible>\n"
+    "\t\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t\t<label>$LOCALIZE[1]</label>\n"
+    "\t\t\t\t\t\t\t<onclick>ActivateWindow(Pictures)</onclick>\n"
+    '\t\t\t\t\t\t\t<property name="menu_id">$NUMBER[4000]</property>\n'
+    "\t\t\t\t\t\t\t<thumb>icons/sidemenu/pictures.png</thumb>\n"
+    '\t\t\t\t\t\t\t<property name="id">pictures</property>\n'
+    '\t\t\t\t\t\t\t<property name="widget">PicturesWidget</property>\n'
+    "\t\t\t\t\t\t\t<visible>!Skin.HasSetting(HomeMenuNoPicturesButton)</visible>\n"
+    "\t\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t\t<label>$LOCALIZE[3]</label>\n"
+    "\t\t\t\t\t\t\t<onclick>ActivateWindow(Videos,root)</onclick>\n"
+    '\t\t\t\t\t\t\t<property name="menu_id">$NUMBER[11000]</property>\n'
+    "\t\t\t\t\t\t\t<thumb>icons/sidemenu/videos.png</thumb>\n"
+    '\t\t\t\t\t\t\t<property name="id">video</property>\n'
+    '\t\t\t\t\t\t\t<property name="widget">VideoWidget</property>\n'
+    "\t\t\t\t\t\t\t<visible>!Skin.HasSetting(HomeMenuNoVideosButton)</visible>\n"
+    "\t\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t\t<label>$LOCALIZE[10134]</label>\n"
+    "\t\t\t\t\t\t\t<onclick>ActivateWindow(favouritesbrowser)</onclick>\n"
+    '\t\t\t\t\t\t\t<property name="menu_id">$NUMBER[14000]</property>\n'
+    "\t\t\t\t\t\t\t<thumb>icons/sidemenu/favourites.png</thumb>\n"
+    '\t\t\t\t\t\t\t<property name="id">favorites</property>\n'
+    '\t\t\t\t\t\t\t<property name="widget">FavoritesWidget</property>\n'
+    "\t\t\t\t\t\t\t<visible>!Skin.HasSetting(HomeMenuNoFavButton)</visible>\n"
+    "\t\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t\t<label>$LOCALIZE[8]</label>\n"
+    '\t\t\t\t\t\t\t<onclick condition="!String.IsEmpty(Weather.Plugin)">ActivateWindow(Weather)</onclick>\n'
+    '\t\t\t\t\t\t\t<onclick condition="String.IsEmpty(Weather.Plugin)">ReplaceWindow(servicesettings,weather)</onclick>\n'
+    '\t\t\t\t\t\t\t<property name="menu_id">$NUMBER[15000]</property>\n'
+    "\t\t\t\t\t\t\t<thumb>icons/sidemenu/weather.png</thumb>\n"
+    '\t\t\t\t\t\t\t<property name="id">weather</property>\n'
+    '\t\t\t\t\t\t\t<property name="widget">WeatherWidget</property>\n'
+    "\t\t\t\t\t\t\t<visible>!Skin.HasSetting(HomeMenuNoWeatherButton)</visible>\n"
+    "\t\t\t\t\t\t</item>\n"
+    "\t\t\t\t\t</content>\n"
+)
+
+
 def _edit_home(text: str, path: str) -> str:
     # The system-info overlay's skin line names the skin literally (the
     # version $INFO beside it is covered by the global id rename).
@@ -261,6 +432,12 @@ def _edit_home(text: str, path: str) -> str:
         "\t\t\t\t<top>20</top>\n\t\t\t\t<left>20</left>",
         path=path,
     )
+    # Main menu: swap the skinshortcuts-generated content include for a STATIC
+    # stock-Estuary <content> block (see the module comment above the block).
+    # This is THE reset fix: the menu is now stock by construction and cannot
+    # go stale, and every home widget keeps working via the baked-in
+    # <property name="widget"> each item carries.
+    text = _replace(text, _HOME_MENU_INCLUDE_ANCHOR, _HOME_MENU_CONTENT, path=path)
     # Widget-hide bakes: fresh box shows only the trimmed widget set.
     for flag in _WIDGET_FLAGS:
         text = _replace(
@@ -272,87 +449,72 @@ def _edit_home(text: str, path: str) -> str:
     return text
 
 
-_HELPERS_ELSE = "        else:\n            xbmc.log('unknown parameter', xbmc.LOGERROR)\n"
+_HELPERS_ELSE = (
+    "        else:\n            xbmc.log('unknown parameter', xbmc.LOGERROR)\n"
+)
 
-_RESET_MENU_ACTION = '''        elif sys.argv[1] == 'resetMenu':
+_RESET_MENU_ACTION = """        elif sys.argv[1] == 'resetMenu':
             \'\'\'
                 reset the main menu to the skin's shipped defaults
 
-                skinshortcuts 2.0.3 cannot do this itself: its resetall
-                deletes data but NEVER rebuilds or reloads, leaving the
-                generated menu (special://skin/xml/script-skinshortcuts-
-                includes.xml, hard-referenced by Includes.xml) stale - so the
-                old menu keeps rendering.
+                The main menu is a STATIC <content> block in Home.xml (stock
+                Estuary's item set), NOT a skinshortcuts-generated include, so
+                the rendered menu is ALWAYS the shipped default and can never
+                go stale. This action therefore does not - and must not - rely
+                on any skinshortcuts rebuild (that path was device-proven
+                unreliable on tvOS: the generated menu kept rendering the old
+                customised items even after a successful delete + ReloadSkin).
 
-                Three things matter here:
-                  * build_menu() returns IMMEDIATELY when the home window's
-                    skinshortcuts-isrunning guard is set, so a stuck flag
-                    makes every rebuild a silent no-op. Clear it first.
-                  * Never delete the generated includes: Includes.xml
-                    references it, so a reload before the rebuild would leave
-                    the home screen with no menu at all.
-                  * Never call ReloadSkin() here: RunScript is async and the
-                    reload could beat the rebuild. build_menu() writes the
-                    file and then reloads itself, so rebuild INLINE (blocking)
-                    and let it do that.
+                All it has to do is clear any leftover skinshortcuts
+                customisation so the box matches a fresh install, then reload
+                the skin. Correctness rests entirely on the static XML, so this
+                cannot get stuck: even if the delete or the reload is a no-op,
+                the menu still renders stock.
             \'\'\'
             if xbmcgui.Dialog().yesno('Reset main menu',
                                       'Reset the main menu back to the skin defaults?'):
                 skin = xbmc.getSkinDir()
-                data = 'special://profile/addon_data/script.skinshortcuts/'
-                master = 'special://masterprofile/addon_data/script.skinshortcuts/'
                 home = xbmcgui.Window(10000)
 
-                # a stuck guard makes build_menu() a silent no-op
-                home.clearProperty('skinshortcuts-isrunning')
-                home.clearProperty('skinshortcuts-loading')
-                for prop in ('skinshortcuts-mainmenu', 'skinshortcutsWidgets',
+                # clear any stuck skinshortcuts state (harmless if unset)
+                for prop in ('skinshortcuts-isrunning', 'skinshortcuts-loading',
+                             'skinshortcuts-mainmenu', 'skinshortcutsWidgets',
                              'skinshortcutsCustomProperties',
                              'skinshortcutsBackgrounds'):
                     home.clearProperty(prop)
-                # force shouldwerun() -> True, whatever the hashes say
-                home.setProperty('skinshortcuts-reloadmainmenu', 'True')
 
-                try:
-                    files = xbmcvfs.listdir(data)[1]
-                except Exception as e:
-                    files = []
-                    xbmc.log('resetMenu: listdir failed: %s' % e, xbmc.LOGERROR)
+                # delete the skinshortcuts user customisation under BOTH the
+                # profile and masterprofile trees, and BOTH naming conventions
+                # (shared menus save unprefixed as mainmenu.DATA.xml; the hash
+                # lives under masterprofile) - so nothing survives to re-seed
+                # the editor's idea of the menu.
+                seen = 0
                 deleted = []
-                for name in files:
-                    if name.endswith('.DATA.xml') \\
-                            or name == skin + '.properties' \\
-                            or name == skin + '.hash':
-                        if xbmcvfs.delete(data + name):
-                            deleted.append(name)
-                # HASH_FILE lives under masterprofile, DATA_PATH under profile
-                if xbmcvfs.exists(master + skin + '.hash'):
-                    if xbmcvfs.delete(master + skin + '.hash'):
-                        deleted.append('master:' + skin + '.hash')
+                for base in ('special://profile/addon_data/script.skinshortcuts/',
+                             'special://masterprofile/addon_data/script.skinshortcuts/'):
+                    try:
+                        files = xbmcvfs.listdir(base)[1]
+                    except Exception as e:
+                        files = []
+                        xbmc.log('resetMenu: listdir %s failed: %s' % (base, e),
+                                 xbmc.LOGERROR)
+                    for name in files:
+                        seen += 1
+                        if name.endswith('.DATA.xml') \\
+                                or name == skin + '.properties' \\
+                                or name == skin + '.hash':
+                            if xbmcvfs.delete(base + name):
+                                deleted.append(name)
 
-                # written BEFORE the rebuild: the reload kills this script
                 report = 'seen=%i deleted=%i [%s]' % (
-                    len(files), len(deleted), ','.join(deleted))
+                    seen, len(deleted), ','.join(deleted))
                 home.setProperty('t7b_resetmenu', report)
                 xbmc.log('resetMenu: %s' % report, xbmc.LOGINFO)
 
-                rebuilt = False
-                try:
-                    lib = xbmcvfs.translatePath(xbmcaddon.Addon(
-                        'script.skinshortcuts').getAddonInfo('path'))
-                    lib = os.path.join(lib, 'resources', 'lib')
-                    if lib not in sys.path:
-                        sys.path.insert(0, lib)
-                    from skinshorcuts import xmlfunctions
-                    xmlfunctions.XMLFunctions().build_menu(
-                        '9000', 'mainmenu', '0', None, [''], 0)
-                    rebuilt = True
-                except Exception as e:
-                    xbmc.log('resetMenu: inline rebuild failed: %s' % e,
-                             xbmc.LOGERROR)
-                if not rebuilt:
-                    xbmc.executebuiltin('RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')
-'''
+                # reload so the UI drops any in-memory customisation; the static
+                # <content> guarantees the stock menu comes back
+                xbmc.executebuiltin('ReloadSkin()')
+"""
 
 _SYSTEM_PAGE = (
     '<?xml version="1.0" encoding="UTF-8"?>\n'
@@ -964,47 +1126,47 @@ _MAINMENU_RADIO_OLD = "        <action>ActivateWindow(RadioChannels)</action>\n"
 _MAINMENU_RADIO_NEW = "        <action>ActivateWindow(10705)</action>\n"
 
 _MAINMENU_DISC = (
-    '    <shortcut>\n'
-    '        <label>427</label>\n'
-    '        <label2>Common Shortcut</label2>\n'
-    '        <defaultID>disc</defaultID>\n'
-    '        <icon>icons/sidemenu/disc.png</icon>\n'
-    '        <action>PlayDisc</action>\n'
-    '        <visible>System.HasMediaDVD</visible>\n'
-    '    </shortcut>\n'
+    "    <shortcut>\n"
+    "        <label>427</label>\n"
+    "        <label2>Common Shortcut</label2>\n"
+    "        <defaultID>disc</defaultID>\n"
+    "        <icon>icons/sidemenu/disc.png</icon>\n"
+    "        <action>PlayDisc</action>\n"
+    "        <visible>System.HasMediaDVD</visible>\n"
+    "    </shortcut>\n"
 )
 
 _MAINMENU_MUSICVIDEOS_FIRST = (
-    '    <shortcut>\n'
-    '        <label>20389</label>\n'
-    '        <label2>Common Shortcut</label2>\n'
-    '        <defaultID>musicvideos</defaultID>\n'
-    '        <icon>icons/sidemenu/musicvideos.png</icon>\n'
-    '        <action>ActivateWindow(Videos,videodb://musicvideos/titles/,return)</action>\n'
-    '        <visible>Library.HasContent(musicvideos) + !Skin.HasSetting(hide_musicvideocategory)</visible>\n'
-    '    </shortcut>\n'
+    "    <shortcut>\n"
+    "        <label>20389</label>\n"
+    "        <label2>Common Shortcut</label2>\n"
+    "        <defaultID>musicvideos</defaultID>\n"
+    "        <icon>icons/sidemenu/musicvideos.png</icon>\n"
+    "        <action>ActivateWindow(Videos,videodb://musicvideos/titles/,return)</action>\n"
+    "        <visible>Library.HasContent(musicvideos) + !Skin.HasSetting(hide_musicvideocategory)</visible>\n"
+    "    </shortcut>\n"
 )
 
 _MAINMENU_LIBREELEC = (
-    '    <shortcut>\n'
-    '        <label>LibreELEC</label>\n'
-    '        <label2>Common Shortcut</label2>\n'
-    '        <defaultID>libreelec</defaultID>\n'
-    '        <icon>icons/sidemenu/libreelec.png</icon>\n'
-    '        <action>RunAddon(service.libreelec.settings)</action>\n'
-    '        <visible>System.HasAddon(service.libreelec.settings)</visible>\n'
-    '    </shortcut>\n'
+    "    <shortcut>\n"
+    "        <label>LibreELEC</label>\n"
+    "        <label2>Common Shortcut</label2>\n"
+    "        <defaultID>libreelec</defaultID>\n"
+    "        <icon>icons/sidemenu/libreelec.png</icon>\n"
+    "        <action>RunAddon(service.libreelec.settings)</action>\n"
+    "        <visible>System.HasAddon(service.libreelec.settings)</visible>\n"
+    "    </shortcut>\n"
 )
 
 _MAINMENU_COREELEC = (
-    '    <shortcut>\n'
-    '        <label>CoreELEC</label>\n'
-    '        <label2>Common Shortcut</label2>\n'
-    '        <defaultID>coreelec</defaultID>\n'
-    '        <icon>icons/sidemenu/coreelec.png</icon>\n'
-    '        <action>RunAddon(service.coreelec.settings)</action>\n'
-    '        <visible>System.HasAddon(service.coreelec.settings)</visible>\n'
-    '    </shortcut>\n'
+    "    <shortcut>\n"
+    "        <label>CoreELEC</label>\n"
+    "        <label2>Common Shortcut</label2>\n"
+    "        <defaultID>coreelec</defaultID>\n"
+    "        <icon>icons/sidemenu/coreelec.png</icon>\n"
+    "        <action>RunAddon(service.coreelec.settings)</action>\n"
+    "        <visible>System.HasAddon(service.coreelec.settings)</visible>\n"
+    "    </shortcut>\n"
 )
 
 
@@ -1019,9 +1181,7 @@ def _edit_mainmenu(text: str, path: str) -> str:
     text = _replace(text, _MAINMENU_TV_OLD, _MAINMENU_TV_NEW, path=path)
     text = _replace(text, _MAINMENU_RADIO_OLD, _MAINMENU_RADIO_NEW, path=path)
     text = _replace(text, _MAINMENU_DISC, "", path=path)
-    text = _insert_before(
-        text, _MAINMENU_MUSICVIDEOS_FIRST, _MAINMENU_DISC, path=path
-    )
+    text = _insert_before(text, _MAINMENU_MUSICVIDEOS_FIRST, _MAINMENU_DISC, path=path)
     text = _replace(text, _MAINMENU_LIBREELEC, "", path=path)
     text = _replace(text, _MAINMENU_COREELEC, "", path=path)
     return text
@@ -1035,15 +1195,16 @@ def _edit_helpers(text: str, path: str) -> str:
     unprefixed (mainmenu.DATA.xml) whenever its "shared menu" setting is on -
     so the delete matches nothing and the customised menu survives every
     reset (owner-reported, root-caused on the ATV2 against skinshortcuts
-    2.0.3's own source). We delete BOTH naming conventions plus the generated
-    includes, then rebuild from the skin's shipped shortcuts/ defaults.
+    2.0.3's own source). And fighting its rebuild is a losing game on tvOS
+    (device-proven: even a clean delete + ReloadSkin left the stale menu).
+
+    Since the main menu is now a STATIC <content> block in Home.xml (see
+    _HOME_MENU_CONTENT), resetMenu no longer rebuilds anything: it wipes the
+    skinshortcuts user customisation under both profiles and both naming
+    conventions, writes a receipt, and reloads. The static XML guarantees the
+    stock menu regardless. Uses only xbmc/xbmcvfs/xbmcgui (already imported
+    upstream) - no skinshortcuts import, nothing that can fail silently.
     """
-    text = _replace(
-        text,
-        "import xbmc\nimport xbmcvfs\nimport xbmcgui\nimport sys\nimport json\n",
-        "import xbmc\nimport xbmcaddon\nimport xbmcvfs\nimport xbmcgui\nimport os\nimport sys\nimport json\n",
-        path=path,
-    )
     return _insert_before(text, _HELPERS_ELSE, _RESET_MENU_ACTION, path=path)
 
 
@@ -1167,12 +1328,10 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
         text,
         "        <news>\nFor a complete view of changes visit "
         "https://github.com/b-jesch/skin.estuary.modv2/tree/Omega\n        </news>",
-        "        <news>\nv{}: 'Reset main menu settings' now actually works. "
-        "skinshortcuts' own reset only deletes files prefixed with the skin id, "
-        "but saves the menu unprefixed - so it silently deleted nothing and your "
-        "customised menu survived every reset. The skin now does the reset itself "
-        "and rebuilds from the shipped defaults. Recent: labeled widget tiles by "
-        "default, superscript-7 icon, stock-style System page.\n"
+        "        <news>\nv{}: the main menu now matches stock Estuary - Movies, TV "
+        "shows, Music, Disc, Music videos, Live TV, Radio, Games, Add-ons, "
+        "Pictures, Videos, Favourites, Weather - rendered as a fixed list like "
+        "stock so it cannot go stale or get stuck. Live TV and Radio are back.\n"
         "        </news>".format(version),
         path=path,
     )
@@ -1182,8 +1341,6 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
 def rename_skin_id(text: str) -> str:
     """Global rename; used for every text file that mentions the upstream id."""
     return text.replace(UPSTREAM_ID, SKIN_ID)
-
-
 
 
 def invert_widget_labels(text: str) -> str:

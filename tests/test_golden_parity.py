@@ -43,7 +43,12 @@ import re
 import pytest
 
 from conftest import GOLDENS
-from skin_transforms import SKIN_ID, UPSTREAM_ID
+from skin_transforms import (
+    _HOME_MENU_CONTENT,
+    _HOME_MENU_INCLUDE_ANCHOR,
+    SKIN_ID,
+    UPSTREAM_ID,
+)
 
 _COMMENT_RE = re.compile(r"[ \t]*<!--.*?-->\n?", re.DOTALL)
 
@@ -298,6 +303,14 @@ _DEBUG_HEADER = '\t\t\t\t<control type="label" id="900014">'
 NORMALIZE = {
     "Home.xml": _WIDGET_INVERSIONS
     + [
+        # Static main menu (owner directive 2026-07-12, the reset fix): the
+        # golden renders the fixedlist from skinshortcuts' generated include,
+        # which is what let the menu go stale and defeat every reset. The fork
+        # replaces it with a hardcoded stock-Estuary <content> block so the
+        # menu is stock by construction and the reset is trivially correct.
+        # Each item carries the widget property the golden's own home widgets
+        # read, so nothing downstream changes.
+        (_HOME_MENU_INCLUDE_ANCHOR, _HOME_MENU_CONTENT, 1),
         (
             "$LOCALIZE[166] Estuary MOD V2 • ",
             "$LOCALIZE[166] Estuary 7 • ",
@@ -366,10 +379,26 @@ NORMALIZE = {
     "SkinSettings.xml": [
         _runscript_rewire(3),
         (_DEBUG_HEADER, _MEDIA_SOURCES_BLOCK + _DEBUG_HEADER, 1),
-        ("\t\t\t\t\t<onclick>RunScript(script.skinshortcuts,type=resetall)</onclick>", "\t\t\t\t\t<onclick>RunScript(special://skin/scripts/helpers.py,resetMenu)</onclick>", 1),
-        ("\t\t\t\t\t<label>$LOCALIZE[31468]</label>", "\t\t\t\t\t<label>Show labeled tiles</label>", 1),
-        ("\t\t\t\t\t<selected>!Skin.HasSetting(HideWidgetLabels)</selected>", "\t\t\t\t\t<selected>Skin.HasSetting(HideWidgetLabels)</selected>", 1),
-        ("\t\t\t\t\t<visible>!Skin.HasSetting(HideWidgetLabels)</visible>", "\t\t\t\t\t<visible>Skin.HasSetting(HideWidgetLabels)</visible>", 1),
+        (
+            "\t\t\t\t\t<onclick>RunScript(script.skinshortcuts,type=resetall)</onclick>",
+            "\t\t\t\t\t<onclick>RunScript(special://skin/scripts/helpers.py,resetMenu)</onclick>",
+            1,
+        ),
+        (
+            "\t\t\t\t\t<label>$LOCALIZE[31468]</label>",
+            "\t\t\t\t\t<label>Show labeled tiles</label>",
+            1,
+        ),
+        (
+            "\t\t\t\t\t<selected>!Skin.HasSetting(HideWidgetLabels)</selected>",
+            "\t\t\t\t\t<selected>Skin.HasSetting(HideWidgetLabels)</selected>",
+            1,
+        ),
+        (
+            "\t\t\t\t\t<visible>!Skin.HasSetting(HideWidgetLabels)</visible>",
+            "\t\t\t\t\t<visible>Skin.HasSetting(HideWidgetLabels)</visible>",
+            1,
+        ),
         (_GOLDEN_T7B_GROUPLIST, "", 1),
         (_GOLDEN_T7B_ITEM11, "", 1),
         (_GOLDEN_CATEGORY_ORDER, _FORK_CATEGORY_ORDER, 1),
