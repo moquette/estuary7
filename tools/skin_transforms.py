@@ -1061,27 +1061,27 @@ _SERVICES_IMPORT_NEW = (
     "import xbmc\nimport xbmcaddon\nimport xbmcvfs\nimport xbmcgui\n\n# view switcher\n"
 )
 
-# Anchor: the service's own startup log line (inside __main__, 4-space indent).
-_SERVICES_START_ANCHOR = (
-    "    xbmc.log('Estuary MOD V2 Nexus service handler started', level=xbmc.LOGINFO)\n"
-)
+# Anchor: the FIRST statement inside __main__ (before the 1s sleep), so we set
+# donthidepvr as early as possible - ideally before Home's onload buildxml runs,
+# so the very first menu build already has it and no rebuild is ever needed.
+_SERVICES_START_ANCHOR = "    TRANS_TITLE = str(xbmc.getLocalizedString(369))\n"
 
 # Seed skinshortcuts' donthidepvr=true once, so it never injects System.HasPVRAddon
 # onto the Live TV/Radio menu items - the only reliable way to keep them
 # always-visible like stock (numeric window ids are normalised back to the named
-# windows and injected anyway; hardware-verified). On the first boot that flips
-# the setting, drop the generated includes and rebuild so the change takes effect.
+# windows and injected anyway; hardware-verified). CRITICAL: only SET the setting
+# and mark the menu for a rebuild on the NEXT natural build (Home's onload
+# buildxml). Do NOT delete the includes or fire buildxml here - forcing a
+# ReloadSkin on first load black-flashes and BYPASSES Kodi's "keep this skin?"
+# prompt on a skin switch (owner-reported on the ATV). The natural onload rebuild
+# picks up the flag without our extra forced reload.
 _SERVICES_SEED = (
     "    try:\n"
     "        _ss = xbmcaddon.Addon('script.skinshortcuts')\n"
     "        if _ss.getSetting('donthidepvr') != 'true':\n"
     "            _ss.setSetting('donthidepvr', 'true')\n"
-    "            _inc = 'special://skin/xml/script-skinshortcuts-includes.xml'\n"
-    "            if xbmcvfs.exists(_inc):\n"
-    "                xbmcvfs.delete(_inc)\n"
     "            xbmcgui.Window(10000).setProperty('skinshortcuts-reloadmainmenu', 'True')\n"
-    "            xbmc.executebuiltin('RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')\n"
-    "            xbmc.log('estuary7: seeded skinshortcuts donthidepvr=true, rebuilding menu', level=xbmc.LOGINFO)\n"
+    "            xbmc.log('estuary7: seeded skinshortcuts donthidepvr=true', level=xbmc.LOGINFO)\n"
     "    except Exception as _pvr_e:\n"
     "        xbmc.log('estuary7: donthidepvr seed failed: %s' % _pvr_e, level=xbmc.LOGWARNING)\n"
 )
@@ -1093,13 +1093,14 @@ def _edit_services(text: str, path: str) -> str:
     Stock Estuary shows Live TV/Radio always; skinshortcuts hides them without a
     PVR client by injecting System.HasPVRAddon. Its donthidepvr setting is the
     only switch that suppresses that (a skin cannot ship the setting file, but the
-    boot service can set it via the addon API). Runs once - on the boot that flips
-    the setting it forces a menu rebuild so the tiles appear immediately."""
+    boot service can set it via the addon API). Runs once - it only SETS the
+    setting and marks a rebuild for the next natural menu build; it does NOT force
+    a ReloadSkin (that bypasses Kodi's keep-this-skin prompt and black-flashes)."""
     text = _replace(text, _SERVICES_IMPORT_OLD, _SERVICES_IMPORT_NEW, path=path)
     return _replace(
         text,
         _SERVICES_START_ANCHOR,
-        _SERVICES_START_ANCHOR + _SERVICES_SEED,
+        _SERVICES_SEED + _SERVICES_START_ANCHOR,
         path=path,
     )
 
