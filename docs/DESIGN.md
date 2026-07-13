@@ -116,6 +116,15 @@ revert toward stock - flag it during transform work, ask the owner:
   Videos/Music/Pictures/Games file-browser buttons) directly above the
   Debug section. The Custom_1120 dialog is now unreferenced (harmless dead
   weight; the buttons open the file browsers directly).
+- Boot splash: stock Estuary/MOD V2 shows a startup splash by default; 1.0.32
+  restores it (an earlier build had inverted the gate to opt-in, so a fresh box
+  booted with NO splash - an unlisted deviation from stock, now corrected). The
+  opt-out flag is renamed to a clear `hide_splash` (splash ON unless the owner
+  disables it, or a non-Home startup action suppresses it), and the splash art
+  is the owner's background.jpg (extras/themes/t7b-splash.jpg, full-screen, full
+  opacity) rather than stock's logo. Beyond stock parity, the splash masks the
+  rare fallback where the first-launch skinshortcuts rebuild+reload still fires
+  (see docs/PLAN.md 1.0.32: the hash seed normally prevents it).
 - MOD V2's FUNCTIONAL mods (PVR integration, widgets, custom windows) stay -
   the mandate is about look and feel, not features
 

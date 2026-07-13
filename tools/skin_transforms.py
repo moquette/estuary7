@@ -92,9 +92,10 @@ _WEATHERINFO_INCLUDES = [
 ]
 
 # Splash screen: stock plays it until EnableSplashScreen is set (the flag is
-# an opt-OUT despite its name). Renamed to a plain opt-IN ShowSplashScreen so
-# a fresh box boots without the splash. Negated atom replaced FIRST - the
-# positive atom is its substring.
+# an opt-OUT despite its name). Renamed to a plain opt-IN ShowSplashScreen so a
+# fresh box boots WITHOUT the splash (owner directive 2026-07-12: no splash by
+# default). Still toggleable in Skin Settings; when enabled it shows our
+# background.jpg. Negated atom replaced FIRST - the positive atom is its substring.
 _SPLASH_NEG = (
     "!Skin.HasSetting(EnableSplashScreen)",
     "Skin.HasSetting(ShowSplashScreen)",
@@ -280,11 +281,64 @@ def _edit_home(text: str, path: str) -> str:
             "Skin.HasSetting(show_{})".format(flag),
             path=path,
         )
+    # FIRST, unconditionally clear skinshortcuts-isrunning. build_menu no-ops when
+    # Window(10000).Property(skinshortcuts-isrunning)=='True'; that flag is left
+    # stuck when a build is interrupted by the skin reload during install, and it
+    # survives ReloadSkin/addon-restart - only a reboot (or an explicit clear)
+    # resets it. A stuck flag is exactly a menu that "won't complete until a hard
+    # restart". Clearing it on every Home load (before the build fires) is safe (no
+    # build runs concurrently at Home load) and is what the reset helper already
+    # does. Then defer the FIRST-per-boot buildxml past Kodi's ~10s "keep this
+    # skin?" timer - this also gives the boot service's hash seed its head start
+    # (the service seeds in <1s, inside the 15s window, so the deferred buildxml
+    # finds a matching hash and no-ops: no rebuild, no ReloadSkin). If the seed
+    # loses the race, the ReloadSkin fires AFTER the keep-dialog is answered, so it
+    # can't destroy it (the silent-revert bug). The gate is a per-SESSION
+    # Home(10000) property, NOT a persisted skin bool (a bool survives
+    # uninstall/reinstall and would wrongly skip the defer on a reinstalled box);
+    # it is empty at every boot, so the first Home load per session defers and
+    # later loads (e.g. after a menu edit) build immediately. The shipped includes
+    # render the menu during the wait. The added RunScripts target
+    # script.skinshortcuts, not the skin id, so the RunScript rewire (15) is intact.
+    text = _replace(
+        text,
+        "\t<onload>RunScript(script.skinshortcuts,type=buildxml&amp;"
+        "mainmenuID=9000&amp;group=mainmenu)</onload>\n",
+        "\t<onload>RunScript(special://skin/scripts/helpers.py,seedPVR)</onload>\n"
+        "\t<onload>ClearProperty(skinshortcuts-isrunning,10000)</onload>\n"
+        '\t<onload condition="String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+        "AlarmClock(t7bbuild,RunScript(script.skinshortcuts,type=buildxml&amp;"
+        "mainmenuID=9000&amp;group=mainmenu),00:15,silent)</onload>\n"
+        '\t<onload condition="!String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+        "RunScript(script.skinshortcuts,type=buildxml&amp;mainmenuID=9000&amp;"
+        "group=mainmenu)</onload>\n"
+        '\t<onload condition="String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+        "SetProperty(t7b_firstbuild_done,1,10000)</onload>\n",
+        path=path,
+    )
     return text
 
 
 _HELPERS_ELSE = (
     "        else:\n            xbmc.log('unknown parameter', xbmc.LOGERROR)\n"
+)
+
+# Lightweight PVR-visibility seed (no rebuild). Home's onload fires this BEFORE
+# the buildxml so donthidepvr=true is set by the time the menu builds, keeping
+# Live TV/Radio always-visible like stock even when no PVR client is installed.
+# It is the reliable partner to the boot service's seed: the service can start
+# late (it is gated on CurrentSkin), so a fresh-install menu could otherwise
+# build before donthidepvr is set and drop Live TV/Radio (owner-reported on the
+# ATV). Idempotent; only writes when the setting is not already 'true'.
+_SEED_PVR_ACTION = (
+    "        elif sys.argv[1] == 'seedPVR':\n"
+    "            try:\n"
+    "                _ss = xbmcaddon.Addon('script.skinshortcuts')\n"
+    "                if _ss.getSetting('donthidepvr') != 'true':\n"
+    "                    _ss.setSetting('donthidepvr', 'true')\n"
+    "                    xbmc.log('estuary7: seedPVR set donthidepvr=true', xbmc.LOGINFO)\n"
+    "            except Exception as e:\n"
+    "                xbmc.log('estuary7: seedPVR failed: %s' % e, xbmc.LOGWARNING)\n"
 )
 
 _RESET_MENU_ACTION = (
@@ -542,8 +596,8 @@ def _edit_settings(text: str, path: str) -> str:
     is gone,
     relocated into Skin Settings > Extras (see _MEDIA_SOURCES_BLOCK). The two
     onunload RunScripts keep upstream's addon-id form so the global rewiring
-    converts them (the count-15 contract); the splash onunload is baked to the
-    opt-in Reset form. Fail loud if the upstream page is not the shape we
+    converts them (the count-15 contract); the splash onunload resets the opt-in
+    ShowSplashScreen flag. Fail loud if the upstream page is not the shape we
     redesigned from."""
     for anchor in (
         "<onclick>ActivateWindow(1120)</onclick>",  # MOD V2 "Media sources" tile
@@ -786,6 +840,14 @@ def _edit_settingsprofile(text: str, path: str) -> str:
 def _edit_startup(text: str, path: str) -> str:
     text = _replace(text, *_SPLASH_NEG, path=path)
     text = _replace(text, *_SPLASH_POS, path=path)
+    # Our splash art: full-screen background.jpg at full opacity (stock's
+    # semi-transparent logo becomes the owner's photo). Shipped by add_assets.
+    text = _replace(
+        text,
+        '<texture colordiffuse="BFFFFFFF">special://skin/extras/themes/splash.png</texture>',
+        '<texture colordiffuse="FFFFFFFF">special://skin/extras/themes/t7b-splash.jpg</texture>',
+        path=path,
+    )
     return text
 
 
@@ -1162,12 +1224,16 @@ def _edit_helpers(text: str, path: str) -> str:
         "import xbmc\nimport xbmcaddon\nimport xbmcvfs\nimport xbmcgui\nimport os\nimport sys\nimport json\n",
         path=path,
     )
-    return _insert_before(text, _HELPERS_ELSE, _RESET_MENU_ACTION, path=path)
+    return _insert_before(
+        text, _HELPERS_ELSE, _SEED_PVR_ACTION + _RESET_MENU_ACTION, path=path
+    )
 
 
 _SERVICES_IMPORT_OLD = "import xbmc\n\n# view switcher\n"
 _SERVICES_IMPORT_NEW = (
-    "import xbmc\nimport xbmcaddon\nimport xbmcvfs\nimport xbmcgui\n\n# view switcher\n"
+    "import xbmc\nimport xbmcaddon\nimport xbmcvfs\nimport xbmcgui\n"
+    "import os\nimport hashlib\nimport json\n"
+    "import xml.etree.ElementTree as ET\n\n# view switcher\n"
 )
 
 # Anchor: the FIRST statement inside __main__ (before the 1s sleep), so we set
@@ -1175,29 +1241,121 @@ _SERVICES_IMPORT_NEW = (
 # so the very first menu build already has it and no rebuild is ever needed.
 _SERVICES_START_ANCHOR = "    TRANS_TITLE = str(xbmc.getLocalizedString(369))\n"
 
-# Seed skinshortcuts' donthidepvr=true once, so it never injects System.HasPVRAddon
-# onto the Live TV/Radio menu items - the only reliable way to keep them
-# always-visible like stock (numeric window ids are normalised back to the named
-# windows and injected anyway; hardware-verified). ONLY set the setting - do NOT
-# nudge a rebuild. This service runs on addon-enable, BEFORE Home's onload
-# buildxml, so the very first (unavoidable, includes-don't-exist-yet) menu build
-# already reads donthidepvr and shows Live TV/Radio - no forced rebuild needed.
-# We used to also set Window(10000).Property('skinshortcuts-reloadmainmenu') here;
-# that made skinshortcuts' shouldwerun() return True and fire build_menu ->
-# ReloadSkin() (xmlfunctions.py:123) an extra time. It is redundant on a fresh
-# install (skinshortcuts reloads anyway when no includes exist) and it is the one
-# reload MOD V2 does not do, so it is dropped (1.0.31, owner directive). The
-# fresh-install rebuild+reload itself is inherent skinshortcuts behaviour, shared
-# by MOD V2 (which also ships no pre-built includes/hash).
-_SERVICES_SEED = (
-    "    try:\n"
-    "        _ss = xbmcaddon.Addon('script.skinshortcuts')\n"
-    "        if _ss.getSetting('donthidepvr') != 'true':\n"
-    "            _ss.setSetting('donthidepvr', 'true')\n"
-    "            xbmc.log('estuary7: seeded skinshortcuts donthidepvr=true', level=xbmc.LOGINFO)\n"
-    "    except Exception as _pvr_e:\n"
-    "        xbmc.log('estuary7: donthidepvr seed failed: %s' % _pvr_e, level=xbmc.LOGWARNING)\n"
-)
+# The boot service (runs on addon-enable, BEFORE Home's onload buildxml) does two
+# things on a fresh install:
+#  1. Seed skinshortcuts' donthidepvr=true so it never injects System.HasPVRAddon
+#     onto Live TV/Radio (the only reliable way to keep them always-visible like
+#     stock; hardware-verified).
+#  2. Seed a matching skinshortcuts HASH so shouldwerun() (xmlfunctions.py:143)
+#     returns False and build_menu()'s ReloadSkin() (line 123) NEVER fires on
+#     first launch. That reload is the root cause of BOTH the install black flash
+#     AND the silent revert (it destroys Kodi's "keep this skin?" dialog ~270ms
+#     after the switch). We ship the generated includes (add_assets), so the only
+#     thing shouldwerun still needs is the hash - and the hash is device-specific
+#     (absolute paths, Kodi version, profile list) so it CANNOT be a static file;
+#     it is generated here. shouldwerun only checks entries we write and we hash
+#     only files that exist now, so every entry is guaranteed to match. We seed
+#     when the includes exist AND (no hash yet OR the hash is from a different
+#     Estuary 7 version) - so upgrades/reinstalls (which carry a stale hash that
+#     would otherwise block the seed and force a rebuild) are covered too, while
+#     the reset path (which deletes the includes and sets reloadmainmenu) is not
+#     fought. Worst case of any failure/race: the hash is absent/rejected,
+#     shouldwerun returns True, one rebuild - exactly today's behaviour, never
+#     worse (Change 3 defers that fallback build past the keep-dialog). Do NOT set
+#     skinshortcuts-reloadmainmenu (that forces a rebuild).
+_SERVICES_SEED = """\
+    try:
+        _ss = xbmcaddon.Addon('script.skinshortcuts')
+        if _ss.getSetting('donthidepvr') != 'true':
+            _ss.setSetting('donthidepvr', 'true')
+            xbmc.log('estuary7: seeded skinshortcuts donthidepvr=true', level=xbmc.LOGINFO)
+    except Exception as _pvr_e:
+        xbmc.log('estuary7: donthidepvr seed failed: %s' % _pvr_e, level=xbmc.LOGWARNING)
+    try:
+        _skindir = xbmc.getSkinDir()
+        _skinver = xbmcaddon.Addon(_skindir).getAddonInfo('version')
+        _master = xbmcvfs.translatePath('special://masterprofile/addon_data/script.skinshortcuts/')
+        _hashfile = os.path.join(_master, '%s.hash' % _skindir)
+        _inc = xbmcvfs.translatePath('special://skin/xml/script-skinshortcuts-includes.xml')
+        # Seed when the shipped includes exist AND (no hash yet, OR the existing
+        # hash was written by a DIFFERENT Estuary 7 version). A stale hash from an
+        # upgrade/reinstall (every box that ever ran an older Estuary 7 has one)
+        # would otherwise block the seed, so the first launch would rebuild +
+        # ReloadSkin - the flash/revert we are killing. The hash only ever carries
+        # over from OUR own prior version; reseeding to the current shipped stock
+        # menu is exactly what a fresh install wants. Tradeoff: a box that had the
+        # menu EDITED and then upgrades sees it reset to the shipped default rather
+        # than a rebuild - acceptable for the fleet (fixed stock menu, fresh per-box
+        # installs). The reset helper deletes the includes (isfile False here) and
+        # sets reloadmainmenu, so this never fights the reset path.
+        _needseed = False
+        if os.path.isfile(_inc):
+            if not os.path.exists(_hashfile):
+                _needseed = True
+            else:
+                try:
+                    with open(_hashfile) as _oh:
+                        _old = json.load(_oh)
+                    _oldver = None
+                    for _e in _old:
+                        if _e and _e[0] == '::SKINVER::':
+                            _oldver = _e[1] if len(_e) > 1 else None
+                            break
+                    if _oldver != _skinver:
+                        _needseed = True
+                except Exception:
+                    _needseed = True
+        if _needseed:
+            _ssa = xbmcaddon.Addon('script.skinshortcuts')
+            def _t7b_md5(_p):
+                _h = hashlib.md5()
+                with open(_p, 'rb') as _f:
+                    for _blk in iter(lambda: _f.read(65536), b''):
+                        _h.update(_blk)
+                return _h.hexdigest()
+            _plist = []
+            _pf = xbmcvfs.translatePath('special://userdata/profiles.xml')
+            try:
+                if os.path.isfile(_pf):
+                    for _pr in ET.parse(_pf).getroot().findall('profile'):
+                        _pnm = _pr.find('name').text
+                        _pdir = _pr.find('directory').text
+                        if '://' in _pdir:
+                            _pdir = xbmcvfs.translatePath(_pdir)
+                        _pdir = xbmcvfs.translatePath(os.path.join('special://masterprofile', _pdir))
+                        _plist.append([_pdir, 'String.IsEqual(System.ProfileName,%s)' % _pnm, _pnm])
+            except Exception:
+                _plist = []
+            if not _plist:
+                _pnm = xbmc.getInfoLabel('System.ProfileName')
+                _plist = [[xbmcvfs.translatePath('special://masterprofile/'), 'String.IsEqual(System.ProfileName,%s)' % _pnm, _pnm]]
+            _hl = [
+                ['::PROFILELIST::', _plist],
+                ['::SCRIPTVER::', _ssa.getAddonInfo('version')],
+                ['::XBMCVER::', xbmc.getInfoLabel('System.BuildVersion').split('.')[0]],
+                ['::HIDEPVR::', _ssa.getSetting('donthidepvr')],
+                ['::SHARED::', _ssa.getSetting('shared_menu')],
+                ['::SKINDIR::', _skindir],
+                ['::FULLMENU::', 'True'],
+                ['::SKINVER::', _skinver],
+            ]
+            _files = [_inc]
+            _scd = xbmcvfs.translatePath('special://skin/shortcuts/')
+            if os.path.isdir(_scd):
+                for _fn in sorted(os.listdir(_scd)):
+                    if _fn.endswith('.DATA.xml') or _fn in ('overrides.xml', 'template.xml'):
+                        _files.append(os.path.join(_scd, _fn))
+            for _fp in _files:
+                if os.path.isfile(_fp):
+                    _hl.append([_fp, _t7b_md5(_fp)])
+            if not os.path.isdir(_master):
+                os.makedirs(_master)
+            with open(_hashfile, 'w') as _hf:
+                _hf.write(json.dumps(_hl, indent=4))
+            xbmc.log('estuary7: seeded skinshortcuts hash (%d entries)' % len(_hl), level=xbmc.LOGINFO)
+    except Exception as _hxe:
+        xbmc.log('estuary7: hash seed failed (falls back to one rebuild): %s' % _hxe, level=xbmc.LOGWARNING)
+"""
 
 
 def _edit_services(text: str, path: str) -> str:

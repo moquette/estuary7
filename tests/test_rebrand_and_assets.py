@@ -68,7 +68,8 @@ def test_helper_script_runs_by_path(built):
         text = xml.read_text(encoding="utf-8")
         assert "RunScript({},".format(SKIN_ID) not in text, xml.name
         total += text.count("RunScript(special://skin/scripts/helpers.py,")
-    assert total == 16
+    # 16 rewired getKodiSetting/reset callers + the Home onload seedPVR (1.0.33).
+    assert total == 17
 
 
 def test_upstream_id_fully_renamed(built):
@@ -269,3 +270,58 @@ def test_stock_videos_icon_shadows_the_bundle(built):
     assert loose.is_file(), "stock videos.png not shipped loose"
     vendored = ROOT / "assets" / "media" / "icons" / "sidemenu" / "videos.png"
     assert loose.read_bytes() == vendored.read_bytes()
+
+
+def test_prebuilt_includes_shipped_into_every_res_folder(built):
+    """The pre-built skinshortcuts includes ship byte-identical to the vendored
+    source, in EVERY resolution folder addon.xml declares. Required by the boot
+    service's hash seed: shouldwerun() only returns False (no rebuild+reload on
+    first launch) when this file already exists."""
+    import re
+
+    vendored = ROOT / "assets" / "xml" / "script-skinshortcuts-includes.xml"
+    want = vendored.read_bytes()
+    addon = (built.tree / "addon.xml").read_text(encoding="utf-8")
+    folders = set(re.findall(r'<res\b[^>]*\bfolder="([^"]+)"', addon)) or {"xml"}
+    for folder in sorted(folders):
+        shipped = built.tree / folder / "script-skinshortcuts-includes.xml"
+        assert shipped.is_file(), "includes missing from res folder {}".format(folder)
+        assert shipped.read_bytes() == want, (
+            "shipped includes in {} diverge from the vendored source".format(folder)
+        )
+
+
+def test_includes_provenance_matches_built_menu(built):
+    """Staleness guard: the vendored includes were captured from a specific menu
+    DATA set. If any of those DATA/override/template files change in the built
+    tree without re-capturing the includes, fail loud - a stale includes file
+    would seed a hash that no longer matches the menu skinshortcuts rebuilds."""
+    import hashlib
+    import json
+
+    prov = json.loads(
+        (ROOT / "assets" / "xml" / "includes.provenance.json").read_text("utf-8")
+    )
+    assert prov["skin_id"] == SKIN_ID
+    drift = []
+    for rel, want in prov["data_sha256"].items():
+        f = built.tree / rel
+        assert f.is_file(), "provenance file {} missing from built tree".format(rel)
+        got = hashlib.sha256(f.read_bytes()).hexdigest()
+        if got != want:
+            drift.append(rel)
+    assert not drift, (
+        "menu DATA changed ({}); re-capture "
+        "assets/xml/script-skinshortcuts-includes.xml and its provenance".format(drift)
+    )
+
+
+def test_splash_image_shipped(built):
+    """The restored splash (owner's background.jpg) ships at the path Startup.xml
+    references, byte-identical to the vendored source."""
+    vendored = ROOT / "assets" / "extras" / "themes" / "t7b-splash.jpg"
+    shipped = built.tree / "extras" / "themes" / "t7b-splash.jpg"
+    assert shipped.is_file(), "splash image not shipped"
+    assert shipped.read_bytes() == vendored.read_bytes()
+    startup = (built.tree / "xml" / "Startup.xml").read_text(encoding="utf-8")
+    assert "special://skin/extras/themes/t7b-splash.jpg" in startup

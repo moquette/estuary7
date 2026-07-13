@@ -312,6 +312,23 @@ NORMALIZE = {
             1,
         ),
         _runscript_rewire(1),
+        # Clear the stuck skinshortcuts-isrunning guard + defer the first-per-boot
+        # buildxml past the keep-dialog timer (1.0.32/1.0.33).
+        (
+            "\t<onload>RunScript(script.skinshortcuts,type=buildxml&amp;"
+            "mainmenuID=9000&amp;group=mainmenu)</onload>",
+            "\t<onload>RunScript(special://skin/scripts/helpers.py,seedPVR)</onload>\n"
+            "\t<onload>ClearProperty(skinshortcuts-isrunning,10000)</onload>\n"
+            '\t<onload condition="String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+            "AlarmClock(t7bbuild,RunScript(script.skinshortcuts,type=buildxml&amp;"
+            "mainmenuID=9000&amp;group=mainmenu),00:15,silent)</onload>\n"
+            '\t<onload condition="!String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+            "RunScript(script.skinshortcuts,type=buildxml&amp;mainmenuID=9000&amp;"
+            "group=mainmenu)</onload>\n"
+            '\t<onload condition="String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+            "SetProperty(t7b_firstbuild_done,1,10000)</onload>",
+            1,
+        ),
         # Centered ◆KODI logo (owner directive 2026-07-10): the main logo group
         # gets a conditional +70 slide when the menu is full, and its wordmark
         # is left-aligned at left=78 (tight gap). Both are new vs the golden.

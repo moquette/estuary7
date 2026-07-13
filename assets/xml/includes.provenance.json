@@ -1,0 +1,19 @@
+{
+  "skin_id": "skin.estuary7",
+  "skinshortcuts_version": "2.0.3",
+  "note": "sha256 of shipped menu DATA; if any changes, re-capture assets/xml/script-skinshortcuts-includes.xml from a pristine Kodi build.",
+  "data_sha256": {
+    "shortcuts/addons.DATA.xml": "17aa9d270475919a6afc61293d8326e8dc244e1f1e8fdd6dcd42de16689925c9",
+    "shortcuts/livetv.DATA.xml": "6b396ca5e259c256b6b5acb5ac5a57f6ef9e909698b77367f31363b2e7493e17",
+    "shortcuts/mainmenu.DATA.xml": "46452fe7a0781deaed0e994e6b87e561d1f823a9d5bab06eb8b234de5aea43a6",
+    "shortcuts/movies.DATA.xml": "aa1f41ad7ef7059941f9da54abcb1614f4a16fc5e59e5c86fd6232e92cf62e0a",
+    "shortcuts/music.DATA.xml": "b8c44592e3edd7c5e823b549232fe9275860223aee44495578672738ae3fd2ca",
+    "shortcuts/musicvideos.DATA.xml": "43a37c3300fd7ad6156daeb2ed1addbc3fda953c41f3a129bf4c1f9b6348f099",
+    "shortcuts/overrides.xml": "9654a37438adb2478ae252b5eaeb9b91ddf7f6c8eeb05987031f522de8e17d1e",
+    "shortcuts/powermenu.DATA.xml": "6d0abebbd09351d1a28e4e1e7ab6b22374ac8f4ef7c6d143bdd5dca0431e2d92",
+    "shortcuts/radio.DATA.xml": "5845d572d2318ff632d22fc3dd7c648702ba6e854f5ed5f7c6b65baaae98159e",
+    "shortcuts/template.xml": "bb5959844b9c95d8ebdcbe69c6fd5b4695e9ab489d235df1dcabf9613ff0d396",
+    "shortcuts/tvshows.DATA.xml": "122a04382bbdffddfdcaa02b21eaedfd302bfa8510051c43397c19d52e7fdd14",
+    "shortcuts/video.DATA.xml": "68d86fab31fec2b4f8fc625ae1e03b316694f744f0785d172449a3efccfd6059"
+  }
+}

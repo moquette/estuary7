@@ -109,7 +109,7 @@ def extract_tree(tarball: Path, dest: Path) -> Path:
 
 
 def add_assets(tree: Path) -> None:
-    """Ship the wordmark, artwork, and provenance docs.
+    """Ship the wordmark, artwork, provenance docs, pre-built menu, and splash.
 
     The home menu is UPSTREAM MOD V2's default (owner directive 2026-07-10):
     the fork ships NO custom skinshortcuts menu, so upstream's shortcuts/
@@ -117,6 +117,14 @@ def add_assets(tree: Path) -> None:
     unmodified. This also retires the skinshortcuts-properties seed - stock
     upstream needs none. The fleet's old trimmed menu lives on in assets/
     shortcuts/ (unused by the build) if it is ever wanted per-box.
+
+    1.0.32 additionally ships the PRE-BUILT skinshortcuts includes
+    (xml/script-skinshortcuts-includes.xml, into every res folder) so the boot
+    service's hash seed can make shouldwerun() return False and skip the
+    first-launch rebuild+ReloadSkin (the install black flash / silent revert);
+    and the restored startup splash (extras/themes/t7b-splash.jpg = the owner's
+    background.jpg). check_contracts() gates both (byte-equality, res-coverage,
+    and a provenance staleness guard for the includes).
     """
     extras = tree / "media" / "extras"
     extras.mkdir(parents=True, exist_ok=True)
@@ -143,6 +151,21 @@ def add_assets(tree: Path) -> None:
     shutil.rmtree(tree / "resources" / "screenshots", ignore_errors=True)
     for shot in sorted(ASSETS_DIR.glob("resources/screenshot-*.jpg")):
         shutil.copyfile(shot, tree / "resources" / shot.name)
+    # Pre-built skinshortcuts menu: shipping the generated includes means
+    # skinshortcuts' shouldwerun() "includes file exists" check passes on first
+    # launch, so with the boot service's on-device hash seed (see
+    # _SERVICES_SEED) it does NOT rebuild+ReloadSkin - killing the first-launch
+    # black flash AND the reload that used to destroy Kodi's "keep this skin?"
+    # dialog (silent revert to stock). Captured pristine from a live build;
+    # re-capture when menu DATA changes (the provenance test fails loud).
+    inc_dst = tree / "xml" / "script-skinshortcuts-includes.xml"
+    inc_dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(ASSETS_DIR / "xml" / "script-skinshortcuts-includes.xml", inc_dst)
+    # Boot splash background (owner-supplied). The splash is restored on by
+    # default (see _edit_startup) and points at this image.
+    splash_dst = tree / "extras" / "themes" / "t7b-splash.jpg"
+    splash_dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(ASSETS_DIR / "extras" / "themes" / "t7b-splash.jpg", splash_dst)
     (tree / "README.md").write_text(SKIN_README, encoding="utf-8")
     shutil.copyfile(ROOT / "ATTRIBUTION.md", tree / "ATTRIBUTION.md")
 
@@ -219,6 +242,39 @@ def check_contracts(tree: Path) -> None:
     for rel in TRIM_PATHS:
         if (tree / rel).exists():
             problems.append("payload not trimmed: {}".format(rel))
+    # Pre-built menu must ship (byte-identical) in EVERY <res> folder addon.xml
+    # declares, or the first-launch rebuild+ReloadSkin reappears. And the vendored
+    # includes must still match the shipped menu DATA (provenance) or it is stale.
+    import json as _json
+    import re as _re
+
+    vendored_inc = (
+        ASSETS_DIR / "xml" / "script-skinshortcuts-includes.xml"
+    ).read_bytes()
+    addon_text = (tree / "addon.xml").read_text(encoding="utf-8")
+    res_folders = set(_re.findall(r'<res\b[^>]*\bfolder="([^"]+)"', addon_text)) or {
+        "xml"
+    }
+    for folder in sorted(res_folders):
+        inc = tree / folder / "script-skinshortcuts-includes.xml"
+        if not inc.is_file():
+            problems.append("res {!r}: missing pre-built includes".format(folder))
+        elif inc.read_bytes() != vendored_inc:
+            problems.append(
+                "{}: includes differ from the vendored capture".format(folder)
+            )
+    prov = _json.loads(
+        (ASSETS_DIR / "xml" / "includes.provenance.json").read_text(encoding="utf-8")
+    )
+    for rel, want in prov["data_sha256"].items():
+        f = tree / rel
+        got = hashlib.sha256(f.read_bytes()).hexdigest() if f.is_file() else None
+        if got != want:
+            problems.append(
+                "menu DATA changed ({}): re-capture "
+                "assets/xml/script-skinshortcuts-includes.xml from a pristine "
+                "Kodi build, then regenerate includes.provenance.json".format(rel)
+            )
     if problems:
         raise SystemExit("FATAL: ship contracts violated:\n  " + "\n  ".join(problems))
 
