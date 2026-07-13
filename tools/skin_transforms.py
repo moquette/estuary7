@@ -149,6 +149,16 @@ _SYSINFO_TOGGLE = """\t\t\t\t<control type="radiobutton" id="1101">
 \t\t\t\t</control>
 """
 
+# System-page grid tile chooser: OFF (default) = stock Games card, ON = Skin
+# Settings. Read by _SYSTEM_PAGE's mutually-exclusive Games/Skin-Settings items.
+_SKINSETTINGS_TILE_TOGGLE = """\t\t\t\t<control type="radiobutton" id="1102">
+\t\t\t\t\t<label>Toggle Skin Settings / Games</label>
+\t\t\t\t\t<include>DefaultSettingButton</include>
+\t\t\t\t\t<onclick>Skin.ToggleSetting(SkinSettingsTile)</onclick>
+\t\t\t\t\t<selected>Skin.HasSetting(SkinSettingsTile)</selected>
+\t\t\t\t</control>
+"""
+
 
 def _category_item(item_id: int, label_id: int) -> str:
     return (
@@ -430,8 +440,18 @@ _SYSTEM_PAGE = (
     "\t\t\t\t\t\t<onclick>ActivateWindow(ServiceSettings)</onclick>\n"
     "\t\t\t\t\t\t<icon>icons/settings/network.png</icon>\n"
     "\t\t\t\t\t</item>\n"
+    # Games slot: stock Estuary's Games card by default; a General toggle
+    # (Skin.HasSetting(SkinSettingsTile), default off) swaps it to Skin Settings.
+    # Mutually exclusive, so the grid always shows exactly eight tiles.
+    "\t\t\t\t\t<item>\n"
+    "\t\t\t\t\t\t<label>$LOCALIZE[15016]</label>\n"
+    "\t\t\t\t\t\t<visible>System.GetBool(gamesgeneral.enable) + !Skin.HasSetting(SkinSettingsTile)</visible>\n"
+    "\t\t\t\t\t\t<onclick>ActivateWindow(GameSettings)</onclick>\n"
+    "\t\t\t\t\t\t<icon>icons/settings/games.png</icon>\n"
+    "\t\t\t\t\t</item>\n"
     "\t\t\t\t\t<item>\n"
     "\t\t\t\t\t\t<label>$LOCALIZE[10035]</label>\n"
+    "\t\t\t\t\t\t<visible>Skin.HasSetting(SkinSettingsTile)</visible>\n"
     "\t\t\t\t\t\t<onclick>ActivateWindow(SkinSettings)</onclick>\n"
     "\t\t\t\t\t\t<icon>icons/settings/skin.png</icon>\n"
     "\t\t\t\t\t</item>\n"
@@ -515,9 +535,11 @@ def _edit_settings(text: str, path: str) -> str:
     """Replace upstream's single scrolling 5-column System page with the
     owner-approved stock-style 4x3 grid (see _SYSTEM_PAGE): a fixed top
     utility row (File manager, Add-ons, System info, Event log), a "Settings"
-    divider, then one non-scrolling block of eight category tiles. Skin
-    Settings takes the slot upstream gave Games (unused on the fleet; stock
-    only shows Games conditionally); the MOD V2 "Media sources" tile is gone,
+    divider, then one non-scrolling block of eight category tiles. The Games
+    slot shows stock Estuary's Games card by default; the General toggle
+    'Toggle Skin Settings / Games' (Skin.HasSetting(SkinSettingsTile), default
+    off) swaps that one tile to Skin Settings. The MOD V2 "Media sources" tile
+    is gone,
     relocated into Skin Settings > Extras (see _MEDIA_SOURCES_BLOCK). The two
     onunload RunScripts keep upstream's addon-id form so the global rewiring
     converts them (the count-15 contract); the splash onunload is baked to the
@@ -589,6 +611,15 @@ def _edit_skinsettings(text: str, path: str) -> str:
         text,
         '\t\t\t\t<control type="button" id="703">\n',
         _SYSINFO_TOGGLE,
+        path=path,
+    )
+    # 'Toggle Skin Settings / Games' - swaps the System-page Games tile for a
+    # Skin Settings tile (owner request; default off = Games). Same General
+    # pane, just above the default-OSD button (id 703).
+    text = _insert_before(
+        text,
+        '\t\t\t\t<control type="button" id="703">\n',
+        _SKINSETTINGS_TILE_TOGGLE,
         path=path,
     )
     # "Add media sources" launcher (Videos/Music/Pictures/Games file
@@ -783,6 +814,23 @@ def _edit_dialogbuttonmenu(text: str, path: str) -> str:
         "$EXP[PowerMenuList]",
         path=path,
         count=2,
+    )
+    # Prepend 'Skin settings' as the FIRST power-menu item (owner request),
+    # opening this skin's settings window. The power menu is a static list here
+    # (not skinshortcuts-driven), with one <content> per display mode (panel /
+    # iconlist / default); insert into all three so it leads regardless of mode.
+    text = _replace(
+        text,
+        "\t\t\t\t<content>\n",
+        "\t\t\t\t<content>\n"
+        "\t\t\t\t\t<item>\n"
+        "\t\t\t\t\t\t<label>$LOCALIZE[10035]</label>\n"
+        "\t\t\t\t\t\t<icon>icons/settings/skin.png</icon>\n"
+        "\t\t\t\t\t\t<onclick>dialog.close(all,true)</onclick>\n"
+        "\t\t\t\t\t\t<onclick>ActivateWindow(SkinSettings)</onclick>\n"
+        "\t\t\t\t\t</item>\n",
+        path=path,
+        count=3,
     )
     return text
 

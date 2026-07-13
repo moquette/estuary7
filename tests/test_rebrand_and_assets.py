@@ -215,6 +215,26 @@ def test_stock_upstream_shortcuts_survive(built):
         assert (built.tree / "shortcuts" / name).is_file(), name
 
 
+def test_powermenu_leads_with_skin_settings(built):
+    """The power menu leads with 'Skin settings' (owner request). It is a static
+    list with one <content> per display mode; the item must be FIRST in each and
+    open this skin's settings window."""
+    import re
+
+    text = (built.tree / "xml" / "DialogButtonMenu.xml").read_text("utf-8")
+    blocks = re.findall(r"<content>\s*(<item>.*?</item>)", text, re.S)
+    assert len(blocks) == 3, "expected 3 power-menu content modes"
+    for first_item in blocks:
+        assert "$LOCALIZE[10035]" in first_item
+        # the power menu is a modal dialog: it MUST close before navigating,
+        # or ActivateWindow is ignored (nothing happens on click).
+        assert first_item.index("dialog.close(all,true)") < first_item.index(
+            "ActivateWindow(SkinSettings)"
+        )
+    # exactly three inserted (one per mode), no more
+    assert text.count("<onclick>ActivateWindow(SkinSettings)</onclick>") == 3
+
+
 def test_videos_override_removed(built, upstream_tree):
     """Upstream ships a videos labelID override; the build must REMOVE it.
 

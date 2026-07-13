@@ -230,14 +230,22 @@ _GOLDEN_SCROLLBAR_WIRING = (
     '\t\t\t\t<onleft condition="Container(9000).HasFocus(11)">1100</onleft>\n'
     '\t\t\t\t<onright condition="Container(9000).HasFocus(11)">1100</onright>\n'
 )
-# The fork inserts the toggle below "Disable zoom effect" (radiobutton 702),
-# i.e. before "Default button on Video/Audio OSD" (button 703).
+# The fork inserts two toggles below "Disable zoom effect" (radiobutton 702),
+# i.e. before "Default button on Video/Audio OSD" (button 703): the system-info
+# overlay toggle, then 'Toggle Skin Settings / Games' (swaps the System-page
+# Games tile for a Skin Settings tile; default off = Games).
 _SYSINFO_IN_GENERAL = (
     '\t\t\t\t<control type="radiobutton" id="1101">\n'
     "\t\t\t\t\t<label>Show system info on Settings focus</label>\n"
     "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
     "\t\t\t\t\t<onclick>Skin.ToggleSetting(show_system_info_overlay)</onclick>\n"
     "\t\t\t\t\t<selected>Skin.HasSetting(show_system_info_overlay)</selected>\n"
+    "\t\t\t\t</control>\n"
+    '\t\t\t\t<control type="radiobutton" id="1102">\n'
+    "\t\t\t\t\t<label>Toggle Skin Settings / Games</label>\n"
+    "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+    "\t\t\t\t\t<onclick>Skin.ToggleSetting(SkinSettingsTile)</onclick>\n"
+    "\t\t\t\t\t<selected>Skin.HasSetting(SkinSettingsTile)</selected>\n"
     "\t\t\t\t</control>\n"
     '\t\t\t\t<control type="button" id="703">\n'
 )
@@ -332,6 +340,30 @@ NORMALIZE = {
     "Settings.xml": [
         ("Skin.SetBool(EnableSplashScreen)", "Skin.Reset(ShowSplashScreen)", 1),
         _runscript_rewire(2),
+        # System-page Games slot: stock Games card by default, swapped to Skin
+        # Settings by the 'Toggle Skin Settings / Games' General toggle (mutually
+        # exclusive; the grid keeps eight tiles).
+        (
+            "\t\t\t\t\t<item>\n"
+            "\t\t\t\t\t\t<label>$LOCALIZE[10035]</label>\n"
+            "\t\t\t\t\t\t<onclick>ActivateWindow(SkinSettings)</onclick>\n"
+            "\t\t\t\t\t\t<icon>icons/settings/skin.png</icon>\n"
+            "\t\t\t\t\t</item>\n",
+            "\t\t\t\t\t<item>\n"
+            "\t\t\t\t\t\t<label>$LOCALIZE[15016]</label>\n"
+            "\t\t\t\t\t\t<visible>System.GetBool(gamesgeneral.enable) + "
+            "!Skin.HasSetting(SkinSettingsTile)</visible>\n"
+            "\t\t\t\t\t\t<onclick>ActivateWindow(GameSettings)</onclick>\n"
+            "\t\t\t\t\t\t<icon>icons/settings/games.png</icon>\n"
+            "\t\t\t\t\t</item>\n"
+            "\t\t\t\t\t<item>\n"
+            "\t\t\t\t\t\t<label>$LOCALIZE[10035]</label>\n"
+            "\t\t\t\t\t\t<visible>Skin.HasSetting(SkinSettingsTile)</visible>\n"
+            "\t\t\t\t\t\t<onclick>ActivateWindow(SkinSettings)</onclick>\n"
+            "\t\t\t\t\t\t<icon>icons/settings/skin.png</icon>\n"
+            "\t\t\t\t\t</item>\n",
+            1,
+        ),
     ],
     "Includes.xml": [
         (
@@ -366,10 +398,26 @@ NORMALIZE = {
     "SkinSettings.xml": [
         _runscript_rewire(3),
         (_DEBUG_HEADER, _MEDIA_SOURCES_BLOCK + _DEBUG_HEADER, 1),
-        ("\t\t\t\t\t<onclick>RunScript(script.skinshortcuts,type=resetall)</onclick>", "\t\t\t\t\t<onclick>RunScript(special://skin/scripts/helpers.py,resetMenu)</onclick>", 1),
-        ("\t\t\t\t\t<label>$LOCALIZE[31468]</label>", "\t\t\t\t\t<label>Show labeled tiles</label>", 1),
-        ("\t\t\t\t\t<selected>!Skin.HasSetting(HideWidgetLabels)</selected>", "\t\t\t\t\t<selected>Skin.HasSetting(HideWidgetLabels)</selected>", 1),
-        ("\t\t\t\t\t<visible>!Skin.HasSetting(HideWidgetLabels)</visible>", "\t\t\t\t\t<visible>Skin.HasSetting(HideWidgetLabels)</visible>", 1),
+        (
+            "\t\t\t\t\t<onclick>RunScript(script.skinshortcuts,type=resetall)</onclick>",
+            "\t\t\t\t\t<onclick>RunScript(special://skin/scripts/helpers.py,resetMenu)</onclick>",
+            1,
+        ),
+        (
+            "\t\t\t\t\t<label>$LOCALIZE[31468]</label>",
+            "\t\t\t\t\t<label>Show labeled tiles</label>",
+            1,
+        ),
+        (
+            "\t\t\t\t\t<selected>!Skin.HasSetting(HideWidgetLabels)</selected>",
+            "\t\t\t\t\t<selected>Skin.HasSetting(HideWidgetLabels)</selected>",
+            1,
+        ),
+        (
+            "\t\t\t\t\t<visible>!Skin.HasSetting(HideWidgetLabels)</visible>",
+            "\t\t\t\t\t<visible>Skin.HasSetting(HideWidgetLabels)</visible>",
+            1,
+        ),
         (_GOLDEN_T7B_GROUPLIST, "", 1),
         (_GOLDEN_T7B_ITEM11, "", 1),
         (_GOLDEN_CATEGORY_ORDER, _FORK_CATEGORY_ORDER, 1),
