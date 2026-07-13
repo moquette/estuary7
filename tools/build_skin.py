@@ -215,6 +215,10 @@ def check_contracts(tree: Path) -> None:
             "Textures.xbt: icons/sidemenu/videos.png still bundled "
             "(shadow failed - MOD V2 film-reel would win over the loose stock icon)"
         )
+    # Payload trim must have run (keeps the install small; see TRIM_PATHS).
+    for rel in TRIM_PATHS:
+        if (tree / rel).exists():
+            problems.append("payload not trimmed: {}".format(rel))
     if problems:
         raise SystemExit("FATAL: ship contracts violated:\n  " + "\n  ".join(problems))
 
@@ -238,6 +242,38 @@ def package(tree: Path, zip_path: Path) -> None:
             zf.writestr(info, path.read_bytes())
 
 
+# Bulk MOD V2 ships that the fleet does not need. Dropping it shrinks the ~86MB
+# install (and the Apple TV's long black-screen install) by roughly two thirds.
+# Fail loud if a target vanishes (upstream drift), never silently ship bloat.
+TRIM_PATHS = (
+    # 49MB of view-layout PREVIEW thumbnails, shown only in the view picker
+    # (Custom_1131 / Skin Settings > Forced views). The picker and forced-views
+    # still work; the preview thumbnail just goes blank. Kodi's normal view
+    # switching is unaffected. Variables.xml still references these paths (now
+    # missing textures = blank), which is harmless and left stock.
+    "extras/views",
+    # 23MB font used ONLY by the unused "Arial Unicode MS" alternate fontset
+    # (the Default fontset uses NotoSans). Font.xml is left stock per the mandate
+    # ("alternates nobody runs"); that alternate fontset would render with
+    # fallback fonts if ever selected via Kodi's font picker.
+    "fonts/ArialUnicodeMS.ttf",
+)
+
+
+def trim_payload(tree: Path) -> None:
+    """Remove bulk assets the fleet does not need (TRIM_PATHS)."""
+    for rel in TRIM_PATHS:
+        target = tree / rel
+        if target.is_dir():
+            shutil.rmtree(target)
+        elif target.is_file():
+            target.unlink()
+        else:
+            raise SystemExit(
+                "FATAL: trim target missing (upstream drift): {}".format(rel)
+            )
+
+
 def build_once(lock: dict, workdir: Path) -> Path:
     tarball = ensure_tarball(lock)
     tree = extract_tree(tarball, workdir)
@@ -248,6 +284,7 @@ def build_once(lock: dict, workdir: Path) -> Path:
         )
     )
     add_assets(tree)
+    trim_payload(tree)
     check_contracts(tree)
     zip_path = workdir.parent / "{}-{}.zip".format(SKIN_ID, lock["our_version"])
     package(tree, zip_path)
