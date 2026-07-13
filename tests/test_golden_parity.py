@@ -397,6 +397,26 @@ NORMALIZE = {
             "[Window.IsVisible(shutdownmenu) + $EXP[PowerMenuList]]",
             3,
         ),
+        # System-page SettingsPanel tiles -> stock Estuary's 400-wide cell (1.0.33).
+        ('height="260" width="380"', 'height="260" width="400"', 2),
+        ("<width>390</width>", "<width>410</width>", 2),
+        (
+            "\t\t\t\t<left>15</left>\n\t\t\t\t<top>190</top>\n\t\t\t\t<width>350</width>",
+            "\t\t\t\t<left>25</left>\n\t\t\t\t<top>190</top>\n\t\t\t\t<width>350</width>",
+            1,
+        ),
+        (
+            "\t\t\t\t\t<left>15</left>\n\t\t\t\t\t<top>190</top>\n\t\t\t\t\t<width>350</width>",
+            "\t\t\t\t\t<left>25</left>\n\t\t\t\t\t<top>190</top>\n\t\t\t\t\t<width>350</width>",
+            1,
+        ),
+        (
+            "\t\t\t\t\t<top>-6</top>\n\t\t\t\t\t<left>-11</left>\n"
+            "\t\t\t\t\t<width>402</width>\n\t\t\t\t\t<height>282</height>",
+            "\t\t\t\t\t<left>-5</left>\n\t\t\t\t\t<width>410</width>\n"
+            "\t\t\t\t\t<height>270</height>",
+            2,
+        ),
     ],
     "Variables.xml": [
         (

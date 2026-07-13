@@ -619,6 +619,46 @@ def _edit_includes(text: str, path: str) -> str:
     text = _replace(text, *_THEMES_NEG, path=path, count=6)
     for old, new, count in _WEATHERINFO_INCLUDES:
         text = _replace(text, old, new, path=path, count=count)
+    # System-page tiles: match stock Estuary's 400-wide SettingsPanel cell so 4
+    # columns fill the redesigned System page's 1600 container exactly - centered,
+    # like stock. MOD V2 sized these for its 5-column 1900 layout (cell 380, bg
+    # 390, label left 15); in our 1600/4-column container that left the grid 80px
+    # short on the right AND each tile's content ~10px left of centre. Stock's
+    # values (cell 400; bg 410, which at left -5 centres in the 400 cell; label
+    # left 25) fix both. Only Settings.xml uses SettingsPanel (itemlayout at 4
+    # tabs, focusedlayout at 5), so this is contained to the System page.
+    text = _replace(
+        text, 'height="260" width="380"', 'height="260" width="400"', path=path, count=2
+    )
+    text = _replace(
+        text, "<width>390</width>", "<width>410</width>", path=path, count=2
+    )
+    text = _replace(
+        text,
+        "\t\t\t\t<left>15</left>\n\t\t\t\t<top>190</top>\n\t\t\t\t<width>350</width>",
+        "\t\t\t\t<left>25</left>\n\t\t\t\t<top>190</top>\n\t\t\t\t<width>350</width>",
+        path=path,
+    )
+    text = _replace(
+        text,
+        "\t\t\t\t\t<left>15</left>\n\t\t\t\t\t<top>190</top>\n\t\t\t\t\t<width>350</width>",
+        "\t\t\t\t\t<left>25</left>\n\t\t\t\t\t<top>190</top>\n\t\t\t\t\t<width>350</width>",
+        path=path,
+    )
+    # Focus highlight (the two focusedlayout overlays: SkinColorVar sky-blue +
+    # GradientColorVar) was sized -11/402/282 with a -6 top for MOD V2's 380 cell,
+    # so on the 400 cell it sits left, bleeds dark on the right, and reads slightly
+    # larger than the tile. Match the tile background (and stock's focus): -5/410
+    # /270, no top offset, so the highlight covers the tile exactly and centred.
+    text = _replace(
+        text,
+        "\t\t\t\t\t<top>-6</top>\n\t\t\t\t\t<left>-11</left>\n"
+        "\t\t\t\t\t<width>402</width>\n\t\t\t\t\t<height>282</height>",
+        "\t\t\t\t\t<left>-5</left>\n\t\t\t\t\t<width>410</width>\n"
+        "\t\t\t\t\t<height>270</height>",
+        path=path,
+        count=2,
+    )
     # Top-bar weather icon: the official Outline HD resource pack replaces the
     # skin-local PNG set.
     text = _replace(
