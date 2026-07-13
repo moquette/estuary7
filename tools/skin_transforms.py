@@ -819,13 +819,19 @@ def _edit_dialogbuttonmenu(text: str, path: str) -> str:
     # opening this skin's settings window. The power menu is a static list here
     # (not skinshortcuts-driven), with one <content> per display mode (panel /
     # iconlist / default); insert into all three so it leads regardless of mode.
+    # tvOS: the icon MUST be a loose special://skin file, NOT a bundle-relative
+    # Textures.xbt path. 1.0.28 used icons/settings/skin.png (bundle) here and it
+    # CRASHED Kodi on the Apple TV the instant the power menu opened (fine on
+    # macOS; ATV kodi.log showed DialogButtonMenu.xml load then a native
+    # shutdown). Every other power-menu item uses a loose
+    # special://skin/extras/icons/... file; matching that fixes it (1.0.29).
     text = _replace(
         text,
         "\t\t\t\t<content>\n",
         "\t\t\t\t<content>\n"
         "\t\t\t\t\t<item>\n"
         "\t\t\t\t\t\t<label>$LOCALIZE[10035]</label>\n"
-        "\t\t\t\t\t\t<icon>icons/settings/skin.png</icon>\n"
+        "\t\t\t\t\t\t<icon>special://skin/extras/icons/skinsettings.png</icon>\n"
         "\t\t\t\t\t\t<onclick>dialog.close(all,true)</onclick>\n"
         "\t\t\t\t\t\t<onclick>ActivateWindow(SkinSettings)</onclick>\n"
         "\t\t\t\t\t</item>\n",
