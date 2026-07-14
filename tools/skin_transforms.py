@@ -1363,6 +1363,55 @@ _SERVICES_SEED = """\
                 xbmc.log('estuary7: re-materialized %d skinshortcuts DATA file(s) orphaned in NSUserDefaults' % _healed, level=xbmc.LOGWARNING)
         except Exception as _he:
             xbmc.log('estuary7: DATA re-materialize skipped: %s' % _he, level=xbmc.LOGWARNING)
+        # --- PURGE the now-redundant NSUserDefaults keys ---
+        # A file living in BOTH layers is listed TWICE by CTVOSDirectory (it merges the POSIX
+        # listing with the keys and never dedupes, TVOSDirectory.cpp:48-106), the stale key
+        # SHADOWS the disk file for any VFS reader (CTVOSFile::Exists/Open check the key
+        # first), and it burns the tvOS defaults budget - which Apple TERMINATES the app over
+        # at 1 MB (warning at 512 KB, whole database). skinshortcuts reads its DATA with plain
+        # open(), so the key is pure liability: drop it and leave one coherent POSIX file.
+        # SAFETY (this is the dangerous part, engineered so data loss is IMPOSSIBLE):
+        # CTVOSFile::Delete removes the key, but FALLS BACK TO DELETING THE POSIX FILE if the
+        # key-delete reports failure (TVOSFile.cpp:101-111). So we (a) only ever touch a file
+        # whose POSIX copy EXISTS - never one where the key is the only copy, (b) hold its
+        # bytes in memory first, and (c) VERIFY the POSIX file survived, rewriting it from
+        # memory if the fallback fired. Only files present in BOTH layers (name listed twice
+        # by the VFS) are touched, so this is a strict no-op once clean and on every non-tvOS
+        # platform. Full model: the kodi-storage-map skill.
+        _purged = 0
+        try:
+            _dirs2, _vfs2 = xbmcvfs.listdir(_ssdir)
+            _dupes = set()
+            _once = set()
+            for _fn in _vfs2:
+                if not _fn.endswith('.DATA.xml'):
+                    continue
+                if _fn in _once:
+                    _dupes.add(_fn)
+                _once.add(_fn)
+            for _fn in sorted(_dupes):
+                _fp = os.path.join(_ssreal, _fn)
+                if not os.path.isfile(_fp):
+                    continue  # no POSIX copy: the key may be the ONLY copy - never touch it
+                with open(_fp, 'rb') as _sf:
+                    _keep = _sf.read()
+                if not _keep:
+                    continue
+                try:
+                    xbmcvfs.delete(_ssdir + _fn)
+                except Exception:
+                    pass
+                if not os.path.isfile(_fp):
+                    # the POSIX fallback fired - put the file straight back
+                    with open(_fp, 'wb') as _rw:
+                        _rw.write(_keep)
+                    xbmc.log('estuary7: key purge hit the POSIX-delete fallback; restored %s' % _fn, level=xbmc.LOGWARNING)
+                else:
+                    _purged += 1
+            if _purged:
+                xbmc.log('estuary7: purged %d redundant skinshortcuts NSUserDefaults key(s)' % _purged, level=xbmc.LOGINFO)
+        except Exception as _pe:
+            xbmc.log('estuary7: key purge skipped: %s' % _pe, level=xbmc.LOGWARNING)
         # Does the owner have a menu of their OWN (restored or hand-edited)?
         _usermenu = False
         try:
