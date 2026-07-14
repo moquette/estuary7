@@ -1370,14 +1370,23 @@ _SERVICES_SEED = """\
         # first), and it burns the tvOS defaults budget - which Apple TERMINATES the app over
         # at 1 MB (warning at 512 KB, whole database). skinshortcuts reads its DATA with plain
         # open(), so the key is pure liability: drop it and leave one coherent POSIX file.
-        # SAFETY (this is the dangerous part, engineered so data loss is IMPOSSIBLE):
-        # CTVOSFile::Delete removes the key, but FALLS BACK TO DELETING THE POSIX FILE if the
-        # key-delete reports failure (TVOSFile.cpp:101-111). So we (a) only ever touch a file
-        # whose POSIX copy EXISTS - never one where the key is the only copy, (b) hold its
-        # bytes in memory first, and (c) VERIFY the POSIX file survived, rewriting it from
-        # memory if the fallback fired. Only files present in BOTH layers (name listed twice
-        # by the VFS) are touched, so this is a strict no-op once clean and on every non-tvOS
-        # platform. Full model: the kodi-storage-map skill.
+        # SAFETY. Verified against Kodi Omega source (xbmc@f8815ee4), NOT against intuition:
+        #   CTVOSFile::Delete       -> DeleteKeyFromPath(); if (!ret) POSIX delete
+        #   DeleteKeyFromPath       -> translatePathIntoKey() succeeds for ANY path under
+        #                              userdata, then DeleteKey()
+        #   DeleteKey               -> removeObjectForKey (SILENT no-op if absent), then
+        #                              `return [defaults synchronize] == YES` -> true
+        # So ret is TRUE whether or not a key existed, and the `if (!ret)` POSIX fallback is
+        # UNREACHABLE for exactly the files CTVOSFile is dispatched for (FileFactory.cpp:117
+        # gates on WantsFile). Net rule, which no doc of ours stated correctly until now:
+        # xbmcvfs.delete() on a userdata *.xml CANNOT delete the POSIX file on tvOS - it drops
+        # the key and reports success. That is precisely what we want here, and it means the
+        # purge cannot destroy the disk copy. We still (a) only touch files whose POSIX copy
+        # EXISTS - never one where the key is the only copy, (b) hold the bytes first, and
+        # (c) re-write from memory if the file vanished anyway. (c) is now known-unreachable
+        # defence-in-depth against a future Kodi changing these semantics on us; it is cheap.
+        # Only files present in BOTH layers (name listed twice by the VFS) are touched, so this
+        # is a strict no-op once clean and on every non-tvOS platform. See: kodi-storage-map.
         _purged = 0
         try:
             _dirs2, _vfs2 = xbmcvfs.listdir(_ssdir)
@@ -1427,19 +1436,30 @@ _SERVICES_SEED = """\
         # (datafunctions.py: [user_shortcuts, skin_shortcuts, default_shortcuts]) and
         # REGENERATES their custom menu. Seeding a hash there would freeze whatever includes
         # happen to be on disk (the SHIPPED DEFAULT on a fresh/updated skin) and permanently
-        # disarm the only mechanism that can rebuild their menu. So: drop any stale hash and
-        # let skinshortcuts rebuild from THEIR data. (This also retires the old "a box that
-        # had the menu EDITED and then upgrades sees it reset to the shipped default -
-        # acceptable for the fleet" tradeoff, which is NOT acceptable now that the menu is
-        # customized.) Home.xml already defers the first build past the keep-this-skin
-        # dialog, so the fallback rebuild is harmless.
-        if _healed or _usermenu:
+        # disarm the only mechanism that can rebuild their menu.
+        #
+        # But NOT seeding is all that takes. Do NOT also DELETE their hash: that is THEIR
+        # hash from THEIR last build, and dropping it on every boot makes skinshortcuts
+        # rebuild + ReloadSkin on every boot forever (it just writes a fresh hash, which we
+        # then delete again). 1.0.36/1.0.37 did exactly that. A skin version bump does not
+        # need it either - skinshortcuts compares ::SKINVER:: in the hash ITSELF and rebuilds
+        # from the owner's DATA when it changes.
+        #
+        # The hash is dropped in exactly ONE case: we just re-materialized DATA off the keys.
+        # There the on-disk includes ARE stale - they were generated from the SHIPPED DEFAULT
+        # while the owner's DATA was invisible - so force one rebuild from the restored data.
+        # _healed is 0 on the next boot, so this is self-limiting: one rebuild, not a loop.
+        if _healed:
             try:
                 if os.path.exists(_hashfile):
                     os.remove(_hashfile)
-                    xbmc.log('estuary7: dropped stale skinshortcuts hash - rebuilding menu from the owner DATA', level=xbmc.LOGINFO)
+                    xbmc.log('estuary7: dropped stale skinshortcuts hash - rebuilding menu from the re-materialized owner DATA', level=xbmc.LOGINFO)
             except Exception:
                 pass
+            _needseed = False
+        elif _usermenu:
+            # The owner has their own menu and nothing needed healing: leave it ALONE.
+            # No seed (would freeze the shipped default), no hash drop (would rebuild forever).
             _needseed = False
         else:
             # Virgin box: seed the hash so the first launch does not rebuild + ReloadSkin.
