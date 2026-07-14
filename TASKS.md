@@ -130,6 +130,24 @@ prevention checklist:
   decision. Reordering is safe anytime: panes gate on item ids, and the
   transform is one data table (`_CATEGORY_ORDER_STOCK` in
   `tools/skin_transforms.py`).
+- **In-place "Remove this main menu item" on empty home pages** (owner wants it;
+  deferred 2026-07-13 as skinshortcuts surgery). Stock Estuary shows, on each
+  empty content panel, an `ImageWidget` call-to-action: "Enter files section" /
+  "Enter add-on browser" (`button_onclick`) PLUS "Remove this main menu item"
+  (`button2_onclick` -> `Skin.SetBool(HomeMenuNo<X>Button)`, string 31116), and
+  each stock item is gated `<visible>!Skin.HasSetting(HomeMenuNo<X>Button)`. Ours
+  keeps the ImageWidget + the "Enter files/add-on" button but sets
+  `visible_2="false"` on every block (the Remove button is hidden) and strips
+  `HomeMenuNo` entirely - because our menu is skinshortcuts-driven (container
+  9000 = `RunScript(script.skinshortcuts,buildxml)`); the stock bool would flip
+  something nothing reads and skinshortcuts would rebuild the item right back. To
+  add it for us: re-point `button2_onclick` at a skinshortcuts item removal
+  (delete the focused item from the shortcuts DATA + set reloadmainmenu + buildxml
+  via a helpers.py action, NOT the HomeMenuNo bool), re-enable `visible_2`,
+  relabel. Fragile (skinshortcuts menu surgery - the area behind the 1.0.2x reset
+  saga); do it deliberately with real-device verify. Touch points: the
+  `ImageWidget` params in `_edit_home` (`tools/skin_transforms.py`) + the
+  helpers.py reset/rebuild pattern.
 
 ## Standing constraints
 

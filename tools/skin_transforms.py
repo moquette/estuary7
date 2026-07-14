@@ -1317,34 +1317,102 @@ _SERVICES_SEED = """\
         _master = xbmcvfs.translatePath('special://masterprofile/addon_data/script.skinshortcuts/')
         _hashfile = os.path.join(_master, '%s.hash' % _skindir)
         _inc = xbmcvfs.translatePath('special://skin/xml/script-skinshortcuts-includes.xml')
-        # Seed when the shipped includes exist AND (no hash yet, OR the existing
-        # hash was written by a DIFFERENT Estuary 7 version). A stale hash from an
-        # upgrade/reinstall (every box that ever ran an older Estuary 7 has one)
-        # would otherwise block the seed, so the first launch would rebuild +
-        # ReloadSkin - the flash/revert we are killing. The hash only ever carries
-        # over from OUR own prior version; reseeding to the current shipped stock
-        # menu is exactly what a fresh install wants. Tradeoff: a box that had the
-        # menu EDITED and then upgrades sees it reset to the shipped default rather
-        # than a rebuild - acceptable for the fleet (fixed stock menu, fresh per-box
-        # installs). The reset helper deletes the includes (isfile False here) and
-        # sets reloadmainmenu, so this never fights the reset path.
-        _needseed = False
-        if os.path.isfile(_inc):
-            if not os.path.exists(_hashfile):
-                _needseed = True
-            else:
+        # --- SELF-HEAL (tvOS): re-materialize menu DATA orphaned in NSUserDefaults ---
+        # An EZ Maintenance++ restore (<= 2026.07.13.6) vectored EVERY userdata *.xml into
+        # NSUserDefaults and then DELETED the POSIX copy. skinshortcuts reads its
+        # *.DATA.xml with plain open() while GUARDING with xbmcvfs.exists() - and on tvOS
+        # CTVOSFile::Exists checks the NSUserDefaults key FIRST (TVOSFile.cpp:113-122), so
+        # the guard passes, ElementTree's plain open() then raises, skinshortcuts swallows
+        # it and falls through to the SKIN'S SHIPPED DEFAULT menu. The owner's customized
+        # menu silently reverts to the full stock menu on every restore.
+        # The bytes are NOT lost - they are in the key. xbmcvfs.listdir is the only API that
+        # surfaces them (CTVOSDirectory merges the POSIX listing with the keys), so read each
+        # orphan back THROUGH xbmcvfs and write it to disk with plain open() - the API
+        # skinshortcuts actually reads with. Entered ONLY when the POSIX file is missing AND
+        # the VFS can still see it: unreachable on Fire TV / desktop and on a healthy Apple
+        # TV, so a strict no-op everywhere else. Full model: the kodi-storage-map skill.
+        _healed = 0
+        _ssdir = 'special://profile/addon_data/script.skinshortcuts/'
+        _ssreal = xbmcvfs.translatePath(_ssdir)
+        try:
+            _dirs, _vfsfiles = xbmcvfs.listdir(_ssdir)
+            for _fn in _vfsfiles:
+                if not _fn.endswith('.DATA.xml'):
+                    continue
+                _fp = os.path.join(_ssreal, _fn)
+                if os.path.isfile(_fp):
+                    continue
+                _rf = None
                 try:
-                    with open(_hashfile) as _oh:
-                        _old = json.load(_oh)
-                    _oldver = None
-                    for _e in _old:
-                        if _e and _e[0] == '::SKINVER::':
-                            _oldver = _e[1] if len(_e) > 1 else None
-                            break
-                    if _oldver != _skinver:
-                        _needseed = True
-                except Exception:
+                    _rf = xbmcvfs.File(_ssdir + _fn)
+                    _bytes = _rf.readBytes()
+                finally:
+                    try:
+                        if _rf is not None:
+                            _rf.close()
+                    except Exception:
+                        pass
+                if not _bytes:
+                    continue
+                if not os.path.isdir(_ssreal):
+                    os.makedirs(_ssreal)
+                with open(_fp, 'wb') as _out:
+                    _out.write(bytes(_bytes))
+                _healed += 1
+            if _healed:
+                xbmc.log('estuary7: re-materialized %d skinshortcuts DATA file(s) orphaned in NSUserDefaults' % _healed, level=xbmc.LOGWARNING)
+        except Exception as _he:
+            xbmc.log('estuary7: DATA re-materialize skipped: %s' % _he, level=xbmc.LOGWARNING)
+        # Does the owner have a menu of their OWN (restored or hand-edited)?
+        _usermenu = False
+        try:
+            for _fn in os.listdir(_ssreal):
+                if _fn.endswith('.DATA.xml'):
+                    _usermenu = True
+                    break
+        except Exception:
+            _usermenu = False
+        # The seed exists ONLY to kill the first-launch rebuild+ReloadSkin flash on a VIRGIN
+        # box - and a virgin box has NO user DATA by definition. If the owner HAS a menu, we
+        # must NOT suppress the rebuild: a rebuild READS the owner's DATA first
+        # (datafunctions.py: [user_shortcuts, skin_shortcuts, default_shortcuts]) and
+        # REGENERATES their custom menu. Seeding a hash there would freeze whatever includes
+        # happen to be on disk (the SHIPPED DEFAULT on a fresh/updated skin) and permanently
+        # disarm the only mechanism that can rebuild their menu. So: drop any stale hash and
+        # let skinshortcuts rebuild from THEIR data. (This also retires the old "a box that
+        # had the menu EDITED and then upgrades sees it reset to the shipped default -
+        # acceptable for the fleet" tradeoff, which is NOT acceptable now that the menu is
+        # customized.) Home.xml already defers the first build past the keep-this-skin
+        # dialog, so the fallback rebuild is harmless.
+        if _healed or _usermenu:
+            try:
+                if os.path.exists(_hashfile):
+                    os.remove(_hashfile)
+                    xbmc.log('estuary7: dropped stale skinshortcuts hash - rebuilding menu from the owner DATA', level=xbmc.LOGINFO)
+            except Exception:
+                pass
+            _needseed = False
+        else:
+            # Virgin box: seed the hash so the first launch does not rebuild + ReloadSkin.
+            # The reset helper deletes the includes (isfile False here), so this never
+            # fights the reset path.
+            _needseed = False
+            if os.path.isfile(_inc):
+                if not os.path.exists(_hashfile):
                     _needseed = True
+                else:
+                    try:
+                        with open(_hashfile) as _oh:
+                            _old = json.load(_oh)
+                        _oldver = None
+                        for _e in _old:
+                            if _e and _e[0] == '::SKINVER::':
+                                _oldver = _e[1] if len(_e) > 1 else None
+                                break
+                        if _oldver != _skinver:
+                            _needseed = True
+                    except Exception:
+                        _needseed = True
         if _needseed:
             _ssa = xbmcaddon.Addon('script.skinshortcuts')
             def _t7b_md5(_p):
