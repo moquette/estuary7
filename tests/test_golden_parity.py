@@ -392,6 +392,29 @@ NORMALIZE = {
         ),
         ("!Skin.HasSetting(DisableThemes)", "Skin.HasSetting(EnableThemes)", 6),
         ("Skin.HasSetting(show_weatherinfo)", "!Skin.HasSetting(hide_weatherinfo)", 3),
+        # 1.0.40: the finish-time flag groups drop upstream's plugin-window
+        # suppression so the flag bar matches Home inside widget "More"
+        # lists (all four end-time groups; no other flag carried the term).
+        ("!String.StartsWith(Container.FolderPath,plugin://) + ", "", 4),
+        # 1.0.40: the media-flags rating badge gains the show_tmdbflag gate
+        # its toggle always claimed (upstream forgot it; only the spacer
+        # honored it) - both logo variants.
+        (
+            '<param name="visible" value="!Skin.HasSetting(use_imdblogo) + '
+            "!String.IsEqual($PARAM[infolabel_prefix]ListItem.DBType,album)",
+            '<param name="visible" value="!Skin.HasSetting(show_tmdbflag) + '
+            "!Skin.HasSetting(use_imdblogo) + "
+            "!String.IsEqual($PARAM[infolabel_prefix]ListItem.DBType,album)",
+            1,
+        ),
+        (
+            '<param name="visible" value="Skin.HasSetting(use_imdblogo) + '
+            "!String.IsEqual($PARAM[infolabel_prefix]ListItem.DBType,album)",
+            '<param name="visible" value="!Skin.HasSetting(show_tmdbflag) + '
+            "Skin.HasSetting(use_imdblogo) + "
+            "!String.IsEqual($PARAM[infolabel_prefix]ListItem.DBType,album)",
+            1,
+        ),
         (
             "[Window.IsVisible(shutdownmenu) + Skin.HasSetting(powermenu_list)]",
             "[Window.IsVisible(shutdownmenu) + $EXP[PowerMenuList]]",

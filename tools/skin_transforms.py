@@ -698,6 +698,40 @@ def _edit_includes(text: str, path: str) -> str:
         path=path,
         count=3,
     )
+    # The finish-time flag is hard-suppressed in plugin-browsed windows
+    # (owner-caught 2026-07-15: home widgets showed duration + finish + date,
+    # the same item's "More" plugin list dropped the finish badge). Upstream
+    # bolted !String.StartsWith(Container.FolderPath,plugin://) onto all four
+    # end-time flag groups (short + AM/PM variants in MediaFlags and
+    # MediaFlagsInfoDialogRight) - no other flag has it, so the bar goes
+    # inconsistent the moment a widget's list opens. Drop the term; the
+    # groups keep their real gates (end-time present, not a folder, the
+    # show_mediaendtimeflag opt-out). The View_*/Variables plugin:// sites
+    # gate unrelated features (spoiler plots, artist variants) and stay.
+    text = _replace(
+        text,
+        "!String.StartsWith(Container.FolderPath,plugin://) + ",
+        "",
+        path=path,
+        count=4,
+    )
+    # The media-flags bar's TMDB/IMDb rating badge ignores its own toggle
+    # (upstream bug, owner-caught on the bench 2026-07-15): the flags dialog
+    # (Custom_1137) writes show_tmdbflag and every OTHER flag checks its
+    # setting, but the two rating MediaFlag sites never got the term - only
+    # the 5px spacer beside them honors it. Add the gate so "TMDB rating"
+    # off actually hides the badge, both logo variants.
+    for prefix in ("!Skin.HasSetting(use_imdblogo)", "Skin.HasSetting(use_imdblogo)"):
+        text = _replace(
+            text,
+            '<param name="visible" value="' + prefix + " + "
+            "!String.IsEqual($PARAM[infolabel_prefix]ListItem.DBType,album)",
+            '<param name="visible" value="!Skin.HasSetting(show_tmdbflag) + '
+            + prefix
+            + " + !String.IsEqual($PARAM[infolabel_prefix]ListItem.DBType,album)",
+            path=path,
+            count=1,
+        )
     return text
 
 
@@ -1157,6 +1191,163 @@ def _strip_home_header_bullets(text: str, path: str) -> str:
     return text
 
 
+# Home widget tiles, labeled mode (owner request 2026-07-15): poster items
+# render the CLEAN full poster with a label BELOW it. Upstream's generic
+# 'Widget' include - the include every skinshortcuts home widget row on the
+# fleet instantiates - stacks InfoWallMovieLayout (full-bleed poster) UNDER
+# the labeled InfoWallMusicLayout chrome in its itemlayout (its own
+# focusedlayout and WidgetListPoster gate that pair mutually exclusively; the
+# itemlayout forgot the condition). Labeled mode therefore drew a poster with
+# a second square-fit copy and dark side bars superimposed - invisible on
+# upstream's unlabeled default, exposed by our labeled default, and
+# owner-rejected on the bench. Even with the stack fixed, the intended
+# labeled design (InfoWallMusicLayout alone) is a square-fit thumb with dark
+# side bars - also owner-rejected for posters. The fork instead splits the
+# labeled tile PER ITEM: poster-art items get InfoWallMovieLayout's poster
+# plus a fork-authored label under it; no-poster items (music, genres,
+# categories) keep the stock square look byte-for-byte. The split rides
+# <control type="group"> visibility, NEVER include conditions - Kodi resolves
+# include conditions once at window load with no item context (the withdrawn
+# first 1.0.40 attempt's hardware lesson, see TASKS.md).
+_POSTER_EMPTY = (
+    "[String.IsEmpty(ListItem.Art(poster)) + "
+    "String.IsEmpty(ListItem.Art(tvshow.poster)) + "
+    "String.IsEmpty(ListItem.Art(season.poster)) + "
+    "String.IsEmpty(ListItem.Art(animatedposter))]"
+)
+
+# The upstream labeled-mode include run of the 486-tall widget layouts
+# (generic Widget + WidgetListPoster; WidgetPanelPoster's focused run is
+# excluded by anchoring on the Animation_FocusBounce line, see below).
+_ANIM_BOUNCE_LINE = (
+    '\t\t\t\t\t\t<include content="Animation_FocusBounce" '
+    'condition="!Skin.HasSetting(no_animations)" />\n'
+)
+
+
+def _widget_movie_include(focused: bool, condition: str = "") -> str:
+    cond = ' condition="{}"'.format(condition) if condition else ""
+    return (
+        '\t\t\t\t\t\t<include content="InfoWallMovieLayout"{}>\n'
+        '\t\t\t\t\t\t\t<param name="focused" value="{}" />\n'
+        "\t\t\t\t\t\t</include>\n".format(cond, "true" if focused else "false")
+    )
+
+
+def _widget_labeled_run(focused: bool) -> str:
+    f = "true" if focused else "false"
+    return (
+        '\t\t\t\t\t\t<include content="InfoWallMusicLayout" condition="Skin.HasSetting(HideWidgetLabels) + Skin.HasSetting(hide_pubyear)">\n'
+        '\t\t\t\t\t\t\t<param name="single_label" value="$VAR[ListLabelVar]$INFO[ListItem.Year, (,)]" />\n'
+        '\t\t\t\t\t\t\t<param name="focused" value="' + f + '" />\n'
+        '\t\t\t\t\t\t\t<param name="fallback_image" value="$PARAM[fallback_icon]" />\n'
+        "\t\t\t\t\t\t</include>\n"
+        '\t\t\t\t\t\t<include content="InfoWallMusicLayout" condition="Skin.HasSetting(HideWidgetLabels) + !Skin.HasSetting(hide_pubyear)">\n'
+        '\t\t\t\t\t\t\t<param name="single_label" value="$VAR[ListLabelVar]" />\n'
+        '\t\t\t\t\t\t\t<param name="focused" value="' + f + '" />\n'
+        '\t\t\t\t\t\t\t<param name="fallback_image" value="$PARAM[fallback_icon]" />\n'
+        "\t\t\t\t\t\t</include>\n"
+        '\t\t\t\t\t\t<include content="InfoWallProgressLayout" condition="Skin.HasSetting(HideWidgetLabels)">\n'
+        '\t\t\t\t\t\t\t<param name="top" value="350" />\n'
+        '\t\t\t\t\t\t\t<param name="top_2" value="378" />\n'
+        '\t\t\t\t\t\t\t<param name="left" value="20" />\n'
+        '\t\t\t\t\t\t\t<param name="width" value="275" />\n'
+        "\t\t\t\t\t\t</include>\n"
+    )
+
+
+def _widget_poster_label(focused: bool, with_year: bool) -> str:
+    # Mirrors InfoWallMusicLayout's tile label (font12, centered, year
+    # appended per the same hide_pubyear split) at the STOCK vertical
+    # position - the bottom band of the tile (bench-compared screenshots:
+    # the old label center sat at y~330). The poster fills the tile
+    # (visible art 35..285 x 10..370, bordersize 20 off 15/-10/290x400), so
+    # the label rides ON its bottom 70px over the fade texture
+    # InfoWallMovieLayout already uses for its episode-count band.
+    return (
+        '\t\t\t\t\t\t<control type="textbox">\n'
+        "\t\t\t\t\t\t\t<left>35</left>\n"
+        "\t\t\t\t\t\t\t<top>300</top>\n"
+        "\t\t\t\t\t\t\t<width>250</width>\n"
+        "\t\t\t\t\t\t\t<height>70</height>\n"
+        "\t\t\t\t\t\t\t<font>font12</font>\n"
+        "\t\t\t\t\t\t\t<align>center</align>\n"
+        "\t\t\t\t\t\t\t<aligny>center</aligny>\n"
+        "\t\t\t\t\t\t\t<label>$VAR[ListLabelVar]{}</label>\n".format(
+            "$INFO[ListItem.Year, (,)]" if with_year else ""
+        )
+        + (
+            '\t\t\t\t\t\t\t<autoscroll delay="1000" time="1000" repeat="1000">true</autoscroll>\n'
+            if focused
+            else ""
+        )
+        + "\t\t\t\t\t\t\t<visible>!"
+        + _POSTER_EMPTY
+        + "</visible>\n"
+        "\t\t\t\t\t\t\t<visible>Skin.HasSetting(HideWidgetLabels) + "
+        + ("" if with_year else "!")
+        + "Skin.HasSetting(hide_pubyear)</visible>\n"
+        "\t\t\t\t\t\t</control>\n"
+    )
+
+
+def _widget_poster_label_fade() -> str:
+    # The dark fade band the label sits on (the texture InfoWallMovieLayout
+    # uses for its episode-count band, full strength and taller per owner
+    # taste 2026-07-15), spanning the drawn poster width so it reads as part
+    # of the artwork. The label textbox sits in its lower 70px.
+    return (
+        '\t\t\t\t\t\t<control type="image">\n'
+        "\t\t\t\t\t\t\t<left>35</left>\n"
+        "\t\t\t\t\t\t\t<top>220</top>\n"
+        "\t\t\t\t\t\t\t<width>250</width>\n"
+        "\t\t\t\t\t\t\t<height>150</height>\n"
+        "\t\t\t\t\t\t\t<texture>overlays/overlayfade.png</texture>\n"
+        "\t\t\t\t\t\t\t<visible>!" + _POSTER_EMPTY + "</visible>\n"
+        "\t\t\t\t\t\t\t<visible>Skin.HasSetting(HideWidgetLabels)</visible>\n"
+        "\t\t\t\t\t\t</control>\n"
+    )
+
+
+def _widget_poster_label_fix(text: str, focused: bool, *, path: str) -> str:
+    """Wrap the labeled square chrome in a per-item no-poster group and add
+    the poster labels. Anchored on the exact upstream run; count=2 = the
+    generic Widget + WidgetListPoster layouts."""
+    run = _widget_labeled_run(focused)
+    wrapped = (
+        '\t\t\t\t\t\t<control type="group">\n'
+        "\t\t\t\t\t\t\t<visible>"
+        + _POSTER_EMPTY
+        + "</visible>\n"
+        + run
+        + "\t\t\t\t\t\t</control>\n"
+        + _widget_poster_label_fade()
+        + _widget_poster_label(focused, True)
+        + _widget_poster_label(focused, False)
+    )
+    if focused:
+        # The focused layouts' labeled mode dropped InfoWallMovieLayout via a
+        # load-time include condition; poster items need it back. Add it in a
+        # per-item poster-present group; the Animation_FocusBounce anchor
+        # scopes the edit to Widget/WidgetListPoster (WidgetPanelPoster uses
+        # a raw <animation> block and keeps its stock focused design).
+        movie = _widget_movie_include(True, "!Skin.HasSetting(HideWidgetLabels)")
+        old = _ANIM_BOUNCE_LINE + movie + run
+        new = (
+            _ANIM_BOUNCE_LINE
+            + movie
+            + '\t\t\t\t\t\t<control type="group">\n'
+            + "\t\t\t\t\t\t\t<visible>!"
+            + _POSTER_EMPTY
+            + "</visible>\n"
+            + _widget_movie_include(True, "Skin.HasSetting(HideWidgetLabels)")
+            + "\t\t\t\t\t\t</control>\n"
+            + wrapped
+        )
+        return _replace(text, old, new, path=path, count=2)
+    return _replace(text, run, wrapped, path=path, count=2)
+
+
 def _edit_includes_home(text: str, path: str) -> str:
     # Weather-icon fallback (no pack chosen) -> the Outline HD pack.
     text = _replace(
@@ -1165,6 +1356,26 @@ def _edit_includes_home(text: str, path: str) -> str:
         "resource://resource.images.weathericons.outline-hd/",
         path=path,
         count=4,
+    )
+    # Labeled poster tiles: clean poster + label, per item (see _POSTER_EMPTY
+    # block comment). Focused first: its anchor contains the unfocused run's
+    # sibling bytes, so ordering keeps both counts exact.
+    text = _widget_poster_label_fix(text, True, path=path)
+    text = _widget_poster_label_fix(text, False, path=path)
+    # WidgetListPoster's itemlayout gates InfoWallMovieLayout behind the
+    # unlabeled mode (a load-time include condition); drop the condition so
+    # poster items render their poster in labeled mode too. The include
+    # self-gates per item on poster art, exactly like the generic Widget
+    # itemlayout, whose InfoWallMovieLayout upstream already ships
+    # unconditioned. No-poster items keep the square chrome drawn OVER the
+    # icon fallback - the same stock stacking the generic Widget has always
+    # had.
+    text = _replace(
+        text,
+        _widget_movie_include(False, "!Skin.HasSetting(HideWidgetLabels)"),
+        _widget_movie_include(False),
+        path=path,
+        count=1,
     )
     return _strip_home_header_bullets(text, path)
 

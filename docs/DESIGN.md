@@ -125,6 +125,27 @@ revert toward stock - flag it during transform work, ask the owner:
   opacity) rather than stock's logo. Beyond stock parity, the splash masks the
   rare fallback where the first-launch skinshortcuts rebuild+reload still fires
   (see docs/PLAN.md 1.0.32: the hash seed normally prevents it).
+- Labeled home widget tiles: poster items render POSTER + LABEL (owner
+  directive 2026-07-15, bench-verified same day, 1.0.40). MOD V2's labeled
+  tile design (InfoWallMusicLayout) is a square-fit thumb over a dark panel -
+  a portrait poster fit into that square leaves dark side bars, and the
+  generic 'Widget' include's itemlayout ALSO stacked it on top of
+  InfoWallMovieLayout's full-bleed poster (upstream forgot the mutually
+  exclusive condition its own focusedlayout and WidgetListPoster carry) - so
+  our labeled default shipped a "double poster with side bars" the owner
+  rejected. The fork splits the labeled tile PER ITEM in the generic Widget
+  and WidgetListPoster layouts: items WITH poster art draw
+  InfoWallMovieLayout's clean poster with the label riding the poster's
+  bottom 70px (font12, year per the stock hide_pubyear split) on a dark fade
+  band (overlays/overlayfade.png full strength, 150px tall, spanning the
+  drawn poster width - darker and taller than InfoWallMovieLayout's
+  episode-count band per owner taste, bench-tuned 2026-07-15); items WITHOUT
+  (music, genres, categories) keep the stock square look byte-for-byte.
+  WidgetPanelPoster keeps its stock design (labels on focus only, no
+  stacking bug). ENGINEERING RULE (hardware-learned, see TASKS.md 1.0.40):
+  the per-item split rides `<control type="group">` visibility - NEVER
+  include conditions, which Kodi resolves once at window load with no item
+  context.
 - MOD V2's FUNCTIONAL mods (PVR integration, widgets, custom windows) stay -
   the mandate is about look and feel, not features
 

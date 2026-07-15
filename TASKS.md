@@ -115,7 +115,7 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.39 (current: 1.0.39)
+## Post-launch hardening, 1.0.28-1.0.40 (current: 1.0.40 built + gated; 1.0.39 is the newest on hardware)
 
 Bench-driven fixes shipped after the 1.0.1 stock-alignment round, none yet a
 formal PLAN.md phase (Phase 5 fleet migration has not started - these all
@@ -212,6 +212,100 @@ landed on the bench box(es) ahead of it). In order:
   the file-browser dialog serves stale in-memory directory listings for
   already-browsed NFS paths - drop new zips into a not-yet-browsed subfolder
   (`apps/`) or reboot Kodi first.
+- **1.0.40 (2026-07-15) - HARDWARE FAIL, WITHDRAWN SAME DAY (never released;
+  nothing committed)** - first attempt at the owner-requested "Show labeled
+  tiles" sub-option "Do not apply labels to Movies & TV Shows" (radiobutton
+  1103 below the PVR-info sub-option, visible only while the parent is on).
+  The attempt made label visibility PER-ITEM: a new `$EXP[tile_unlabeled]`
+  (global flag OR sub-toggle + ListItem.DBType in movie/set/tvshow/season/
+  episode) textually swapped into all 496 layout sites reading
+  `Skin.HasSetting(hide_tile_labels)`. All local gates were green (100 tests,
+  golden parity mirrored, determinism) but it FAILED on the office Fire TV:
+  with the sub-toggle on, movie tiles dropped the label but kept the LABELED
+  art geometry - a smaller inset thumb with dark side borders superimposed on
+  the poster (owner-observed + screencap-confirmed). ROOT CAUSE: upstream
+  gates labeled-vs-unlabeled through THREE mechanisms - control `<visible>`
+  (re-evaluated per item, per frame), itemlayout/focusedlayout `condition`
+  attributes, and `<include condition>` (resolved ONCE at window load with NO
+  ListItem context). A per-item expression can only ever flip the first kind,
+  so the DBType terms were false at the structural sites (include picks the
+  labeled InfoWallMusicLayout in e.g. WidgetPanelPoster's focusedlayout) while
+  the per-item sites flipped - one tile rendered a MIX of both modes. LESSON:
+  any skin-setting condition that upstream uses inside `<include condition>`
+  can never become per-item; scoping must stay STATIC (whole-widget), decided
+  per widget-layout include, not per tile. Bench box rolled back to the 1.0.39
+  xml set same hour (adb push + restart, JSON-RPC-confirmed 1.0.39, screencap
+  parity); the orphaned `hide_video_tile_labels` guisettings bool is inert
+  under 1.0.39. SUPERSEDED same day: on seeing the bench, the owner redefined
+  the ask - keep the labels, kill the "double poster" and the dark side bars
+  (see the second 1.0.40 entry below). The sub-toggle work was fully reverted
+  (git checkout; no remnants, guarded by the new end-state test).
+- **1.0.40 (2026-07-15, second take) - LABELED POSTER TILES FIXED, BENCH-
+  VERIFIED SAME DAY (not yet committed/released)** - owner redefined the ask
+  after the withdrawn sub-toggle attempt: keep labels, remove the doubled
+  poster and the dark side bars on home widget tiles. DIAGNOSIS (bench,
+  screencap + JSON-RPC art dump): every widget row on the box instantiates
+  the generic 'Widget' include (skinshortcuts personal-widget rows; POV
+  plugin items DO carry poster art), whose ITEMLAYOUT stacks
+  InfoWallMovieLayout (full-bleed poster) under the labeled
+  InfoWallMusicLayout chrome - upstream forgot the mutually exclusive
+  condition its own focusedlayout and WidgetListPoster carry. And the
+  intended labeled design itself is a 316x316 aspect-keep thumb over a dark
+  panel: portrait posters get dark side bars. Both owner-rejected. FIX
+  (tools/skin_transforms.py, `_edit_includes_home`): in the generic Widget +
+  WidgetListPoster 486 layouts, wrap the InfoWallMusicLayout/Progress run in
+  a per-item group visible only when ALL poster art keys are empty (the same
+  split InfoWallMovieLayout uses internally), add a fork label riding the
+  poster's bottom 70px (font12 textbox at top 300, year per the stock
+  hide_pubyear pair) on a dark fade band (overlays/overlayfade.png, full
+  strength, 150px tall at top 220 - owner-tuned live on the bench: 70 CC ->
+  100 FF -> 150 FF), restore InfoWallMovieLayout to labeled focusedlayouts
+  via a per-item poster-present group, and drop WidgetListPoster's
+  itemlayout load-time condition (the include self-gates on art). WidgetPanelPoster
+  untouched (no stacking bug; Animation_FocusBounce anchor excludes it).
+  Music/genre/category tiles byte-identical. Per-item logic rides GROUP
+  VISIBILITY ONLY - the first take's include-condition lesson. Ship delta vs
+  1.0.39: Includes_Home.xml + addon.xml only. Gates: 100 tests (new
+  test_labeled_poster_tiles_render_poster_plus_label end-state contract) +
+  determinism green. Bench-verified on the office Fire TV (adb push +
+  restart, JSON-RPC 1.0.40 confirmed, screencaps each round): POV movie rows
+  render clean single posters, label on the fade band at the poster bottom,
+  focused tile = poster + focus frame + label, no doubling, no side bars;
+  owner watched live and tuned the fade twice ("nice!"). Pending: owner
+  sign-off on the final fade height, then commit + release.
+- **1.0.40 also fixes: rating badge ignored its toggle (2026-07-15,
+  bench-verified)** - the owner disabled every media flag, yet a lone TMDB
+  rating badge kept rendering at the screen corner on focused home tiles.
+  Upstream bug: the flags dialog (Custom_1137) writes `show_tmdbflag` and
+  every other flag in the MediaFlags bar checks its own opt-out setting, but
+  the two rating MediaFlag sites (flags/tmdb.png + the use_imdblogo
+  variant, Includes.xml) never got the term - ONLY the 5px spacer beside
+  them honors it. Fix: `_edit_includes` prepends
+  `!Skin.HasSetting(show_tmdbflag)` to both visible params; golden parity
+  mirrors the pair. Verified live: badge gone with a POV tile focused.
+  FLAGGED upstream typos found during diagnosis (not fixed, candidates for
+  a later round): Custom_1137 line ~107 `!Skin.HasSetting(show_tmdbflag`
+  (missing paren, breaks the use_imdblogo sub-toggle's visibility),
+  Includes.xml `Skin.HasSetting(cinfodialog_rating)` (stray 'c' - the info
+  dialog's tmdb rating reads a never-set flag), DialogFullScreenInfo
+  `...AudioChannels)<"` (stray '<' in a visible param). The PVR widget bar's
+  tmdb badge also lacks the show_tmdbflag gate (PVR items - separate site,
+  not part of this fix).
+- **1.0.40 also fixes: finish-time flag vanished in widget "More" lists
+  (2026-07-15, bench-verified)** - with duration + aired-date + finish-time
+  flags enabled, Home showed all three on a focused tile but the same
+  widget's "More" plugin list showed only duration + date. Upstream bolted
+  `!String.StartsWith(Container.FolderPath,plugin://)` onto ALL FOUR
+  end-time flag groups (short + AM/PM variants in MediaFlags and
+  MediaFlagsInfoDialogRight, Includes.xml) - no other flag carries it, so
+  the bar goes inconsistent inside any plugin-browsed window. Fix:
+  `_edit_includes` drops the term (count=4); the groups keep their real
+  gates (end-time present, not a folder, show_mediaendtimeflag). Audited
+  the other 27 plugin:// sites (View_54/503/504/505/506/507/53, Variables,
+  DialogVideoInfo): all gate UNRELATED features (spoiler plots, artist
+  variants, per-view panels) - untouched. Golden parity mirrors the pair.
+  Verified live: POV Trending list now shows 1h51 / finish 1:20 PM /
+  05/27/2026, matching Home.
 
 ## Bench state (Office Fire TV 192.168.7.162)
 
@@ -228,6 +322,14 @@ landed on the bench box(es) ahead of it). In order:
   `script.ezmaintenanceplusplus` 2026.07.14.1.
 
 ## Deferred / revisit later
+
+- **Labeled poster-tile look (1.0.40) - REVISIT (owner, 2026-07-15).** The
+  poster+label-on-fade design is live on the office bench (fade at top 220,
+  150px, full strength) and the owner paused tuning there ("let's pause for
+  a moment here but make it a task to revisit this again"). Revisit the fade
+  height/strength and overall tile look with the owner before cutting the
+  1.0.40 release; the build, tests, and bench deploy loop are all in place
+  (see the second 1.0.40 entry above - one-minute iteration cycle).
 
 - **Phase 4/5 MUST handle the proxy's 1h manifest cache** (learned on the ATV
   2026-07-10): the proxy service caches its GENERATED addons.xml for an hour
