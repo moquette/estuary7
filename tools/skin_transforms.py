@@ -72,6 +72,29 @@ def _insert_after(text: str, anchor: str, insertion: str, *, path: str) -> str:
     return _replace(text, anchor, anchor + insertion, path=path)
 
 
+def _delete_block(text: str, first: str, last: str, *, path: str) -> str:
+    """Delete the span from ``first`` through ``last`` inclusive. Both anchors
+    must occur exactly once and in order - same fail-loud contract as
+    _replace, for blocks too large to embed as a full literal."""
+    for anchor in (first, last):
+        found = text.count(anchor)
+        if found != 1:
+            raise TransformError(
+                "{}: block anchor occurs {}x, expected 1x: {!r}".format(
+                    path, found, anchor[:120]
+                )
+            )
+    start = text.index(first)
+    end = text.index(last)
+    if end < start:
+        raise TransformError(
+            "{}: block anchors out of order: {!r} .. {!r}".format(
+                path, first[:60], last[:60]
+            )
+        )
+    return text[:start] + text[end + len(last) :]
+
+
 # ---------------------------------------------------------------------------
 # 5. Baked defaults - the retired overlay's apply_skin_settings(), as XML.
 #
@@ -678,7 +701,22 @@ def _edit_includes(text: str, path: str) -> str:
     return text
 
 
+# The view-picker dialog's image-lookup variable: 89 focus-conditioned
+# extras/views thumbnail paths plus the themes/splash.png fallthrough. Dead
+# once _edit_includes_mediamenu unreaches Custom_1131; deleting it removes the
+# skin's last reference to the trimmed extras/views AND to the MOD V2 splash
+# art. Public (not _-prefixed): test_golden_parity applies the same deletion
+# to normalize the golden.
+_VIEWS_VAR_FIRST = '\t<variable name="SettingsViewsImagesVar">\n'
+_VIEWS_VAR_LAST = "\t\t<value>themes/splash.png</value>\n\t</variable>\n"
+
+
+def drop_settings_views_variable(text: str, *, path: str = "xml/Variables.xml") -> str:
+    return _delete_block(text, _VIEWS_VAR_FIRST, _VIEWS_VAR_LAST, path=path)
+
+
 def _edit_variables(text: str, path: str) -> str:
+    text = drop_settings_views_variable(text, path=path)
     # Plain Power/Settings/Search backgrounds by default.
     for flag in _BACKGROUND_FLAGS:
         text = _replace(
@@ -859,8 +897,58 @@ _LOGO_MEDIAMENU = (
 )
 
 
+# MOD V2 splits stock Estuary's single Viewtype button into a pair: 6051 keeps
+# the stock Container.NextViewMode cycle for non-library content, 60511 opens
+# the custom view-picker dialog (Custom_1131) for library content. The picker
+# existed to show preview thumbnails (extras/views, 49MB) that this build
+# trims, leaving it rendering its MOD V2 splash-art fallback instead (owner
+# report 2026-07-15). Restore the stock button - one Viewtype entry, label
+# 31023, cycle on click (THE FIRST MANDATE) - so the dialog is unreachable;
+# build_skin.py TRIM_PATHS then drops the dialog XML and the splash art, and
+# _edit_variables drops the picker's dead image-lookup variable.
+_VIEW_BUTTONS_MODV2 = (
+    '\t\t\t<control type="button" id="6051">\n'
+    "\t\t\t\t<include>MediaMenuItemsCommon</include>\n"
+    "\t\t\t\t<label>$LOCALIZE[31347]</label>\n"
+    "\t\t\t\t<label2>[B]$INFO[Container.Viewmode][/B]</label2>\n"
+    "\t\t\t\t<visible>Integer.IsGreater(Container.ViewCount,1)</visible>\n"
+    "\t\t\t\t<onclick>Container.NextViewMode</onclick>\n"
+    "\t\t\t\t<visible>!Container.Content(movies) + !Container.Content(sets) + "
+    "!Container.Content(tvshows) + !Container.Content(seasons) + "
+    "!Container.Content(episodes) + !Container.Content(musicvideos) + "
+    "!Container.Content(artists) + !Container.Content(albums) + "
+    "!Container.Content(images)</visible>\n"
+    "\t\t\t</control>\n"
+    '\t\t\t<control type="button" id="60511">\n'
+    "\t\t\t\t<include>MediaMenuItemsCommon</include>\n"
+    "\t\t\t\t<label>$LOCALIZE[31347]</label>\n"
+    "\t\t\t\t<label2>[B]$INFO[Container.Viewmode][/B]</label2>\n"
+    "\t\t\t\t<visible>Integer.IsGreater(Container.ViewCount,1)</visible>\n"
+    "\t\t\t\t<onclick>SetFocus(50)</onclick>\n"
+    "\t\t\t\t<onclick>ActivateWindow(1131)</onclick>\n"
+    "\t\t\t\t<visible>Container.Content(movies) | Container.Content(sets) | "
+    "Container.Content(tvshows) | Container.Content(seasons) | "
+    "Container.Content(episodes) | Container.Content(musicvideos) | "
+    "Container.Content(artists) | Container.Content(albums) | "
+    "Container.Content(images)</visible>\n"
+    "\t\t\t</control>\n"
+)
+# Stock Estuary Omega's button (xbmc/xbmc Omega Includes_MediaMenu.xml), with
+# the label2 [B] markup pre-stripped per the no-bold mandate.
+_VIEW_BUTTON_STOCK = (
+    '\t\t\t<control type="button" id="6051">\n'
+    "\t\t\t\t<include>MediaMenuItemsCommon</include>\n"
+    "\t\t\t\t<label>$LOCALIZE[31023]</label>\n"
+    "\t\t\t\t<label2>$INFO[Container.Viewmode]</label2>\n"
+    "\t\t\t\t<visible>Integer.IsGreater(Container.ViewCount,1)</visible>\n"
+    "\t\t\t\t<onclick>Container.NextViewMode</onclick>\n"
+    "\t\t\t</control>\n"
+)
+
+
 def _edit_includes_mediamenu(text: str, path: str) -> str:
-    return _replace(text, _LOGO_MEDIAMENU, "", path=path)
+    text = _replace(text, _LOGO_MEDIAMENU, "", path=path)
+    return _replace(text, _VIEW_BUTTONS_MODV2, _VIEW_BUTTON_STOCK, path=path)
 
 
 def _edit_settingscategory(text: str, path: str) -> str:
@@ -1676,11 +1764,10 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
         text,
         "        <news>\nFor a complete view of changes visit "
         "https://github.com/b-jesch/skin.estuary.modv2/tree/Omega\n        </news>",
-        "        <news>\nv{}: the main menu is fully customizable again (the "
-        "editor works), its default items are stock Estuary's set, and 'Reset "
-        "main menu settings' now reliably restores that default by copying the "
-        "shipped defaults into place and rebuilding. Live TV and Radio show by "
-        "default.\n"
+        "        <news>\nv{}: the Viewtype button in the media sidebar now "
+        "cycles views like stock Estuary. The MOD V2 view-picker dialog (its "
+        "preview images were removed to slim the install, leaving it showing "
+        "placeholder art) is gone, along with the MOD V2 splash artwork.\n"
         "        </news>".format(version),
         path=path,
     )

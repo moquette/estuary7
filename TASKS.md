@@ -106,7 +106,7 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.38 (current: 1.0.38)
+## Post-launch hardening, 1.0.28-1.0.39 (current: 1.0.39)
 
 Bench-driven fixes shipped after the 1.0.1 stock-alignment round, none yet a
 formal PLAN.md phase (Phase 5 fleet migration has not started - these all
@@ -180,6 +180,29 @@ landed on the bench box(es) ahead of it). In order:
     on 1.0.38, alongside EZ Maintenance++ `2026.07.14.1`; that box was asleep
     (unreachable over JSON-RPC) at the time of this audit, so its version was
     not independently re-confirmed here.
+- **1.0.39 (2026-07-15)** - replaced the MOD V2 view-picker dialog with stock
+  Estuary view cycling, and removed the MOD V2 splash/poster art. The dialog
+  (`Custom_1131_SettingsViews.xml`, opened from the media sidebar's "View"
+  button) existed to show per-view preview thumbnails; 1.0.30 trimmed those
+  (`extras/views`, 49MB), leaving the dialog rendering its
+  `extras/themes/splash.png` fallback - the "MOD V2 poster" the owner reported.
+  Now the sidebar carries exactly stock Estuary Omega's single Viewtype button
+  (label 31023, `Container.NextViewMode` cycle, verified against xbmc/xbmc
+  Omega `Includes_MediaMenu.xml`), the dialog XML and splash art are TRIM_PATHS
+  entries, and the dead 92-line `SettingsViewsImagesVar` block is deleted from
+  Variables.xml (new `_delete_block` fail-loud helper; the golden-parity test
+  normalizes via the same shared function). Forced views (Skin Settings) use
+  Kodi's built-in select dialog and are unaffected; `extras/views.xml` (the
+  view-id definitions `services.py` reads) still ships. New
+  `tests/test_viewpicker.py` (4 contracts: stock button bytes, no
+  `ActivateWindow(1131)` anywhere, variable gone, trims present). 99 tests +
+  determinism green. Hardware-verified BOTH bench boxes same day: office Fire
+  TV (adb push + boot rescan) and atv2 (install-from-zip over the KodiShare
+  NFS source, driven end-to-end via JSON-RPC); owner confirmed the sidebar
+  cycles views with no dialog and no poster on atv2. Kodi GUI gotcha learned:
+  the file-browser dialog serves stale in-memory directory listings for
+  already-browsed NFS paths - drop new zips into a not-yet-browsed subfolder
+  (`apps/`) or reboot Kodi first.
 
 ## Bench state (Office Fire TV 192.168.7.162)
 
@@ -191,8 +214,9 @@ landed on the bench box(es) ahead of it). In order:
   and its `.baks` frozen (disabled add-ons do not auto-update, so no Kodinerds
   clobber is possible). Rollback = re-enable both, switch skins - seconds, no
   downloads. The other six boxes keep everything enabled until Phase 5.
-- **Current version (confirmed live 2026-07-14 via JSON-RPC):** `skin.estuary7`
-  1.0.38, `script.ezmaintenanceplusplus` 2026.07.14.1.
+- **Current version (confirmed live 2026-07-15 via JSON-RPC):** `skin.estuary7`
+  1.0.39 on both the office Fire TV (192.168.7.162) and atv2 (192.168.7.183);
+  `script.ezmaintenanceplusplus` 2026.07.14.1.
 
 ## Deferred / revisit later
 

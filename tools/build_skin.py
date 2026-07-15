@@ -302,12 +302,22 @@ def package(tree: Path, zip_path: Path) -> None:
 # install (and the Apple TV's long black-screen install) by roughly two thirds.
 # Fail loud if a target vanishes (upstream drift), never silently ship bloat.
 TRIM_PATHS = (
-    # 49MB of view-layout PREVIEW thumbnails, shown only in the view picker
-    # (Custom_1131 / Skin Settings > Forced views). The picker and forced-views
-    # still work; the preview thumbnail just goes blank. Kodi's normal view
-    # switching is unaffected. Variables.xml still references these paths (now
-    # missing textures = blank), which is harmless and left stock.
+    # 49MB of view-layout PREVIEW thumbnails, formerly shown in the MOD V2
+    # view-picker dialog (Custom_1131). Since 1.0.39 nothing references them:
+    # the picker itself is trimmed below and its Variables.xml image-lookup
+    # variable is deleted by the transforms. Forced views (Skin Settings) use
+    # Kodi's built-in select dialog and never showed these.
     "extras/views",
+    # The MOD V2 view-picker dialog. Unreachable since 1.0.39: the transforms
+    # restore stock Estuary's single Viewtype cycle button (the dialog's only
+    # ActivateWindow(1131) caller). With extras/views trimmed it could only
+    # show its splash-art fallback (the "MOD V2 poster"). Custom windows load
+    # by filename, so deleting the XML deletes the window.
+    "xml/Custom_1131_SettingsViews.xml",
+    # MOD V2's splash/poster art. Startup.xml uses our t7b-splash.jpg and the
+    # view picker (its last consumer, via texture fallback + the deleted
+    # Variables.xml fallthrough) is gone.
+    "extras/themes/splash.png",
     # 23MB font used ONLY by the unused "Arial Unicode MS" alternate fontset
     # (the Default fontset uses NotoSans). Font.xml is left stock per the mandate
     # ("alternates nobody runs"); that alternate fontset would render with

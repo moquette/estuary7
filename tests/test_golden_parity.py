@@ -43,7 +43,7 @@ import re
 import pytest
 
 from conftest import GOLDENS
-from skin_transforms import SKIN_ID, UPSTREAM_ID
+from skin_transforms import SKIN_ID, UPSTREAM_ID, drop_settings_views_variable
 
 _COMMENT_RE = re.compile(r"[ \t]*<!--.*?-->\n?", re.DOTALL)
 
@@ -547,6 +547,10 @@ def _invert_widget_labels(text: str) -> str:
 
 def _normalize_golden(name: str, text: str) -> str:
     text = text.replace(UPSTREAM_ID, SKIN_ID)
+    if name == "Variables.xml":
+        # 1.0.39: the view-picker image variable is deleted (the same
+        # transform the build applies), not normalized pair-by-pair.
+        text = drop_settings_views_variable(text, path="golden " + name)
     for old, new, count in NORMALIZE.get(name, []):
         found = text.count(old)
         assert found == count, (
