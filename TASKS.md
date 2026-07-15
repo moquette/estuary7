@@ -73,8 +73,15 @@ Full phase plan + locked decisions: `docs/PLAN.md`. Project rules: `CLAUDE.md`.
 
 "Reset main menu settings" did not restore items the user had disabled/hidden in
 the Customize main menu editor - only a full Apple TV reboot did. Root-caused and
-fixed on the bench ATV (192.168.1.162) after a multi-session, ~2-day dig. Two
-independent bugs:
+fixed on the bench ATV (`192.168.1.162` as recorded at the time) after a
+multi-session, ~2-day dig. **FLAGGED (2026-07-14 doc audit): this IP is on a
+different subnet than every other documented box on this network (Office Fire TV
+`192.168.7.162`, the Mini `192.168.7.2`, the bench Apple TV later identified as
+`192.168.7.183` - see `tony7bones.github.io/docs/incident-2026-07-14-ezmpp-restore-wiped-custom-menu-tvos.md`,
+which independently caught the SAME box being misidentified by IP, `.220` vs the
+real `.183`). This looks like a `7`/`1` transposition typo, not a re-verified
+fact - left as originally recorded rather than silently corrected; treat
+`192.168.1.162` here as unverified.** Two independent bugs:
 
 1. **tvOS xbmcvfs vs real-path split** - the reset cleaned menu files via
    `xbmcvfs` on `special://` paths, but skinshortcuts reads/writes them with
@@ -99,16 +106,93 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
+## Post-launch hardening, 1.0.28-1.0.38 (current: 1.0.38)
+
+Bench-driven fixes shipped after the 1.0.1 stock-alignment round, none yet a
+formal PLAN.md phase (Phase 5 fleet migration has not started - these all
+landed on the bench box(es) ahead of it). In order:
+
+- **1.0.28/1.0.29** - added a Skin Settings item to the power menu (all three
+  display modes) + a System-page toggle to swap the Games tile for it. 1.0.29
+  fixed a same-day tvOS CRASH: 1.0.28's menu item pointed at a bundle-relative
+  `Textures.xbt` icon, which killed Kodi the instant the power menu opened on
+  Apple TV (fine on macOS). Fixed by repointing at the shipped loose
+  `special://skin/extras/icons/skinsettings.png`, matching every other working
+  power-menu item.
+- **1.0.30** - trimmed the install payload ~70% (86MB -> 25MB) by dropping
+  `extras/views` (view-picker preview thumbnails only) and the unused
+  `ArialUnicodeMS.ttf` (23MB, no fontset references it), cutting the Apple TV's
+  install black-screen window.
+- **1.0.31** - stopped the boot service from forcing an extra
+  `skinshortcuts-reloadmainmenu` nudge on top of the natural first-boot rebuild
+  (redundant, and the one reload MOD V2 itself never did).
+- **1.0.33** - closed the first-launch black-flash/revert/reset/reboot cluster:
+  ships pre-built skinshortcuts includes + a matching on-device hash so first
+  Home load skips the rebuild+`ReloadSkin` entirely (re-seeds on a version
+  mismatch, so upgrades are covered too); clears the stuck
+  `skinshortcuts-isrunning` guard on every Home load; seeds `donthidepvr` before
+  the first build. Hardware-verified on the bench Apple TV.
+- **1.0.35** - matched stock Estuary's System-page tile grid metrics (centered
+  4-column layout, corrected focus-highlight size) - the redesigned System page
+  had drifted from stock's cell/highlight geometry. Hardware-verified.
+- **1.0.36/1.0.37/1.0.38 - the tvOS restore self-heal + boot-loop saga
+  (2026-07-14).** Cross-linked with the EZ Maintenance++ incident
+  `tony7bones.github.io/docs/incident-2026-07-14-ezmpp-restore-wiped-custom-menu-tvos.md`
+  (that repo owns the root-cause writeup; this is the skin-side summary):
+  - **1.0.36** - the boot service now self-heals a main menu orphaned by an
+    EZM++ restore: if skinshortcuts DATA exists only as an NSUserDefaults key
+    (not on disk), it reads the key back through `xbmcvfs`, writes it to disk
+    with plain `open()` (the API skinshortcuts itself reads with), drops the
+    stale hash, and lets skinshortcuts rebuild the menu from the owner's own
+    data. It also stopped seeding a hash over an already-customized menu
+    (which had been silently reverting the menu to stock on every skin version
+    bump, fleet-wide, restore or not).
+  - **1.0.37** - purges the now-redundant NSUserDefaults keys the self-heal (or
+    an earlier bad restore) leaves behind, so each file goes back to being one
+    coherent on-disk entity (no duplicate File Manager entry, no stale key
+    shadowing the disk copy, tvOS defaults budget freed). Guarded so it only
+    ever purges a key whose POSIX copy is confirmed present first.
+  - **1.0.38 - REGRESSION FOUND AND FIXED SAME DAY.** 1.0.36's hash-drop rule
+    was too broad: it dropped skinshortcuts' hash whenever the box had ANY
+    `*.DATA.xml` on disk, which is true of every box that has ever built a
+    menu - not just a just-healed one. skinshortcuts then saw no hash on
+    every boot, rebuilt, reloaded the skin, wrote a fresh hash, which the next
+    boot deleted again: **a permanent every-boot rebuild loop on all 7 boxes,
+    Fire TV included, not just Apple TV.** Fixed by narrowing the drop to
+    exactly the boot that just re-materialized menu DATA out of
+    NSUserDefaults (self-limiting: heals once, never loops). Also corrects the
+    1.0.37 purge's safety reasoning against Kodi Omega source: `xbmcvfs.delete()`
+    on a userdata `*.xml` CANNOT delete the POSIX file on tvOS (`CTVOSFile::Delete`'s
+    POSIX-delete fallback is unreachable for files dispatched to it - it drops
+    the key and reports success either way); the purge's actual safety property
+    is structural (it only calls delete on a path whose disk copy it already
+    confirmed), not the reachable-fallback story the 1.0.37 comment originally
+    claimed. New tests: `tests/fake_kodi_storage.py` (a two-layer tvOS fake -
+    NSUserDefaults keys + a real POSIX tree - representing "key exists, disk
+    file gone", which the old dict-based fake could not express) +
+    `tests/test_services_selfheal.py` (9 tests: healthy/orphaned/post-heal/
+    virgin/skin-bump/purge boots on tvOS and Android; the healthy-boot case
+    fails on the pre-fix guard). 95 tests + determinism green.
+  - **Verified live (2026-07-14 doc audit):** office Fire TV
+    (`192.168.7.162`) confirmed via direct JSON-RPC query -
+    `skin.estuary7` reports version `1.0.38`. The task record states the
+    bench Apple TV (`192.168.7.183`, friendlyname now reports `atv2`) is also
+    on 1.0.38, alongside EZ Maintenance++ `2026.07.14.1`; that box was asleep
+    (unreachable over JSON-RPC) at the time of this audit, so its version was
+    not independently re-confirmed here.
+
 ## Bench state (Office Fire TV 192.168.7.162)
 
 - Since 2026-07-10 (1.0.1 tweak round): Estuary 7 ACTIVE; BOTH
   `script.tony7bones.modv2plus` AND `skin.estuary.modv2` DISABLED (deliberate
   end-state soak - the fork standing with zero overlay machinery). Both stay
-  INSTALLED: modv2plus 1.8.0 is the future Phase 5 migrator, and the MOD V2
-  skin dir keeps the applied overlay + .baks frozen (disabled add-ons do not
-  auto-update, so no Kodinerds clobber is possible). Rollback = re-enable
-  both, switch skins - seconds, no downloads. The other six boxes keep
-  everything enabled until Phase 5.
+  INSTALLED: modv2plus (currently 1.8.0 in `tony7bones.github.io`) is the
+  future Phase 5 migrator, and the MOD V2 skin dir keeps the applied overlay
+  and its `.baks` frozen (disabled add-ons do not auto-update, so no Kodinerds
+  clobber is possible). Rollback = re-enable both, switch skins - seconds, no
+  downloads. The other six boxes keep everything enabled until Phase 5.
+- **Current version (confirmed live 2026-07-14 via JSON-RPC):** `skin.estuary7`
+  1.0.38, `script.ezmaintenanceplusplus` 2026.07.14.1.
 
 ## Deferred / revisit later
 
