@@ -8,7 +8,14 @@ work of others:
 - **Estuary** - the original Kodi skin by **phil65 and Team Kodi**
 - **Estuary MOD V2** - the MOD by **Guilouz**, Matrix+ continuation by **PvD**
 - **Omega maintenance** - **b-jesch** (the pinned upstream source:
-  https://github.com/b-jesch/skin.estuary.modv2, `Omega` branch)
+  <https://github.com/b-jesch/skin.estuary.modv2>, `Omega` branch)
+- **Weather icons** (`extras/weather/`, the skin's baked-in default set) -
+  **Outline HD Weather Icons** by **braz** (vendored from
+  <https://github.com/bryanbrazil/resource.images.weathericons.outline-hd>,
+  commit `5644804`), based on the **weather-icons** project by
+  **Erik Flowers** (<http://erikflowers.github.io/weather-icons/>). Licensed
+  **Creative Commons Attribution 3.0** (the pack's LICENSE.txt ships
+  alongside the icons at `extras/weather/LICENSE.txt`).
 
 ## Licenses (inherited, unchanged)
 

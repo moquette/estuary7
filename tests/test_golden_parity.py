@@ -407,6 +407,16 @@ NORMALIZE = {
         ),
         ("!Skin.HasSetting(DisableThemes)", "Skin.HasSetting(EnableThemes)", 6),
         ("Skin.HasSetting(show_weatherinfo)", "!Skin.HasSetting(hide_weatherinfo)", 3),
+        # 1.0.46: the golden carries the outline-hd resource URL (the
+        # 1.0.1-1.0.45 rewrite); the fork now bakes those icons into
+        # extras/weather and keeps upstream's skin-local default path.
+        (
+            "<texture>$INFO[Weather.FanartCode,"
+            "resource://resource.images.weathericons.outline-hd/,.png]</texture>",
+            "<texture>$INFO[Weather.FanartCode,"
+            "special://skin/extras/weather/,.png]</texture>",
+            1,
+        ),
         # 1.0.40: the finish-time flag groups drop upstream's plugin-window
         # suppression so the flag bar matches Home inside widget "More"
         # lists (all four end-time groups; no other flag carried the term).
@@ -530,27 +540,59 @@ NORMALIZE = {
         ('\t\t\t\t<control type="button" id="703">\n', _SYSINFO_IN_GENERAL, 1),
         (_GOLDEN_DUAL_ITEMLAYOUT, _FORK_SINGLE_ITEMLAYOUT, 1),
         (_GOLDEN_DUAL_FOCUSEDLAYOUT, _FORK_SINGLE_FOCUSEDLAYOUT, 1),
+        # 1.0.46 Extras declutter: the splash cluster (toggle 503 + gated
+        # sub-rows 504/505), the themes toggle (506), and the Home menu
+        # pane's Kodi/Distribution logo chooser (10023) leave Skin Settings
+        # entirely (owner directives 2026-07-15). These replace the former
+        # splash/themes rename pairs, whose anchors lived inside the rows.
         (
-            "<selected>!Skin.HasSetting(EnableSplashScreen) + "
-            "String.IsEqual(Window(home).property(lookandfeel.startupaction),0)"
-            "</selected>",
-            "<selected>Skin.HasSetting(ShowSplashScreen) + "
-            "String.IsEqual(Window(home).property(lookandfeel.startupaction),0)"
-            "</selected>",
+            '\t\t\t\t<control type="radiobutton" id="503">\n'
+            "\t\t\t\t\t<label>$LOCALIZE[31051]</label>\n"
+            "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+            '\t\t\t\t\t<onclick condition="String.IsEqual(Window(home).property(lookandfeel.startupaction),0)">Skin.ToggleSetting(EnableSplashScreen)</onclick>\n'
+            "\t\t\t\t\t<selected>!Skin.HasSetting(EnableSplashScreen) + String.IsEqual(Window(home).property(lookandfeel.startupaction),0)</selected>\n"
+            "\t\t\t\t\t<enable>String.IsEqual(Window(home).property(lookandfeel.startupaction),0)</enable>\n"
+            "\t\t\t\t</control>\n"
+            '\t\t\t\t<control type="radiobutton" id="504">\n'
+            "\t\t\t\t\t<label>$LOCALIZE[31640]</label>\n"
+            "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+            "\t\t\t\t\t<selected>!Skin.HasSetting(enable_splash_background)</selected>\n"
+            "\t\t\t\t\t<onclick>Skin.ToggleSetting(enable_splash_background)</onclick>\n"
+            "\t\t\t\t\t<visible>!Skin.HasSetting(EnableSplashScreen) + String.IsEqual(Window(home).property(lookandfeel.startupaction),0)</visible>\n"
+            "\t\t\t\t</control>\n"
+            '\t\t\t\t<control type="button" id="505">\n'
+            "\t\t\t\t\t<label>  ∟$LOCALIZE[31344]</label>\n"
+            "\t\t\t\t\t<label2>$VAR[Label_SkinSetting_SplashFanart]</label2>\n"
+            "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+            '\t\t\t\t\t<onclick condition="!Skin.String(splash_background)">Skin.SetImage(splash_background)</onclick>\n'
+            '\t\t\t\t\t<onclick condition="Skin.String(splash_background)">Skin.Reset(splash_background)</onclick>\n'
+            "\t\t\t\t\t<visible>!Skin.HasSetting(EnableSplashScreen) + !Skin.HasSetting(enable_splash_background) + String.IsEqual(Window(home).property(lookandfeel.startupaction),0)</visible>\n"
+            "\t\t\t\t</control>\n",
+            "",
             1,
         ),
         (
-            "!Skin.HasSetting(EnableSplashScreen)",
-            "Skin.HasSetting(ShowSplashScreen)",
-            2,
-        ),
-        (
-            "Skin.ToggleSetting(EnableSplashScreen)",
-            "Skin.ToggleSetting(ShowSplashScreen)",
+            '\t\t\t\t<control type="radiobutton" id="506">\n'
+            "\t\t\t\t\t<label>$LOCALIZE[31459]</label>\n"
+            "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+            "\t\t\t\t\t<onclick>Skin.ToggleSetting(DisableThemes)</onclick>\n"
+            "\t\t\t\t\t<selected>!Skin.HasSetting(DisableThemes)</selected>\n"
+            "\t\t\t\t</control>\n",
+            "",
             1,
         ),
-        ("!Skin.HasSetting(DisableThemes)", "Skin.HasSetting(EnableThemes)", 1),
-        ("Skin.ToggleSetting(DisableThemes)", "Skin.ToggleSetting(EnableThemes)", 1),
+        (
+            '\t\t\t\t<control type="button" id="10023">\n'
+            "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+            "\t\t\t\t\t<description>menu logo</description>\n"
+            "\t\t\t\t\t<onclick>Skin.SelectBool(31567, 15109|MenuLogoDefault, "
+            "31568|MenuLogoLE, 31569|MenuLogoCE)</onclick>\n"
+            "\t\t\t\t\t<label>$LOCALIZE[31567]</label>\n"
+            "\t\t\t\t\t<label2>$VAR[Label_SkinSetting_Logo]</label2>\n"
+            "\t\t\t\t</control>\n",
+            "",
+            1,
+        ),
         (
             "<selected>Skin.HasSetting(show_weatherinfo) + "
             "!String.IsEmpty(Weather.Plugin)</selected>",

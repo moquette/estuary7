@@ -771,13 +771,11 @@ def _edit_includes(text: str, path: str) -> str:
     )
     # Top-bar weather icon: the official Outline HD resource pack replaces the
     # skin-local PNG set.
-    text = _replace(
-        text,
-        "<texture>$INFO[Weather.FanartCode,special://skin/extras/weather/,.png]</texture>",
-        "<texture>$INFO[Weather.FanartCode,"
-        "resource://resource.images.weathericons.outline-hd/,.png]</texture>",
-        path=path,
-    )
+    # Top-bar weather icon: upstream's special://skin/extras/weather/ default
+    # path stays UNTOUCHED since 1.0.46 - the build ships the vendored
+    # Outline HD set at that exact path (see build_skin.add_assets), so the
+    # stock default IS the owner's look with no resource-pack download.
+    # (1.0.1-1.0.45 rewrote this texture to the outline-hd resource URL.)
     text = _replace(
         text,
         "[Window.IsVisible(shutdownmenu) + Skin.HasSetting(powermenu_list)]",
@@ -946,29 +944,51 @@ def _edit_skinsettings(text: str, path: str) -> str:
     text = _replace(
         text, "<font>font30_title</font>", "<font>font13</font>", path=path, count=2
     )
-    # Splash toggle -> opt-in ShowSplashScreen (selected line first: it is the
-    # only site that pairs the flag with the startupaction condition).
-    text = _replace(
+    # Extras declutter (owner directive 2026-07-15, 1.0.46): the splash
+    # CLUSTER leaves Skin Settings entirely - the "Enable Splash Screen"
+    # toggle (503) plus its two gated sub-rows (504 splash background, 505
+    # splash image picker). Startup.xml still honors ShowSplashScreen for a
+    # box that set it before the toggle vanished; a fresh box has no splash
+    # (the 2026-07-12 default) and no switch. This replaces the 1.0.32-era
+    # selected/onclick rewrites, whose anchors lived inside these rows.
+    text = _delete_block(
         text,
-        "<selected>!Skin.HasSetting(EnableSplashScreen) + "
-        "String.IsEqual(Window(home).property(lookandfeel.startupaction),0)</selected>",
-        "<selected>Skin.HasSetting(ShowSplashScreen) + "
-        "String.IsEqual(Window(home).property(lookandfeel.startupaction),0)</selected>",
+        '\t\t\t\t<control type="radiobutton" id="503">\n',
+        "<visible>!Skin.HasSetting(EnableSplashScreen) + "
+        "!Skin.HasSetting(enable_splash_background) + "
+        "String.IsEqual(Window(home).property(lookandfeel.startupaction),0)"
+        "</visible>\n\t\t\t\t</control>\n",
         path=path,
     )
-    text = _replace(text, *_SPLASH_NEG, path=path, count=2)
+    # "Enable themes" toggle (506) leaves too: 1.0.44 trimmed the seasonal
+    # art packs, so the toggle could only enable artless themes. The
+    # EnableThemes expressions stay inert; a fresh box never sets the flag.
     text = _replace(
         text,
-        "Skin.ToggleSetting(EnableSplashScreen)",
-        "Skin.ToggleSetting(ShowSplashScreen)",
+        '\t\t\t\t<control type="radiobutton" id="506">\n'
+        "\t\t\t\t\t<label>$LOCALIZE[31459]</label>\n"
+        "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+        "\t\t\t\t\t<onclick>Skin.ToggleSetting(DisableThemes)</onclick>\n"
+        "\t\t\t\t\t<selected>!Skin.HasSetting(DisableThemes)</selected>\n"
+        "\t\t\t\t</control>\n",
+        "",
         path=path,
     )
-    # Themes toggle -> opt-in EnableThemes.
-    text = _replace(text, *_THEMES_NEG, path=path)
+    # "Kodi/Distribution Logo" chooser (10023) leaves the Home menu pane
+    # (owner directive 2026-07-15: "It should only be Kodi"): the fork ships
+    # the stock Kodi wordmark and offers no LibreELEC/CoreELEC variants. The
+    # MenuLogo* bools stay unset on the fleet, so the default renders.
     text = _replace(
         text,
-        "Skin.ToggleSetting(DisableThemes)",
-        "Skin.ToggleSetting(EnableThemes)",
+        '\t\t\t\t<control type="button" id="10023">\n'
+        "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+        "\t\t\t\t\t<description>menu logo</description>\n"
+        "\t\t\t\t\t<onclick>Skin.SelectBool(31567, 15109|MenuLogoDefault, "
+        "31568|MenuLogoLE, 31569|MenuLogoCE)</onclick>\n"
+        "\t\t\t\t\t<label>$LOCALIZE[31567]</label>\n"
+        "\t\t\t\t\t<label2>$VAR[Label_SkinSetting_Logo]</label2>\n"
+        "\t\t\t\t</control>\n",
+        "",
         path=path,
     )
     # Weather readout toggle -> opt-out hide_weatherinfo.
@@ -1499,11 +1519,12 @@ def _widget_poster_label_fix(text: str, focused: bool, *, path: str) -> str:
 
 
 def _edit_includes_home(text: str, path: str) -> str:
-    # Weather-icon fallback (no pack chosen) -> the Outline HD pack.
+    # Weather-icon fallback (no pack chosen) -> the BAKED-IN Outline HD set
+    # (1.0.46; 1.0.1-1.0.45 pointed these at the outline-hd resource pack).
     text = _replace(
         text,
         "resource://resource.images.weathericons.default/",
-        "resource://resource.images.weathericons.outline-hd/",
+        "special://skin/extras/weather/",
         path=path,
         count=4,
     )
@@ -2094,10 +2115,11 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
     # skinshortcuts + image.resource.select) are all no-sub-dep add-ons
     # served by OUR proxy repo, so the closure resolves from the repo the
     # user just installed.
+    # (outline-hd was a hard import 1.0.1-1.0.45; since 1.0.46 the icons are
+    # BAKED IN at extras/weather and the skin imports no icon pack at all.)
     text = _replace(
         text,
         '\t\t<import addon="script.module.pvr.artwork" version="2.0.0"/>\n',
-        '\t\t<import addon="resource.images.weathericons.outline-hd" version="0.0.1"/>\n'
         '\t\t<import addon="script.module.autocompletion" version="1.0.0"/>\n',
         path=path,
     )

@@ -85,7 +85,13 @@ revert toward stock - flag it during transform work, ask the owner:
   original Estuary (conditional +70 slide when the menu is full; the lone
   diamond re-centers over the icon column when minimized - MOD V2 default)
 - Thin side navigation (font13/font12 on all four left-hand nav columns)
-- Outline HD weather icons; top-bar weather
+- Outline HD weather icons; top-bar weather. Since 1.0.46 the icons are
+  BAKED IN (owner directive 2026-07-15: "no extra downloads"): braz's
+  Outline HD set (CC BY 3.0, Erik Flowers' weather-icons; credited in
+  ATTRIBUTION.md) is vendored at extras/weather/ and every default
+  weather-icon path is skin-local - the outline-hd resource-pack import is
+  gone from the manifest. The WeatherIcons pack chooser still overrides
+  the default when a user picks an installed pack.
 - Plain Power/Settings/Search backgrounds
 - Gear-menu reorder. HOME MENU (owner directive 2026-07-12): ships STOCK
   Estuary's default item set/order and stays fully editable (skinshortcuts).
@@ -116,15 +122,22 @@ revert toward stock - flag it during transform work, ask the owner:
   Videos/Music/Pictures/Games file-browser buttons) directly above the
   Debug section. The Custom_1120 dialog is now unreferenced (harmless dead
   weight; the buttons open the file browsers directly).
-- Boot splash: stock Estuary/MOD V2 shows a startup splash by default; 1.0.32
-  restores it (an earlier build had inverted the gate to opt-in, so a fresh box
-  booted with NO splash - an unlisted deviation from stock, now corrected). The
-  opt-out flag is renamed to a clear `hide_splash` (splash ON unless the owner
-  disables it, or a non-Home startup action suppresses it), and the splash art
-  is the owner's background.jpg (extras/themes/t7b-splash.jpg, full-screen, full
-  opacity) rather than stock's logo. Beyond stock parity, the splash masks the
-  rare fallback where the first-launch skinshortcuts rebuild+reload still fires
-  (see docs/PLAN.md 1.0.32: the hash seed normally prevents it).
+- Boot splash: NO splash on a fresh box (owner directive 2026-07-12: the
+  flag is a plain opt-in `ShowSplashScreen`), and since 1.0.46 there is NO
+  Skin Settings switch for it either (owner directive 2026-07-15: the
+  Extras pane loses the "Enable Splash Screen" toggle and its two gated
+  splash-background sub-rows). Startup.xml still honors a ShowSplashScreen
+  a box set before the toggle vanished; the splash art, when enabled, is
+  the owner's background.jpg (extras/themes/t7b-splash.jpg). (History: the
+  1.0.32 round had restored a default-ON splash; 2026-07-12 flipped it to
+  opt-in; 1.0.46 removed the switch.)
+- Skin Settings declutter (owner directives 2026-07-15, 1.0.46): the
+  "Enable themes" toggle is gone (1.0.44 trimmed the seasonal art, so it
+  could only enable artless themes; the EnableThemes expressions stay
+  inert), and the Home menu pane's "Kodi/Distribution Logo" chooser is
+  gone ("It should only be Kodi" - the fork ships the stock Kodi wordmark
+  and offers no LibreELEC/CoreELEC variants; the MenuLogo* bools stay
+  unset so the default renders).
 - Labeled home widget tiles: poster items render POSTER + LABEL (owner
   directive 2026-07-15, bench-verified same day, 1.0.40). MOD V2's labeled
   tile design (InfoWallMusicLayout) is a square-fit thumb over a dark panel -

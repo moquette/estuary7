@@ -20,10 +20,12 @@ def test_addon_xml_identity(built):
     for dep in (
         "script.skinshortcuts",
         "script.image.resource.select",
-        "resource.images.weathericons.outline-hd",
         "script.module.autocompletion",
     ):
         assert '<import addon="{}"'.format(dep) in addon
+    # outline-hd left the closure in 1.0.46: its icons are baked into
+    # extras/weather (owner directive - no extra downloads).
+    assert "weathericons" not in addon
     # pvr.artwork is GONE from the manifest (owner directive 2026-07-15,
     # 1.0.45; it had been optional since 2026-07-10): the bench never had it
     # installed and never missed it - every skin read is emptiness-guarded,

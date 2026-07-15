@@ -139,6 +139,19 @@ def add_assets(tree: Path) -> None:
     # the flat resources/screenshot-0N.jpg names instead.
     for name in ("icon.png", "fanart.jpg"):
         shutil.copyfile(ASSETS_DIR / "resources" / name, tree / "resources" / name)
+    # Baked-in default weather icons (owner directive 2026-07-15, 1.0.46:
+    # "no extra downloads"): braz's Outline HD set - CC BY 3.0, based on Erik
+    # Flowers' weather-icons; vendored into assets/weather/ from
+    # bryanbrazil/resource.images.weathericons.outline-hd @5644804 (tarball
+    # sha256 0c92d66fa19019eb309a0fede552ee77eb39708e428c4ab531248e0ddeb61d68)
+    # with its LICENSE.txt alongside, credited in ATTRIBUTION.md. Replaces
+    # upstream's skin-local set IN PLACE so stock Estuary's
+    # special://skin/extras/weather/ default path serves the owner's chosen
+    # look with no resource-pack download; the WeatherIcons pack chooser
+    # still overrides it when a user picks an installed pack.
+    weather = tree / "extras" / "weather"
+    shutil.rmtree(weather)
+    shutil.copytree(ASSETS_DIR / "weather", weather)
     # Stock Estuary's Videos glyph (Team Kodi, vendored from xbmc/xbmc): a loose
     # media file that Kodi falls back to because the transform shadows MOD V2's
     # redrawn videos.png entry inside Textures.xbt. THE FIRST MANDATE (match
@@ -194,8 +207,10 @@ def check_contracts(tree: Path) -> None:
     addon = (tree / "addon.xml").read_text(encoding="utf-8")
     if 'id="{}"'.format(SKIN_ID) not in addon:
         problems.append("addon.xml: missing rebranded id")
-    if "resource.images.weathericons.outline-hd" not in addon:
-        problems.append("addon.xml: missing outline-hd dependency")
+    if "resource.images.weathericons.outline-hd" in addon:
+        problems.append("addon.xml: outline-hd import survived the 1.0.46 bake-in")
+    if not (tree / "extras" / "weather" / "na.png").is_file():
+        problems.append("baked weather icons missing: extras/weather/na.png")
     # The home menu ships STOCK ESTUARY's item set/order (owner directive).
     # Live TV/Radio keep stock's named windows (TVChannels/RadioChannels) and
     # stay always-visible like stock because the boot service + reset helper seed
@@ -324,9 +339,9 @@ TRIM_PATHS = (
     # fallback fonts if ever selected via Kodi's font picker.
     "fonts/ArialUnicodeMS.ttf",
     # ---- 1.0.44 trim round (owner-approved 2026-07-15, audit in TASKS) ----
-    # Orphaned when the Outline HD weather-icon resource pack replaced the
-    # skin-local PNG set: zero references in the shipped tree.
-    "extras/weather",
+    # (1.0.44 trimmed extras/weather as orphaned; 1.0.46 re-ships that dir
+    # with the VENDORED Outline HD set instead - see add_assets - so it left
+    # this list.)
     # Orphaned by the no-bold rebind: no fontset binds the Bold face anymore.
     "fonts/NotoSans-Bold.ttf",
     # Dead since MOD V2's Media sources tile left the System page: nothing

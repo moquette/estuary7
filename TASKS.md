@@ -115,7 +115,37 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.45 (current: 1.0.45 bench-verified 2026-07-15, release pending owner word; 1.0.43 released)
+## Post-launch hardening, 1.0.28-1.0.46 (current: 1.0.46 bench-verified 2026-07-15, release pending owner word; 1.0.43 released)
+
+- **1.0.46 (2026-07-15) - weather icons BAKED IN + Skin Settings declutter -
+  BENCH-VERIFIED, not yet released** - two owner directives in one version:
+  (1) "Can the outline icons be our default weather icons baked in? e.g. no
+  extra downloads": braz's Outline HD set (CC BY 3.0, Erik Flowers'
+  weather-icons; vendored into assets/weather/ from
+  bryanbrazil/resource.images.weathericons.outline-hd @5644804, tarball
+  sha256 0c92d66..., 49 PNGs = FanartCode 0-47 + na, LICENSE.txt ships at
+  extras/weather/LICENSE.txt, credited in ATTRIBUTION.md) now ships AT
+  upstream's stock special://skin/extras/weather/ default path (add_assets
+  replaces the dir the 1.0.44 trim used to delete); all 5 default texture
+  sites are skin-local (the Includes.xml rewrite is GONE - upstream's path
+  stands - and Includes_Home's 4 fallbacks now point local); the outline-hd
+  import LEFT the manifest (ship-contract check inverted to assert its
+  absence + the baked na.png present). The Artworks pane's weather-icon
+  pack CHOOSER stays (generic resource-type filter; a user-picked installed
+  pack still overrides the baked default). (2) Extras/Home menu declutter:
+  the splash CLUSTER (Enable Splash Screen toggle 503 + gated sub-rows
+  504/505), the "Enable themes" toggle (506, artless since the 1.0.44
+  trim), and the "Kodi/Distribution Logo" chooser (10023, "It should only
+  be Kodi") all leave Skin Settings; stale flags keep being honored by
+  their consumers, and the office box was verified to carry NONE. Gates:
+  104 tests (weather test rewritten for the baked inventory; golden parity
+  gains a reverse weather pair + three block-deletion pairs replacing the
+  splash/themes rename pairs; ShowSplashScreen/EnableThemes REPLACEMENT
+  counts re-baselined) + determinism green. Bench: pushed 5 changed files
+  - the new extras/weather dir (50 files), verified live: top-bar weather
+    icon renders from the BAKED set, Extras pane has no splash/themes rows,
+    Home menu pane opens at "Minimize main menu" with no logo chooser.
+    Pending: release on owner word (ships with 1.0.44 + 1.0.45).
 
 - **1.0.45 (2026-07-15) - pvr.artwork dependency dropped - BENCH-VERIFIED,
   not yet released** - owner-approved after a full binding audit: the

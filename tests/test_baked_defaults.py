@@ -30,8 +30,9 @@ RETIRED_FLAGS = [
 # Their opt-out/opt-in replacements (flag, minimum expected references).
 REPLACEMENT_FLAGS = [
     ("hide_weatherinfo", 4),  # 3 includes + the toggle
-    ("ShowSplashScreen", 5),  # Startup(2) + Timers + Settings reset + toggle
-    ("EnableThemes", 7),  # 6 theme expressions + the toggle
+    ("ShowSplashScreen", 4),  # Startup(2) + Timers + System-page reset;
+    # the Skin Settings toggle left in the 1.0.46 Extras declutter
+    ("EnableThemes", 6),  # 6 theme expressions; toggle removed 1.0.46
     ("show_recordingchannels", 2),
     ("show_searches", 2),
     ("show_allchannels", 2),
@@ -228,12 +229,25 @@ def test_trim_round_1044(corpus, built):
     assert "lyr" in corpus["Font.xml"]
 
 
-def test_weather_icons_default_to_outline_hd(corpus, built):
+def test_weather_icons_baked_default(corpus, built):
+    """1.0.46: the Outline HD icons are VENDORED at extras/weather (CC BY
+    3.0, credited in ATTRIBUTION.md) and every default weather-icon path is
+    skin-local - no resource-pack import, no download on a fresh box. The
+    WeatherIcons pack chooser still overrides when a user picks one."""
     joined = "".join(corpus.values())
+    # No reference to any SPECIFIC icon pack survives; the Artworks pane's
+    # pack CHOOSER keeps its generic resource-type filter (a user picking an
+    # installed pack still overrides the baked default).
+    assert "resource.images.weathericons.outline-hd" not in joined
     assert "resource.images.weathericons.default" not in joined
-    assert joined.count("resource://resource.images.weathericons.outline-hd/") >= 5
+    assert joined.count("special://skin/extras/weather/") == 5
     addon = (built.tree / "addon.xml").read_text(encoding="utf-8")
-    assert '<import addon="resource.images.weathericons.outline-hd"' in addon
+    assert "weathericons" not in addon
+    weather = built.tree / "extras" / "weather"
+    icons = {p.stem for p in weather.glob("*.png")}
+    # The complete Weather.FanartCode inventory: codes 0-47 plus na.
+    assert icons == {str(n) for n in range(48)} | {"na"}
+    assert (weather / "LICENSE.txt").is_file()
 
 
 def test_no_runtime_settings_writers_shipped(built):
