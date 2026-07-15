@@ -115,7 +115,32 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.43 (current: 1.0.43 RELEASED 2026-07-15, live on the office bench)
+## Post-launch hardening, 1.0.28-1.0.44 (current: 1.0.44 bench-verified 2026-07-15, release pending owner word; 1.0.43 released)
+
+- **1.0.44 (2026-07-15) - trim round two - BENCH-VERIFIED, not yet
+  released** - full-tree audit (sizes + reference greps + live box-settings
+  checks), owner-approved item by item. Zip 26.2MB -> 20.9MB, tree 37M ->
+  29M. TRIM_PATHS gains 24 entries: extras/weather (196K, zero refs since
+  the Outline HD switch), fonts/NotoSans-Bold.ttf (356K, zero refs since
+  the no-bold rebind), xml/Custom_1120_SourcesDialog.xml (dead since Media
+  sources moved to Skin Settings), extras/epg-genres (4.9MB - the EPG
+  genre-artwork mode; owner: "no one uses it"; the sidebar genre-colors
+  cycle drops mode 20190 via `_edit_includes_mediamenu` so it cannot be
+  selected into blankness, and stale 20190 values reset on the next click),
+  fonts/lyrics (844K karaoke faces; Font.xml keeps the lyr* id inventory),
+  5 seasonal theme art dirs (936K; the EnableThemes machinery stays,
+  background.jpg + t7b-splash.jpg survive), and 14 non-English locales
+  (~860K; en_gb ships, Kodi falls back to it anyway). DELIBERATELY KEPT
+  (audited, referenced): extras/patterns (pattern13 renders unconditionally
+  in dialogs), extras/backgrounds (the opt-in shortcut-background toggles),
+  extras/home-images, Textures.xbt (repack = high risk, low reward),
+  alternate fontsets (prior decision), resources/ screenshots. Gates: 104
+  tests (new `test_trim_round_1044`: survivors present, cycle rewired,
+  lyr ids intact) + determinism green. Bench round: pushed the 2 changed
+  files AND rm -rf'd the 24 trimmed paths on-device (adb pushes never
+  delete; repo-path updates replace the whole addon dir so the fleet needs
+  no such step), device tree 29M matches the build; home + PVR guide
+  screencap-verified clean. Pending: release on owner word.
 
 - **1.0.43 (2026-07-15) - POV search toggle renamed and moved - BENCH-
   VERIFIED, not yet released** - owner refinement on 1.0.42: the toggle is

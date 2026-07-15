@@ -1087,7 +1087,34 @@ _VIEW_BUTTON_STOCK = (
 
 def _edit_includes_mediamenu(text: str, path: str) -> str:
     text = _replace(text, _LOGO_MEDIAMENU, "", path=path)
-    return _replace(text, _VIEW_BUTTONS_MODV2, _VIEW_BUTTON_STOCK, path=path)
+    text = _replace(text, _VIEW_BUTTONS_MODV2, _VIEW_BUTTON_STOCK, path=path)
+    # The EPG genre-colors cycle loses its "genre artwork" mode (20190): its
+    # 4.9MB image set is trimmed (1.0.44, owner-approved - unused on the
+    # fleet). Cycle becomes defined-colors <-> converted-colors, and a stale
+    # genrecolors=20190 falls out of the guard's valid list, resetting to
+    # defined colors on the next click.
+    text = _replace(
+        text,
+        " + !String.IsEqual(Skin.String(genrecolors),20190)]"
+        '">Skin.SetString(genrecolors,1223)</onclick>',
+        ']">Skin.SetString(genrecolors,1223)</onclick>',
+        path=path,
+    )
+    text = _replace(
+        text,
+        '<onclick condition="String.IsEqual(Skin.String(genrecolors),571)">'
+        "Skin.SetString(genrecolors,20190)</onclick>",
+        '<onclick condition="String.IsEqual(Skin.String(genrecolors),571)">'
+        "Skin.SetString(genrecolors,1223)</onclick>",
+        path=path,
+    )
+    return _replace(
+        text,
+        '\t\t\t\t\t<onclick condition="String.IsEqual(Skin.String(genrecolors),'
+        '20190)">Skin.SetString(genrecolors,1223)</onclick>\n',
+        "",
+        path=path,
+    )
 
 
 def _edit_settingscategory(text: str, path: str) -> str:

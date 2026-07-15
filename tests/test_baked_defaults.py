@@ -206,6 +206,28 @@ def test_pov_search_toggle_wired(corpus):
     assert readers == ["Custom_1107_SearchDialog.xml", "SkinSettings.xml"], readers
 
 
+def test_trim_round_1044(corpus, built):
+    """1.0.44 trim round (owner-approved): dead weight is gone, the things
+    that must survive it are still shipped, and the EPG genre-colors cycle
+    no longer offers the trimmed 'genre artwork' mode. (Path absence itself
+    is enforced by build_skin's ship-contract check over TRIM_PATHS; this
+    pins the survivors and the cycle rewire.)"""
+    tree = built.tree
+    # Survivors adjacent to trimmed things.
+    assert (tree / "language" / "resource.language.en_gb").is_dir()
+    assert (tree / "extras" / "themes" / "background.jpg").is_file()
+    assert (tree / "extras" / "themes" / "t7b-splash.jpg").is_file()
+    assert (tree / "fonts" / "NotoSans-Regular.ttf").is_file()
+    # The genre-artwork mode (20190) is gone from the sidebar cycle; the
+    # remaining pair still cycles.
+    mm = corpus["Includes_MediaMenu.xml"]
+    assert "20190" not in mm
+    assert mm.count("Skin.SetString(genrecolors,571)") == 1
+    assert mm.count("Skin.SetString(genrecolors,1223)") == 3
+    # Font.xml keeps the lyr* id inventory even though the faces are gone.
+    assert "lyr" in corpus["Font.xml"]
+
+
 def test_weather_icons_default_to_outline_hd(corpus, built):
     joined = "".join(corpus.values())
     assert "resource.images.weathericons.default" not in joined

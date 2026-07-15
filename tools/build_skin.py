@@ -323,6 +323,51 @@ TRIM_PATHS = (
     # ("alternates nobody runs"); that alternate fontset would render with
     # fallback fonts if ever selected via Kodi's font picker.
     "fonts/ArialUnicodeMS.ttf",
+    # ---- 1.0.44 trim round (owner-approved 2026-07-15, audit in TASKS) ----
+    # Orphaned when the Outline HD weather-icon resource pack replaced the
+    # skin-local PNG set: zero references in the shipped tree.
+    "extras/weather",
+    # Orphaned by the no-bold rebind: no fontset binds the Bold face anymore.
+    "fonts/NotoSans-Bold.ttf",
+    # Dead since MOD V2's Media sources tile left the System page: nothing
+    # calls ActivateWindow(1120). Custom windows load by filename, so
+    # deleting the XML deletes the window.
+    "xml/Custom_1120_SourcesDialog.xml",
+    # 4.9MB of EPG genre artwork, rendered only by the sidebar genre-colors
+    # cycle's "genre artwork" mode - unused on the fleet (owner: "no one
+    # uses it"). The transforms drop that mode from the cycle so it cannot
+    # be selected into blankness; a stale genrecolors=20190 resets to
+    # defined colors on the next cycle click.
+    "extras/epg-genres",
+    # Karaoke lyric faces, used only by the CU LRC Lyrics add-on overlays;
+    # the fleet runs no lyrics add-on. Font.xml keeps the lyr* ids untouched
+    # (the font-id inventory invariant); if lyrics ever return, those
+    # overlays render in the fallback face instead of the decorative ones.
+    "fonts/lyrics",
+    # Seasonal theme art packs (owner: gone). The EnableThemes machinery
+    # (toggle, expressions, picker) stays - it is opt-in default-off and
+    # sheds only its artwork here.
+    "extras/themes/christmas",
+    "extras/themes/easter",
+    "extras/themes/halloween",
+    "extras/themes/palmweek",
+    "extras/themes/valentine",
+    # Non-English skin locales (14): the fleet is English; Kodi falls back
+    # to en_gb strings for any missing locale anyway.
+    "language/resource.language.cs_cz",
+    "language/resource.language.de_de",
+    "language/resource.language.es_es",
+    "language/resource.language.fr_fr",
+    "language/resource.language.he_il",
+    "language/resource.language.hu_hu",
+    "language/resource.language.it_it",
+    "language/resource.language.nl_nl",
+    "language/resource.language.pl_pl",
+    "language/resource.language.pt_br",
+    "language/resource.language.ru_ru",
+    "language/resource.language.sk_sk",
+    "language/resource.language.tr_tr",
+    "language/resource.language.zh_cn",
 )
 
 
