@@ -183,6 +183,23 @@ _SKINSETTINGS_TILE_TOGGLE = """\t\t\t\t<control type="radiobutton" id="1102">
 \t\t\t\t</control>
 """
 
+# "Show labeled tiles" sub-option (owner request 2026-07-15, shipped 1.0.41),
+# styled like the PVR-info sub-option above it (indented ∟ label, visible
+# only while the parent is on): hide the fork poster fade + label on
+# Movies & TV Shows tiles only (see _VIDEO_LABEL_OPTOUT, which the fork
+# fade/label controls read per item). Written in POST-FLIP names on purpose -
+# step 1c only rewrites the upstream HideWidgetLabels forms, so this block
+# passes through untouched. Id 1103 is unused by upstream; default off =
+# zero settings writes, the shipped 1.0.40 look.
+_VIDEO_LABEL_OPTOUT_TOGGLE = """\t\t\t\t<control type="radiobutton" id="1103">
+\t\t\t\t\t<include>DefaultSettingButton</include>
+\t\t\t\t\t<label>  ∟Do not apply labels to Movies &amp; TV Shows</label>
+\t\t\t\t\t<onclick>Skin.ToggleSetting(hide_video_tile_labels)</onclick>
+\t\t\t\t\t<selected>Skin.HasSetting(hide_video_tile_labels)</selected>
+\t\t\t\t\t<visible>!Skin.HasSetting(hide_tile_labels)</visible>
+\t\t\t\t</control>
+"""
+
 
 def _category_item(item_id: int, label_id: int) -> str:
     return (
@@ -828,6 +845,16 @@ def _edit_skinsettings(text: str, path: str) -> str:
         "\t\t\t\t\t<visible>Skin.HasSetting(HideWidgetLabels)</visible>",
         path=path,
     )
+    # New sub-option under "Show labeled tiles", after the PVR-info
+    # sub-option (10022) and before the next stock toggle (10014): hide the
+    # fork poster labels on Movies & TV Shows tiles only (see
+    # _VIDEO_LABEL_OPTOUT_TOGGLE).
+    text = _insert_before(
+        text,
+        '\t\t\t\t<control type="radiobutton" id="10014">\n',
+        _VIDEO_LABEL_OPTOUT_TOGGLE,
+        path=path,
+    )
     # Categories in stock Estuary's order.
     text = _replace(
         text,
@@ -1216,6 +1243,22 @@ _POSTER_EMPTY = (
     "String.IsEmpty(ListItem.Art(animatedposter))]"
 )
 
+# The 1103 sub-toggle's per-item gate (owner request 2026-07-15, wired as
+# 1.0.41): 'Do not apply labels to Movies & TV Shows' hides the fork fade +
+# label on video-library items only. Safe where the withdrawn first 1.0.40
+# attempt was not: the fade and label are fork-authored CONTROLS gated by
+# per-item <visible> conditions - the poster art renders identically either
+# way, so no include-condition split can desynchronize. Default off = the
+# owner's shipped 1.0.40 look, zero settings writes.
+_VIDEO_LABEL_OPTOUT = (
+    "![Skin.HasSetting(hide_video_tile_labels) + ["
+    "String.IsEqual(ListItem.DBType,movie) | "
+    "String.IsEqual(ListItem.DBType,set) | "
+    "String.IsEqual(ListItem.DBType,tvshow) | "
+    "String.IsEqual(ListItem.DBType,season) | "
+    "String.IsEqual(ListItem.DBType,episode)]]"
+)
+
 # The upstream labeled-mode include run of the 486-tall widget layouts
 # (generic Widget + WidgetListPoster; WidgetPanelPoster's focused run is
 # excluded by anchoring on the Animation_FocusBounce line, see below).
@@ -1287,6 +1330,7 @@ def _widget_poster_label(focused: bool, with_year: bool) -> str:
         "\t\t\t\t\t\t\t<visible>Skin.HasSetting(HideWidgetLabels) + "
         + ("" if with_year else "!")
         + "Skin.HasSetting(hide_pubyear)</visible>\n"
+        "\t\t\t\t\t\t\t<visible>" + _VIDEO_LABEL_OPTOUT + "</visible>\n"
         "\t\t\t\t\t\t</control>\n"
     )
 
@@ -1305,6 +1349,7 @@ def _widget_poster_label_fade() -> str:
         "\t\t\t\t\t\t\t<texture>overlays/overlayfade.png</texture>\n"
         "\t\t\t\t\t\t\t<visible>!" + _POSTER_EMPTY + "</visible>\n"
         "\t\t\t\t\t\t\t<visible>Skin.HasSetting(HideWidgetLabels)</visible>\n"
+        "\t\t\t\t\t\t\t<visible>" + _VIDEO_LABEL_OPTOUT + "</visible>\n"
         "\t\t\t\t\t\t</control>\n"
     )
 

@@ -115,7 +115,35 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.40 (current: 1.0.40 RELEASED 2026-07-15, live on the office bench)
+## Post-launch hardening, 1.0.28-1.0.41 (current: 1.0.41 bench-verified 2026-07-15, release pending owner word; 1.0.40 released)
+
+- **1.0.41 (2026-07-15) - the Movies & TV Shows label opt-out, DONE RIGHT -
+  BENCH-VERIFIED, not yet released** - owner asked for the withdrawn 1.0.40
+  sub-toggle back, now that the architecture allows it: "Do not apply labels
+  to Movies & TV Shows" (radiobutton 1103 under "Show labeled tiles", beside
+  the PVR sub-option, visible only while the parent is on; writes
+  `hide_video_tile_labels`, default OFF = the shipped 1.0.40 look,
+  zero settings writes). ON = the fork fade + label hide per item on DBType
+  movie/set/tvshow/season/episode, leaving the clean poster; music/genre/
+  category labels unaffected. Safe where the first attempt failed: the gate
+  is a third `<visible>` term on the fork's OWN fade/label controls - the
+  poster art renders identically either way, so no include-condition split
+  exists to desynchronize. Ship delta vs 1.0.40: SkinSettings.xml +
+  Includes_Home.xml + addon.xml. Gates: 101 tests (new
+  `test_video_label_optout_toggle_wired`: 12 gated controls, SkinSettings
+  sole writer, Includes_Home+SkinSettings sole readers) + determinism green;
+  golden parity mirrors the toggle insert. Bench round (office Fire TV):
+  cleared the STALE `hide_video_tile_labels=true` left in the box's
+  addon_data settings.xml by the morning's withdrawn attempt (edited while
+  Kodi was STOPPED, per the settings-clobber playbook), then verified all
+  three states by screencap: default OFF = 1.0.40 look pixel-parity; flag ON
+  = clean bare posters on movie tiles; and the REAL GUI path - focused the
+  1103 toggle in Skin Settings, Input.Select via JSON-RPC - flipped labels
+  back live, no reload. NOTE for the fleet: any box that ran the withdrawn
+  morning build may carry the same stale flag; harmless on 1.0.39/1.0.40
+  (nothing reads it), but 1.0.41 will honor it - those boxes would boot
+  with movie labels hidden until the toggle is flipped once. Only the
+  office bench ever ran it (flag now cleared there).
 
 Bench-driven fixes shipped after the 1.0.1 stock-alignment round, none yet a
 formal PLAN.md phase (Phase 5 fleet migration has not started - these all

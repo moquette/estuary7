@@ -136,10 +136,45 @@ def test_labeled_poster_tiles_render_poster_plus_label(corpus):
         )
         == 3
     )
-    # The withdrawn per-item toggle attempt left no remnants.
+    # The withdrawn 1.0.40 $EXP attempt left no remnants.
     joined = "".join(corpus.values())
     assert "tile_unlabeled" not in joined
-    assert "hide_video_tile_labels" not in joined
+
+
+def test_video_label_optout_toggle_wired(corpus):
+    """1.0.41: 'Do not apply labels to Movies & TV Shows' (radiobutton 1103
+    under 'Show labeled tiles') hides the fork poster fade + label on
+    video-library items only, via per-item <visible> terms on the fork
+    controls - never include conditions (the withdrawn first attempt's
+    hardware lesson). Default off = the shipped 1.0.40 look untouched."""
+    optout = (
+        "![Skin.HasSetting(hide_video_tile_labels) + ["
+        "String.IsEqual(ListItem.DBType,movie) | "
+        "String.IsEqual(ListItem.DBType,set) | "
+        "String.IsEqual(ListItem.DBType,tvshow) | "
+        "String.IsEqual(ListItem.DBType,season) | "
+        "String.IsEqual(ListItem.DBType,episode)]]"
+    )
+    ih = corpus["Includes_Home.xml"]
+    # Every fork fade (4) and label (8) control carries the gate.
+    assert ih.count("<visible>" + optout + "</visible>") == 12
+    # The sub-toggle: wired in SkinSettings.xml, visible only while the
+    # parent labels toggle is on, and nothing else writes the flag.
+    skinsettings = corpus["SkinSettings.xml"]
+    assert "Skin.ToggleSetting(hide_video_tile_labels)" in skinsettings
+    assert (
+        "<selected>Skin.HasSetting(hide_video_tile_labels)</selected>" in skinsettings
+    )
+    writers = [
+        name
+        for name, text in corpus.items()
+        if "Skin.ToggleSetting(hide_video_tile_labels)" in text
+    ]
+    assert writers == ["SkinSettings.xml"], writers
+    readers = sorted(
+        name for name, text in corpus.items() if "hide_video_tile_labels" in text
+    )
+    assert readers == ["Includes_Home.xml", "SkinSettings.xml"], readers
 
 
 def test_weather_icons_default_to_outline_hd(corpus, built):

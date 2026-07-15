@@ -250,6 +250,21 @@ _SYSINFO_IN_GENERAL = (
     '\t\t\t\t<control type="button" id="703">\n'
 )
 
+# The fork's "Show labeled tiles" sub-option (1.0.41, owner request
+# 2026-07-15): hide the fork poster fade + label on Movies & TV Shows tiles
+# only. Inserted after the PVR-info sub-option (10022), before the next
+# stock toggle (10014).
+_VIDEO_LABEL_OPTOUT_TOGGLE = (
+    '\t\t\t\t<control type="radiobutton" id="1103">\n'
+    "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+    "\t\t\t\t\t<label>  ∟Do not apply labels to Movies &amp; TV Shows</label>\n"
+    "\t\t\t\t\t<onclick>Skin.ToggleSetting(hide_video_tile_labels)</onclick>\n"
+    "\t\t\t\t\t<selected>Skin.HasSetting(hide_video_tile_labels)</selected>\n"
+    "\t\t\t\t\t<visible>!Skin.HasSetting(hide_tile_labels)</visible>\n"
+    "\t\t\t\t</control>\n"
+    '\t\t\t\t<control type="radiobutton" id="10014">\n'
+)
+
 
 # The fork's helper invocations run the file, not the addon id (the skin
 # ships no python.script extension). Applied after the golden's id rename.
@@ -476,6 +491,11 @@ NORMALIZE = {
         (
             "\t\t\t\t\t<visible>!Skin.HasSetting(HideWidgetLabels)</visible>",
             "\t\t\t\t\t<visible>Skin.HasSetting(HideWidgetLabels)</visible>",
+            1,
+        ),
+        (
+            '\t\t\t\t<control type="radiobutton" id="10014">\n',
+            _VIDEO_LABEL_OPTOUT_TOGGLE,
             1,
         ),
         (_GOLDEN_T7B_GROUPLIST, "", 1),
