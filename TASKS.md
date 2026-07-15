@@ -115,7 +115,7 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.40 (current: 1.0.40 built + gated; 1.0.39 is the newest on hardware)
+## Post-launch hardening, 1.0.28-1.0.40 (current: 1.0.40 RELEASED 2026-07-15, live on the office bench)
 
 Bench-driven fixes shipped after the 1.0.1 stock-alignment round, none yet a
 formal PLAN.md phase (Phase 5 fleet migration has not started - these all
@@ -271,8 +271,14 @@ landed on the bench box(es) ahead of it). In order:
   restart, JSON-RPC 1.0.40 confirmed, screencaps each round): POV movie rows
   render clean single posters, label on the fade band at the poster bottom,
   focused tile = poster + focus frame + label, no doubling, no side bars;
-  owner watched live and tuned the fade twice ("nice!"). Pending: owner
-  sign-off on the final fade height, then commit + release.
+  owner watched live and tuned the fade twice ("nice!"). RELEASED 2026-07-15
+  (owner: "deploy"): commit 7b56720, GitHub release v1.0.40 (asset sha256
+  download-verified against the lock), proxy metadata bumped
+  (tony7bones.github.io f795516, raw URL confirmed serving 1.0.40), office
+  proxy cache busted via the update endpoint. The office box already runs
+  the identical bytes via the bench pushes; atv2 and the fleet update
+  through the repo at the owner's leisure. The fade-look revisit stays an
+  open task (see Deferred) - any change ships as 1.0.41+.
 - **1.0.40 also fixes: rating badge ignored its toggle (2026-07-15,
   bench-verified)** - the owner disabled every media flag, yet a lone TMDB
   rating badge kept rendering at the screen corner on focused home tiles.
@@ -318,8 +324,9 @@ landed on the bench box(es) ahead of it). In order:
   clobber is possible). Rollback = re-enable both, switch skins - seconds, no
   downloads. The other six boxes keep everything enabled until Phase 5.
 - **Current version (confirmed live 2026-07-15 via JSON-RPC):** `skin.estuary7`
-  1.0.39 on both the office Fire TV (192.168.7.162) and atv2 (192.168.7.183);
-  `script.ezmaintenanceplusplus` 2026.07.14.1.
+  1.0.40 on the office Fire TV (192.168.7.162, bench-pushed bytes identical
+  to release v1.0.40); atv2 (192.168.7.183) still on 1.0.39 pending a repo
+  update at the owner's leisure; `script.ezmaintenanceplusplus` 2026.07.14.1.
 
 ## Deferred / revisit later
 
