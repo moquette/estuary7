@@ -2081,19 +2081,22 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
     )
     # Dependency closure for a CLEAN-BOX manual install (owner directive
     # 2026-07-10): the skin must enable from our repo alone, nothing
-    # pre-installed. pvr.artwork is the one dep NOT in Kodi's official repo
-    # (b-jesch GitHub-only) - as a REQUIRED import it made Kodi abandon the
-    # whole dependency install and disable the skin. It becomes OPTIONAL (the
-    # skin already gates every pvr.artwork context item on System.HasAddon, so
-    # it enables fine without it; Setup still direct-extracts it on the fleet,
-    # and it is one-click otherwise). The remaining hard deps (outline-hd
-    # weather default + autocompletion, plus upstream's skinshortcuts +
-    # image.resource.select) are all no-sub-dep add-ons served by OUR proxy
-    # repo, so the closure resolves from the repo the user just installed.
+    # pre-installed. pvr.artwork was first demoted from REQUIRED (it is the
+    # one dep NOT in Kodi's official repo - b-jesch GitHub-only - and as a
+    # required import it made Kodi abandon the whole dependency install and
+    # disable the skin) to optional, then DROPPED ENTIRELY (owner directive
+    # 2026-07-15, 1.0.45): the fleet's bench never had it installed and never
+    # missed it - every pvr.artwork read in the skin is emptiness-guarded, so
+    # the skin renders stock PVR labels without it, and the SkinSettings
+    # "PVR Artwork" toggle still one-click-installs it from the hosted mirror
+    # for anyone who wants the enrichment. The remaining hard deps
+    # (outline-hd weather default + autocompletion, plus upstream's
+    # skinshortcuts + image.resource.select) are all no-sub-dep add-ons
+    # served by OUR proxy repo, so the closure resolves from the repo the
+    # user just installed.
     text = _replace(
         text,
         '\t\t<import addon="script.module.pvr.artwork" version="2.0.0"/>\n',
-        '\t\t<import addon="script.module.pvr.artwork" version="2.0.0" optional="true"/>\n'
         '\t\t<import addon="resource.images.weathericons.outline-hd" version="0.0.1"/>\n'
         '\t\t<import addon="script.module.autocompletion" version="1.0.0"/>\n',
         path=path,

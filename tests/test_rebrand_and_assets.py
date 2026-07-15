@@ -24,14 +24,12 @@ def test_addon_xml_identity(built):
         "script.module.autocompletion",
     ):
         assert '<import addon="{}"'.format(dep) in addon
-    # pvr.artwork is OPTIONAL: it is the one dep not in Kodi's official repo,
-    # so a REQUIRED import made a clean-box install abandon the whole closure
-    # and disable the skin. Optional = the skin enables without it (owner
-    # directive 2026-07-10). Setup still installs it on the fleet.
-    assert (
-        '<import addon="script.module.pvr.artwork" version="2.0.0" optional="true"/>'
-        in addon
-    )
+    # pvr.artwork is GONE from the manifest (owner directive 2026-07-15,
+    # 1.0.45; it had been optional since 2026-07-10): the bench never had it
+    # installed and never missed it - every skin read is emptiness-guarded,
+    # and the SkinSettings "PVR Artwork" toggle still one-click-installs it
+    # for anyone who wants the enrichment.
+    assert "pvr.artwork" not in addon
     # No unrelated couplings: Setup owns EZ Maintenance++ (owner decision
     # 2026-07-10 - the skin declares only what it uses).
     assert "ezmaintenanceplusplus" not in addon

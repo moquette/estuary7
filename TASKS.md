@@ -115,7 +115,30 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.44 (current: 1.0.44 bench-verified 2026-07-15, release pending owner word; 1.0.43 released)
+## Post-launch hardening, 1.0.28-1.0.45 (current: 1.0.45 bench-verified 2026-07-15, release pending owner word; 1.0.43 released)
+
+- **1.0.45 (2026-07-15) - pvr.artwork dependency dropped - BENCH-VERIFIED,
+  not yet released** - owner-approved after a full binding audit: the
+  `script.module.pvr.artwork` import leaves the manifest entirely (it had
+  been optional since 2026-07-10). Evidence: the office bench NEVER had the
+  module installed and nobody noticed - every one of the skin's ~80
+  pvr.artwork references is defensive (AddonIsEnabled-guarded RunScripts in
+  the PVR next-up popup; emptiness-guarded Window(Home).Property(PVR.
+  Artwork.*) reads everywhere else), so the skin renders stock PVR labels
+  without it. KEPT: all skin XML guards byte-for-byte (upstream parity,
+  zero cost), the SkinSettings "PVR Artwork" toggle (one-click InstallAddon
+  opt-in), and the hosted mirror in tony7bones.github.io that serves it.
+  KEPT: resource.images.weathericons.outline-hd (owner asked - it is
+  load-bearing: 5 active texture refs for the deliberate Outline HD look,
+  and it resolves from Kodi's OFFICIAL repo, zero hosting burden).
+  FLAG FOR THE STATIC-CONVERSION CREW (shared repo, not touched here):
+  bootstrap `_install_skin` still direct-extracts pvr.artwork (+ its
+  requests/simplecache deps) on fresh installs - that step can be removed
+  now that the skin neither requires nor imports it. Gates: 104 tests
+  (rebrand test flipped to assert the import ABSENT) + determinism green.
+  Bench: manifest-only delta pushed, Kodi restarted, skin enabled + active
+  on 1.0.45 - on a box that never had the module, the exact scenario the
+  removal serves.
 
 - **1.0.44 (2026-07-15) - trim round two - BENCH-VERIFIED, not yet
   released** - full-tree audit (sizes + reference greps + live box-settings
