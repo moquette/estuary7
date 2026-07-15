@@ -153,6 +153,16 @@ revert toward stock - flag it during transform work, ask the owner:
   the per-item split rides `<control type="group">` visibility - NEVER
   include conditions, which Kodi resolves once at window load with no item
   context.
+- POV search (owner request 2026-07-15, 1.0.42): "Use POV search"
+  (radiobutton 1104, Home menu pane, after the Search-shortcut background
+  pair; visible only while plugin.video.pov is installed AND enabled). ON =
+  the home Search popup (Custom_1107) swaps its four provider items (local
+  library / add-ons / YouTube / TheMovieDB) for POV's four search entries
+  (Movies / TV Shows / People / Movies Collection (TMDb), each opening
+  POV's search-history page) - same dialog design, different items. Every
+  popup item re-checks the toggle AND System.AddonIsEnabled live, so a
+  removed POV falls back to the stock popup silently. Default OFF = stock
+  popup, zero settings writes.
 - MOD V2's FUNCTIONAL mods (PVR integration, widgets, custom windows) stay -
   the mandate is about look and feel, not features
 

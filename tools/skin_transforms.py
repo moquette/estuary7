@@ -200,6 +200,76 @@ _VIDEO_LABEL_OPTOUT_TOGGLE = """\t\t\t\t<control type="radiobutton" id="1103">
 \t\t\t\t</control>
 """
 
+# POV search toggle (owner request 2026-07-15, 1.0.42): the home Search
+# popup (Custom_1107) swaps its four provider buttons for POV's four search
+# entries when this is on. Only VISIBLE while plugin.video.pov is installed
+# AND enabled; the dialog items double-check the same condition, so a
+# vanished POV silently falls back to the stock popup. Sits in the Home
+# menu pane right after the Search-shortcut background pair, before the
+# Widgets section header. Id 1104 is unused by upstream; default off =
+# zero settings writes, stock popup.
+_POV_SEARCH_TOGGLE = """\t\t\t\t<control type="radiobutton" id="1104">
+\t\t\t\t\t<label>Use POV search</label>
+\t\t\t\t\t<include>DefaultSettingButton</include>
+\t\t\t\t\t<onclick>Skin.ToggleSetting(use_pov_search)</onclick>
+\t\t\t\t\t<selected>Skin.HasSetting(use_pov_search)</selected>
+\t\t\t\t\t<visible>System.AddonIsEnabled(plugin.video.pov)</visible>
+\t\t\t\t</control>
+"""
+
+# The condition the popup items ride: POV mode is opted in AND POV is
+# actually available. Stock items carry the negation, POV items the
+# affirmative - the popup always shows exactly four entries.
+_POV_SEARCH_ON = (
+    "Skin.HasSetting(use_pov_search) + System.AddonIsEnabled(plugin.video.pov)"
+)
+
+# POV's four search entries, exactly as its navigator.search menu emits them
+# (labels and search_history routes read live from the bench box 2026-07-15;
+# each opens POV's search-history page - prior searches plus New Search -
+# per owner decision).
+_POV_SEARCH_ITEMS = (
+    ("Movies", "mode=search_history&amp;action=movie&amp;name=Movies"),
+    ("TV Shows", "mode=search_history&amp;action=tvshow&amp;name=TV+Shows"),
+    ("People", "mode=search_history&amp;action=people&amp;name=People"),
+    (
+        "Movies Collection (TMDb)",
+        "mode=search_history&amp;action=tmdb_collections"
+        "&amp;name=Movies+Collection+%28TMDb%29",
+    ),
+)
+
+
+def _edit_searchdialog(text: str, path: str) -> str:
+    # Gate each stock provider item on the POV toggle being off (or POV
+    # gone). The four items end on distinct lines, so each anchor is unique.
+    for tail in (
+        "InstallAddon(script.globalsearch)</onclick>",
+        "<onclick>ActivateWindow(addonbrowser,addons://search/,return)</onclick>",
+        "InstallAddon(plugin.video.youtube)</onclick>",
+        "InstallAddon(script.embuary.info)</onclick>",
+    ):
+        text = _replace(
+            text,
+            tail + "\n\t\t\t\t\t</item>",
+            tail + "\n\t\t\t\t\t\t<visible>![" + _POV_SEARCH_ON + "]</visible>"
+            "\n\t\t\t\t\t</item>",
+            path=path,
+        )
+    # Append POV's four search entries, shown only in POV mode.
+    pov_items = "".join(
+        "\t\t\t\t\t<item>\n"
+        "\t\t\t\t\t\t<label>" + label + "</label>\n"
+        "\t\t\t\t\t\t<onclick>Dialog.Close(all)</onclick>\n"
+        '\t\t\t\t\t\t<onclick>ActivateWindow(videos,"plugin://plugin.video.pov/?'
+        + query
+        + '",return)</onclick>\n'
+        "\t\t\t\t\t\t<visible>" + _POV_SEARCH_ON + "</visible>\n"
+        "\t\t\t\t\t</item>\n"
+        for label, query in _POV_SEARCH_ITEMS
+    )
+    return _insert_before(text, "\t\t\t\t</content>\n", pov_items, path=path)
+
 
 def _category_item(item_id: int, label_id: int) -> str:
     return (
@@ -853,6 +923,14 @@ def _edit_skinsettings(text: str, path: str) -> str:
         text,
         '\t\t\t\t<control type="radiobutton" id="10014">\n',
         _VIDEO_LABEL_OPTOUT_TOGGLE,
+        path=path,
+    )
+    # POV search toggle, after the Search-shortcut background pair and
+    # before the Widgets section header (see _POV_SEARCH_TOGGLE).
+    text = _insert_before(
+        text,
+        '\t\t\t\t<control type="label" id="100013">\n',
+        _POV_SEARCH_TOGGLE,
         path=path,
     )
     # Categories in stock Estuary's order.
@@ -1915,6 +1993,7 @@ FILE_EDITS = {
     "xml/Timers.xml": _edit_timers,
     "xml/DialogButtonMenu.xml": _edit_dialogbuttonmenu,
     "xml/DialogNotification.xml": _edit_dialognotification,
+    "xml/Custom_1107_SearchDialog.xml": _edit_searchdialog,
     "xml/Custom_1127_SettingsTVWidgets.xml": _edit_custom_tv_widgets,
     "xml/Custom_1129_SettingsProgramsWidgets.xml": _edit_custom_programs_widgets,
     "xml/Includes_Home.xml": _edit_includes_home,

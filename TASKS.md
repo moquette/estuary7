@@ -115,7 +115,29 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.41 (current: 1.0.41 bench-verified 2026-07-15, release pending owner word; 1.0.40 released)
+## Post-launch hardening, 1.0.28-1.0.42 (current: 1.0.42 bench-verified 2026-07-15, release pending owner word; 1.0.40 released)
+
+- **1.0.42 (2026-07-15) - POV search toggle - BENCH-VERIFIED, not yet
+  released** - owner-designed via interview before any code: "Use POV
+  search" (radiobutton 1104, Home menu pane after the Search-shortcut
+  background pair, visible only while plugin.video.pov is installed AND
+  enabled, default OFF = zero settings writes). ON = the home Search popup
+  (Custom_1107_SearchDialog) swaps its four provider items for POV's four
+  search entries - Movies / TV Shows / People / Movies Collection (TMDb),
+  labels and search_history routes read live from the box's POV
+  navigator.search menu; each opens POV's search-history page (owner
+  decision). Wiring: new `_edit_searchdialog` (FILE_EDITS 23 -> 24) gates
+  each stock item on `![use_pov_search + AddonIsEnabled(pov)]` and appends
+  the four POV items with the affirmative - the popup always shows exactly
+  four entries, and a vanished POV falls back to stock silently (panel
+  items re-evaluate visibility live; no include conditions anywhere).
+  Gates: 103 tests (new `test_pov_search_toggle_wired`; anchors count and
+  golden parity updated) + determinism green. Bench round (office Fire TV,
+  screencap-verified end to end): stock popup with toggle off; toggle
+  rendered in place and flipped via the real GUI; popup showed POV's four
+  entries; selecting Movies opened POV's search page (NEW SEARCH...).
+  Toggle left ON on the bench box per owner testing. Pending: release on
+  owner word (will ship together with unreleased 1.0.41).
 
 - **1.0.41 (2026-07-15) - the Movies & TV Shows label opt-out, DONE RIGHT -
   BENCH-VERIFIED, not yet released** - owner asked for the withdrawn 1.0.40

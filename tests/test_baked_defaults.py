@@ -177,6 +177,35 @@ def test_video_label_optout_toggle_wired(corpus):
     assert readers == ["Includes_Home.xml", "SkinSettings.xml"], readers
 
 
+def test_pov_search_toggle_wired(corpus):
+    """1.0.42: 'Use POV search' (radiobutton 1104, Home menu pane) swaps the
+    home Search popup's four provider items for POV's four search entries.
+    The toggle is visible only while plugin.video.pov is installed AND
+    enabled, and every popup item re-checks the same condition live - POV
+    vanishing falls back to the stock popup. Default off = stock popup,
+    zero settings writes."""
+    pov_on = "Skin.HasSetting(use_pov_search) + System.AddonIsEnabled(plugin.video.pov)"
+    dialog = corpus["Custom_1107_SearchDialog.xml"]
+    # Four stock items gated off in POV mode, four POV items gated on.
+    assert dialog.count("<visible>![" + pov_on + "]</visible>") == 4
+    assert dialog.count("<visible>" + pov_on + "</visible>") == 4
+    # POV's exact search-history routes, one per entry.
+    for action in ("movie", "tvshow", "people", "tmdb_collections"):
+        assert dialog.count("mode=search_history&amp;action=" + action + "&amp;") == 1
+    # The toggle: wired in SkinSettings.xml, POV-gated, sole writer.
+    skinsettings = corpus["SkinSettings.xml"]
+    assert "Skin.ToggleSetting(use_pov_search)" in skinsettings
+    assert "<selected>Skin.HasSetting(use_pov_search)</selected>" in skinsettings
+    writers = [
+        name
+        for name, text in corpus.items()
+        if "Skin.ToggleSetting(use_pov_search)" in text
+    ]
+    assert writers == ["SkinSettings.xml"], writers
+    readers = sorted(name for name, text in corpus.items() if "use_pov_search" in text)
+    assert readers == ["Custom_1107_SearchDialog.xml", "SkinSettings.xml"], readers
+
+
 def test_weather_icons_default_to_outline_hd(corpus, built):
     joined = "".join(corpus.values())
     assert "resource.images.weathericons.default" not in joined
