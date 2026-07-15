@@ -29,10 +29,44 @@ jobs:
       - name: Install dependencies
         run: pip install pytest
 
-      # Self-contained: the suite runs against the vendored goldens in tests/goldens/ and a
-      # fake Kodi runtime - it does NOT fetch upstream, so it is fast and network-free.
+      # Corrected 2026-07-14 (GAP 4 audit): most of this suite is NOT network-free. Its
+      # `built`/`upstream_tree` fixtures (tests/conftest.py) call build_skin.ensure_tarball(),
+      # which fetches the PINNED upstream tarball (sha256-verified) whenever upstream-cache/
+      # is absent - true on every fresh CI checkout, since that dir is gitignored. So this job
+      # already exercises the anchored transform against LIVE pinned upstream on every push.
+      # What it does NOT cover: trim_payload() (the TRIM_PATHS upstream-drift assertions have
+      # zero test coverage - confirmed by grep, 2026-07-14), the aggregate check_contracts()
+      # gate, packaging the fully trimmed+contract-checked tree, or the CLI's own `--check`
+      # double-build byte-compare. That is what the separate `anchored-build-check` job below
+      # covers, kept separate so a slow/flaky upstream fetch there never blocks this job's
+      # signal on the transform/golden/no-bold/self-heal contracts.
       # Covers: transform anchors (incl. mutation / fail-loud), golden parity vs the
       # hardware-verified 1.8.0 bytes, the no-bold contract, baked-default conditions,
       # rebrand, determinism, and the boot-service self-heal / menu-rebuild-loop regression.
       - name: Run the test suite
         run: python3 -m pytest tests/ -q
+
+  anchored-build-check:
+    # GAP 4: the pytest suite above never runs the real CLI entrypoint end to end, so a
+    # break confined to trim_payload() (TRIM_PATHS upstream-drift detection), the aggregate
+    # check_contracts() gate, or the packaged/trimmed zip's own determinism would not
+    # surface anywhere in CI. This job runs the actual build twice against the pinned
+    # upstream SHA and byte-compares the two zips - the same command a release does.
+    # Separate job (not a step in `test`) so this fetch-dependent, slower path can never
+    # slow down or flake the fast vendored-golden job above; it reports as its own
+    # independent, loudly-named check.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+        # No pip install: tools/build_skin.py and tools/skin_transforms.py are stdlib-only.
+        # python 3.12 is required, not incidental - 3.9's tarfile.extractall() predates the
+        # `filter=` argument extract_tree() passes (PEP 706); 3.12 has it.
+
+      - name: Anchored double-build against pinned upstream (determinism gate)
+        run: python3 tools/build_skin.py --check
