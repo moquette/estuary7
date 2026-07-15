@@ -200,16 +200,16 @@ _VIDEO_LABEL_OPTOUT_TOGGLE = """\t\t\t\t<control type="radiobutton" id="1103">
 \t\t\t\t</control>
 """
 
-# POV search toggle (owner request 2026-07-15, 1.0.42): the home Search
-# popup (Custom_1107) swaps its four provider buttons for POV's four search
-# entries when this is on. Only VISIBLE while plugin.video.pov is installed
-# AND enabled; the dialog items double-check the same condition, so a
-# vanished POV silently falls back to the stock popup. Sits in the Home
-# menu pane right after the Search-shortcut background pair, before the
-# Widgets section header. Id 1104 is unused by upstream; default off =
-# zero settings writes, stock popup.
+# POV search toggle (owner request 2026-07-15, 1.0.42; renamed and moved
+# 1.0.43): the home Search popup (Custom_1107) swaps its four provider
+# buttons for POV's four search entries when this is on. Only VISIBLE while
+# plugin.video.pov is installed AND enabled; the dialog items double-check
+# the same condition, so a vanished POV silently falls back to the stock
+# popup. Sits in the Home menu pane just above the "Enable background of
+# 'Power options' shortcut" toggle (10006). Id 1104 is unused by upstream;
+# default off = zero settings writes, stock popup.
 _POV_SEARCH_TOGGLE = """\t\t\t\t<control type="radiobutton" id="1104">
-\t\t\t\t\t<label>Use POV search</label>
+\t\t\t\t\t<label>Enable POV search</label>
 \t\t\t\t\t<include>DefaultSettingButton</include>
 \t\t\t\t\t<onclick>Skin.ToggleSetting(use_pov_search)</onclick>
 \t\t\t\t\t<selected>Skin.HasSetting(use_pov_search)</selected>
@@ -925,11 +925,11 @@ def _edit_skinsettings(text: str, path: str) -> str:
         _VIDEO_LABEL_OPTOUT_TOGGLE,
         path=path,
     )
-    # POV search toggle, after the Search-shortcut background pair and
-    # before the Widgets section header (see _POV_SEARCH_TOGGLE).
+    # POV search toggle, just above the Power-options background toggle
+    # (see _POV_SEARCH_TOGGLE).
     text = _insert_before(
         text,
-        '\t\t\t\t<control type="label" id="100013">\n',
+        '\t\t\t\t<control type="radiobutton" id="10006">\n',
         _POV_SEARCH_TOGGLE,
         path=path,
     )

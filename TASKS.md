@@ -115,7 +115,16 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.42 (current: 1.0.42 RELEASED 2026-07-15, live on the office bench)
+## Post-launch hardening, 1.0.28-1.0.43 (current: 1.0.43 bench-verified 2026-07-15, release pending owner word; 1.0.42 released)
+
+- **1.0.43 (2026-07-15) - POV search toggle renamed and moved - BENCH-
+  VERIFIED, not yet released** - owner refinement on 1.0.42: the toggle is
+  now "Enable POV search" and sits just above "Enable background of 'Power
+  options' shortcut" (anchor: upstream radiobutton 10006) instead of below
+  the Search-background pair. Setting name unchanged (`use_pov_search`), so
+  boxes keep their state across the update. 103 tests + determinism green;
+  golden parity mirror updated. Bench-verified: toggle rendered at the new
+  position, still ON from the owner's testing.
 
 - **1.0.42 (2026-07-15) - POV search toggle - BENCH-VERIFIED, not yet
   released** - owner-designed via interview before any code: "Use POV

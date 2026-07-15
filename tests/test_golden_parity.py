@@ -498,17 +498,18 @@ NORMALIZE = {
             _VIDEO_LABEL_OPTOUT_TOGGLE,
             1,
         ),
-        # 1.0.42: POV search toggle, before the Widgets section header.
+        # 1.0.42 (moved/renamed 1.0.43): POV search toggle, just above the
+        # Power-options background toggle.
         (
-            '\t\t\t\t<control type="label" id="100013">\n',
+            '\t\t\t\t<control type="radiobutton" id="10006">\n',
             '\t\t\t\t<control type="radiobutton" id="1104">\n'
-            "\t\t\t\t\t<label>Use POV search</label>\n"
+            "\t\t\t\t\t<label>Enable POV search</label>\n"
             "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
             "\t\t\t\t\t<onclick>Skin.ToggleSetting(use_pov_search)</onclick>\n"
             "\t\t\t\t\t<selected>Skin.HasSetting(use_pov_search)</selected>\n"
             "\t\t\t\t\t<visible>System.AddonIsEnabled(plugin.video.pov)</visible>\n"
             "\t\t\t\t</control>\n"
-            '\t\t\t\t<control type="label" id="100013">\n',
+            '\t\t\t\t<control type="radiobutton" id="10006">\n',
             1,
         ),
         (_GOLDEN_T7B_GROUPLIST, "", 1),

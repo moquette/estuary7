@@ -153,9 +153,10 @@ revert toward stock - flag it during transform work, ask the owner:
   the per-item split rides `<control type="group">` visibility - NEVER
   include conditions, which Kodi resolves once at window load with no item
   context.
-- POV search (owner request 2026-07-15, 1.0.42): "Use POV search"
-  (radiobutton 1104, Home menu pane, after the Search-shortcut background
-  pair; visible only while plugin.video.pov is installed AND enabled). ON =
+- POV search (owner request 2026-07-15, 1.0.42; renamed/moved 1.0.43):
+  "Enable POV search" (radiobutton 1104, Home menu pane, just above "Enable
+  background of 'Power options' shortcut"; visible only while
+  plugin.video.pov is installed AND enabled). ON =
   the home Search popup (Custom_1107) swaps its four provider items (local
   library / add-ons / YouTube / TheMovieDB) for POV's four search entries
   (Movies / TV Shows / People / Movies Collection (TMDb), each opening
