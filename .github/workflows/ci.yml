@@ -1,0 +1,38 @@
+name: CI
+
+# Estuary 7 is a fork-by-build of skin.estuary.modv2: it ships a rebranded skin zip built
+# from a PINNED upstream commit plus anchored transforms. The test suite is the build
+# contract - anchored transforms fail loud on a missing anchor, goldens pin the proven
+# bytes, the no-bold sweep is enforced, and the boot-service self-heal is tested against a
+# tvOS-accurate fake. This workflow runs it on every push so that contract is gated in CI,
+# not only when someone remembers to run pytest locally.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install pytest
+
+      # Self-contained: the suite runs against the vendored goldens in tests/goldens/ and a
+      # fake Kodi runtime - it does NOT fetch upstream, so it is fast and network-free.
+      # Covers: transform anchors (incl. mutation / fail-loud), golden parity vs the
+      # hardware-verified 1.8.0 bytes, the no-bold contract, baked-default conditions,
+      # rebrand, determinism, and the boot-service self-heal / menu-rebuild-loop regression.
+      - name: Run the test suite
+        run: python3 -m pytest tests/ -q
