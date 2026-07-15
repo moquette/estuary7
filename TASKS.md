@@ -115,7 +115,7 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.42 (current: 1.0.42 bench-verified 2026-07-15, release pending owner word; 1.0.40 released)
+## Post-launch hardening, 1.0.28-1.0.42 (current: 1.0.42 RELEASED 2026-07-15, live on the office bench)
 
 - **1.0.42 (2026-07-15) - POV search toggle - BENCH-VERIFIED, not yet
   released** - owner-designed via interview before any code: "Use POV
@@ -136,8 +136,16 @@ prevention checklist:
   screencap-verified end to end): stock popup with toggle off; toggle
   rendered in place and flipped via the real GUI; popup showed POV's four
   entries; selecting Movies opened POV's search page (NEW SEARCH...).
-  Toggle left ON on the bench box per owner testing. Pending: release on
-  owner word (will ship together with unreleased 1.0.41).
+  Toggle left ON on the bench box per owner testing. RELEASED 2026-07-15
+  (owner: "deploy", carrying the unreleased 1.0.41 with it): GitHub release
+  v1.0.42 (asset sha256 download-verified against the lock), proxy metadata
+  bumped (tony7bones.github.io 8d6bacf - a SINGLE-FILE commit; the static-
+  conversion crew's work had just landed as 5d8fe81 and local was synced
+  before touching anything, per the owner's "folks working on the repo"
+  heads-up), raw URL confirmed serving 1.0.42, office proxy cache busted.
+  v1.0.41 was never released standalone - its tag/commit exist but the
+  fleet jumps 1.0.40 -> 1.0.42. atv2 and the fleet update through the repo
+  at the owner's leisure.
 
 - **1.0.41 (2026-07-15) - the Movies & TV Shows label opt-out, DONE RIGHT -
   BENCH-VERIFIED, not yet released** - owner asked for the withdrawn 1.0.40
