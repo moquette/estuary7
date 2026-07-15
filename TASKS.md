@@ -64,10 +64,19 @@ Full phase plan + locked decisions: `docs/PLAN.md`. Project rules: `CLAUDE.md`.
       index. Snapshot regenerated; 1295 tests + ruff green. Real-device proof
       of the fresh-box path deliberately deferred to Phase 5 (a full fresh
       provision would wipe the bench; the migrator run IS the live exercise).
-- [ ] **Phase 5 - Fleet migration**: modv2plus 2.0.0 one-shot migrator
-      (disarmed first), box-by-box, rollback = one skin switch.
-- [ ] **Phase 6 - Retirement + docs**: retire modv2plus, correct the playbook's
-      wrong "MIT" license note (upstream = GPL-2.0 code + CC-BY-SA-4.0 art).
+- [x] **Phase 5 - Fleet migration**: DROPPED as a project (owner decision
+      2026-07-15). No modv2plus 2.0.0 migrator will be built. Boxes switch to
+      Estuary 7 MANUALLY, one at a time, at leisure (one skin switch via the
+      repo; rollback = one switch back). `script.tony7bones.modv2plus` is
+      DEPRECATED effective immediately: no further releases or investment;
+      its boot service keeps already-patched MOD V2 boxes working until each
+      box is switched. Context: the fleet's distribution is converting to a
+      static repo - plan lives in the fleet meta-repo,
+      `~/Code/moquette/kodi/docs/static-repo-and-tailscale.md` - and no
+      longer gates on this migration.
+- [ ] **Phase 6 - Retirement + docs**: retire modv2plus once the last box has
+      left MOD V2; correct the playbook's wrong "MIT" license note (upstream =
+      GPL-2.0 code + CC-BY-SA-4.0 art).
 
 ## Menu-reset incident (1.0.2x, RESOLVED 2026-07-12)
 
