@@ -115,7 +115,7 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.46 (current: 1.0.46 bench-verified 2026-07-15, release pending owner word; 1.0.43 released)
+## Post-launch hardening, 1.0.28-1.0.46 (current: 1.0.46 RELEASED 2026-07-15, live on the office bench)
 
 - **1.0.46 (2026-07-15) - weather icons BAKED IN + Skin Settings declutter -
   BENCH-VERIFIED, not yet released** - two owner directives in one version:
@@ -145,7 +145,13 @@ prevention checklist:
   - the new extras/weather dir (50 files), verified live: top-bar weather
     icon renders from the BAKED set, Extras pane has no splash/themes rows,
     Home menu pane opens at "Minimize main menu" with no logo chooser.
-    Pending: release on owner word (ships with 1.0.44 + 1.0.45).
+    RELEASED 2026-07-15: GitHub release v1.0.46 (created owner-side ~8min
+  after the commit - the catalog work published it; asset sha256
+  download-verified IDENTICAL to the lock) with notes bundling
+  1.0.44-1.0.46, and the hosted metadata bumped in the shared repo by
+  the catalog commit 381d3fa ('feat(catalog): ship estuary7 1.0.46').
+  1.0.44 and 1.0.45 were never released standalone; the fleet jumps
+  1.0.43 -> 1.0.46.
 
 - **1.0.45 (2026-07-15) - pvr.artwork dependency dropped - BENCH-VERIFIED,
   not yet released** - owner-approved after a full binding audit: the
