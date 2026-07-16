@@ -326,6 +326,19 @@ _DEBUG_HEADER = '\t\t\t\t<control type="label" id="900014">'
 NORMALIZE = {
     "Home.xml": _WIDGET_INVERSIONS
     + [
+        # 1.0.51 "Apple Elegance": whole-window dissolve+swell on Home close
+        # (upstream faded only some background groups, cutting the menu).
+        (
+            "\t<controls>\n",
+            '\t<animation effect="fade" start="100" end="0" time="260" '
+            'tween="sine" easing="out" '
+            'condition="System.Platform.TVOS">WindowClose</animation>\n'
+            '\t<animation effect="zoom" start="100" end="106" center="960,540" '
+            'time="260" tween="sine" easing="out" '
+            'condition="System.Platform.TVOS">WindowClose</animation>\n'
+            "\t<controls>\n",
+            1,
+        ),
         (
             "$LOCALIZE[166] Estuary MOD V2 • ",
             "$LOCALIZE[166] Estuary 7 • ",

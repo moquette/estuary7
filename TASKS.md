@@ -115,7 +115,21 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.50 (current: 1.0.50 RELEASED 2026-07-15)
+## Post-launch hardening, 1.0.28-1.0.51 (current: 1.0.51 RELEASED 2026-07-15)
+
+- **1.0.51 (2026-07-15) - 'Apple Elegance' round 1: Home dissolves into
+  fullscreen video (tvOS ONLY)** - owner request after living with the
+  1.0.50 back-at-Home flow: the hard cut into fullscreen TV should be a
+  transition. Two window-level WindowClose animations on Home.xml (fade
+  100->0 + zoom 100->106 centered, 260ms sine/out): the whole Home UI
+  dissolves and swells toward the viewer as it hands off to the video -
+  upstream faded only some background groups, cutting the menu layer.
+  BOTH animations carry condition=System.Platform.TVOS (owner directive:
+  'the office TV is firetv which shouldn't be touched') - Fire OS keeps
+  stock timing, verified by redeploying the gated build to the bench.
+  WindowOpen untouched. Golden parity mirrors the insert. 106 tests +
+  determinism green. Owner feels the motion on the bedroom ATV after
+  the repo update; timing/zoom are one-number tunables for iteration.
 
 - **1.0.50 (2026-07-15) - back at Home returns to the playing video
   (tvOS)** - owner live-tested 1.0.49 on the ATV and it WORKED (back
