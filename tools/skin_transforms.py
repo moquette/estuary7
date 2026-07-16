@@ -327,11 +327,11 @@ def _edit_home(text: str, path: str) -> str:
     text = _replace(
         text,
         "\t<controls>\n",
-        '\t<animation effect="fade" start="100" end="0" time="260" '
-        'tween="sine" easing="out" '
+        '\t<animation effect="slide" end="0,1080" time="400" '
+        'tween="sine" easing="in" '
         'condition="System.Platform.TVOS">WindowClose</animation>\n'
-        '\t<animation effect="zoom" start="100" end="106" center="960,540" '
-        'time="260" tween="sine" easing="out" '
+        '\t<animation effect="fade" start="100" end="0" time="400" '
+        'tween="sine" easing="in" '
         'condition="System.Platform.TVOS">WindowClose</animation>\n'
         "\t<controls>\n",
         path=path,

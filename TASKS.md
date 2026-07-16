@@ -115,7 +115,16 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.51 (current: 1.0.51 RELEASED 2026-07-15)
+## Post-launch hardening, 1.0.28-1.0.52 (current: 1.0.52 RELEASED 2026-07-15)
+
+- **1.0.52 (2026-07-15) - the Home exit becomes a SLIDE-OUT (tvOS)** -
+  owner reaction to 1.0.51's dissolve: imperceptible ('it just
+  disappears... borrow slide-out animations instead of recreating the
+  wheel'). Diagnosis: the 260ms fade + 6% zoom DID run but reads as a
+  cut over an instantly-visible video surface. Replaced with the skin's
+  own slide idiom (sine tween, like the sidebar glide): the whole Home
+  UI slides down (0,1080) and fades over 400ms, easing in - a visible
+  curtain-drop into the show. Still tvOS-gated; Fire OS stock.
 
 - **1.0.51 (2026-07-15) - 'Apple Elegance' round 1: Home dissolves into
   fullscreen video (tvOS ONLY)** - owner request after living with the
