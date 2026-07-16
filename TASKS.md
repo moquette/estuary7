@@ -115,7 +115,27 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.52 (current: 1.0.52 RELEASED 2026-07-15)
+## Post-launch hardening, 1.0.28-1.0.53 (current: 1.0.53 RELEASED 2026-07-15)
+
+- **1.0.53 (2026-07-15) - REVERT of 1.0.51/1.0.52: Home exit animations
+  removed, Home.xml back to stock bytes.** Owner report: 'you broke my
+  settings button animation' - the window-level WindowClose slide/fade
+  fired on EVERY exit from Home (Settings included, adding 400ms of
+  blocked render loop to all Home navigation) while NEVER playing for
+  the video handoff it targeted. Root cause, proven from Omega source
+  by the architecture agent: Kodi FORCE-CLOSES any window whose
+  successor is WINDOW_FULLSCREEN_VIDEO (GUIWindow.cpp:379-380,
+  `forceClose |= nextWindowID == WINDOW_FULLSCREEN_VIDEO`), skipping
+  the WindowClose animation queue entirely - unpatchable from skin XML
+  on the close path. LESSON: window-level WindowClose animations can
+  never animate a hand-off INTO fullscreen video, and they tax every
+  other exit. If Apple Elegance round 2 is ever revisited, the only
+  viable mechanism (source-verified) is: keymap sets a skin bool ->
+  Conditional animations on ALL top-level Home groups slide/fade the
+  UI out over the live video layer -> a skin timer (Timers.xml) fires
+  `FullScreen` + `Skin.Reset` after ~1s. Risks documented in the agent
+  report (timer 1s granularity; input lands on invisible Home during
+  the window). OWNER DECISION REQUIRED before any retry.
 
 - **1.0.52 (2026-07-15) - the Home exit becomes a SLIDE-OUT (tvOS)** -
   owner reaction to 1.0.51's dissolve: imperceptible ('it just
@@ -249,12 +269,12 @@ prevention checklist:
     icon renders from the BAKED set, Extras pane has no splash/themes rows,
     Home menu pane opens at "Minimize main menu" with no logo chooser.
     RELEASED 2026-07-15: GitHub release v1.0.46 (created owner-side ~8min
-  after the commit - the catalog work published it; asset sha256
-  download-verified IDENTICAL to the lock) with notes bundling
-  1.0.44-1.0.46, and the hosted metadata bumped in the shared repo by
-  the catalog commit 381d3fa ('feat(catalog): ship estuary7 1.0.46').
-  1.0.44 and 1.0.45 were never released standalone; the fleet jumps
-  1.0.43 -> 1.0.46.
+    after the commit - the catalog work published it; asset sha256
+    download-verified IDENTICAL to the lock) with notes bundling
+    1.0.44-1.0.46, and the hosted metadata bumped in the shared repo by
+    the catalog commit 381d3fa ('feat(catalog): ship estuary7 1.0.46').
+    1.0.44 and 1.0.45 were never released standalone; the fleet jumps
+    1.0.43 -> 1.0.46.
 
 - **1.0.45 (2026-07-15) - pvr.artwork dependency dropped - BENCH-VERIFIED,
   not yet released** - owner-approved after a full binding audit: the
