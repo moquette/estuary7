@@ -314,28 +314,6 @@ _CATEGORY_ORDER_STOCK = (
 
 
 def _edit_home(text: str, path: str) -> str:
-    # Home window-close transition (owner request 2026-07-15, 1.0.51,
-    # "Apple Elegance"): upstream fades only some background groups on
-    # WindowClose, so leaving Home for fullscreen video (the 1.0.50
-    # back-at-Home path, or any window switch) CUTS the menu/widgets
-    # abruptly. These window-level animations dissolve the WHOLE Home UI
-    # while it swells slightly toward the viewer - the tvOS "hand off to
-    # the content" feel. tvOS-ONLY by owner directive ("the office TV is
-    # firetv which shouldn't be touched") - Fire OS keeps stock timing.
-    # WindowOpen is untouched (the groups' staggered 400ms fades already
-    # read well).
-    text = _replace(
-        text,
-        "\t<controls>\n",
-        '\t<animation effect="slide" end="0,1080" time="400" '
-        'tween="sine" easing="in" '
-        'condition="System.Platform.TVOS">WindowClose</animation>\n'
-        '\t<animation effect="fade" start="100" end="0" time="400" '
-        'tween="sine" easing="in" '
-        'condition="System.Platform.TVOS">WindowClose</animation>\n'
-        "\t<controls>\n",
-        path=path,
-    )
     # The system-info overlay's skin line names the skin literally (the
     # version $INFO beside it is covered by the global id rename).
     text = _replace(
