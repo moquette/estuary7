@@ -126,8 +126,14 @@ prevention checklist:
   returns to fullscreen. The keymap gains a <Home> section mapping
   button 6 to FullScreen (a no-op when nothing is playing, so idle
   Home-back does nothing instead of surprising). Seed test extended.
-  106 tests + determinism green; owner verifies on the ATV after the
-  repo update.
+  106 tests + determinism green; owner verified LIVE on the ATV (back
+  through guide and Home with Family Guy playing; Home-back and double
+  play/pause return to fullscreen). Fire TV isolation hardware-proven
+  (empty keymaps dir on the office box at 1.0.50). FULL WRITEUP - the
+  stock-Kodi contrast, the JSON-RPC-vs-physical-button diagnosis
+  method, button-id reference, delivery, revert, maintenance:
+  docs/playbooks/tvos-siri-remote-firetv-parity.md (also linked from
+  CLAUDE.md and DESIGN.md).
 
 - **1.0.49 (2026-07-15) - Siri remote Fire TV parity for live TV (tvOS
   keymap via the boot service)** - owner-reported: on tvOS, backing out

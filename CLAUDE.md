@@ -69,6 +69,16 @@ python3 tools/build_skin.py --check    # build twice, byte-compare (determinism 
 python3 -m pytest tests/ -q            # transform anchors, golden parity, sweep contracts
 ```
 
+## tvOS Siri remote behavior is FORK-AUTHORED, not stock
+
+Stock Kodi on Apple TV stops playback when back is pressed in fullscreen
+and has no return-to-fullscreen gesture. The fork's boot service writes a
+userdata keymap on tvOS boxes (back keeps playback running; back-at-Home
+and double play/pause return to fullscreen). Before touching the service,
+the keymap payload, or diagnosing "remote misbehaves" reports, read
+`docs/playbooks/tvos-siri-remote-firetv-parity.md` - including the
+JSON-RPC-vs-physical-button diagnosis method that found it.
+
 ## Runtime gotchas (skinshortcuts + tvOS) - READ BEFORE TOUCHING THE RESET
 
 The skin ships a `scripts/helpers.py` `resetMenu` action (injected by

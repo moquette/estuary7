@@ -177,6 +177,15 @@ revert toward stock - flag it during transform work, ask the owner:
   popup item re-checks the toggle AND System.AddonIsEnabled live, so a
   removed POV falls back to the stock popup silently. Default OFF = stock
   popup, zero settings writes.
+- tvOS Siri remote: Fire TV parity for playback (owner directives
+  2026-07-15, 1.0.49/1.0.50) - a deliberate BEHAVIORAL deviation from
+  stock Kodi, which stops playback on back in fullscreen and offers no
+  return-to-fullscreen gesture on the Apple TV. The fork's boot service
+  writes a userdata keymap on tvOS boxes only: back exits fullscreen with
+  playback continuing, back at Home and double play/pause return to
+  fullscreen, stop stays on hold-play/pause and in the OSD. Full record,
+  root cause, and maintenance notes:
+  docs/playbooks/tvos-siri-remote-firetv-parity.md
 - MOD V2's FUNCTIONAL mods (PVR integration, widgets, custom windows) stay -
   the mandate is about look and feel, not features
 
