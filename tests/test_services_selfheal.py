@@ -340,6 +340,10 @@ def test_siri_keymap_written_on_tvos_and_idempotent(tmp_path):
     assert "<FullscreenVideo>" in body and "<FullscreenLiveTV>" in body
     # double play/pause (upstream noop) toggles fullscreen back.
     assert '<button id="21">FullScreen</button>' in body
+    # back at Home returns to the playing video (upstream opened the
+    # Favourites browser - a blank screen with no favourites set).
+    assert "<Home>" in body
+    assert body.count(">FullScreen</button>") == 2
     assert "builtin: Action(reloadkeymaps)" in store.log
     # Second boot of the SAME box: content unchanged, NO second reload.
     reloads = store.log.count("builtin: Action(reloadkeymaps)")

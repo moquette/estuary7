@@ -115,7 +115,19 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.49 (current: 1.0.49 RELEASED 2026-07-15)
+## Post-launch hardening, 1.0.28-1.0.50 (current: 1.0.50 RELEASED 2026-07-15)
+
+- **1.0.50 (2026-07-15) - back at Home returns to the playing video
+  (tvOS)** - owner live-tested 1.0.49 on the ATV and it WORKED (back
+  from fullscreen kept Family Guy playing through the guide and Home),
+  but one more back at Home hit upstream's OTHER Siri mapping: back on
+  Home opens the Favourites browser - a blank blue screen on a box with
+  no favourites. Owner expectation: back at Home while something plays
+  returns to fullscreen. The keymap gains a <Home> section mapping
+  button 6 to FullScreen (a no-op when nothing is playing, so idle
+  Home-back does nothing instead of surprising). Seed test extended.
+  106 tests + determinism green; owner verifies on the ATV after the
+  repo update.
 
 - **1.0.49 (2026-07-15) - Siri remote Fire TV parity for live TV (tvOS
   keymap via the boot service)** - owner-reported: on tvOS, backing out
