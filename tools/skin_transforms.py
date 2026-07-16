@@ -2016,6 +2016,58 @@ _SERVICES_SEED = """\
             xbmc.log('estuary7: seeded skinshortcuts hash (%d entries)' % len(_hl), level=xbmc.LOGINFO)
     except Exception as _hxe:
         xbmc.log('estuary7: hash seed failed (falls back to one rebuild): %s' % _hxe, level=xbmc.LOGWARNING)
+    # --- Siri remote keymap (tvOS ONLY): Fire TV parity for live TV ---
+    # Kodi's shipped customcontroller.SiriRemote.xml maps back/menu (button
+    # 6) to STOP inside FullscreenVideo, so live TV dies on back - and the
+    # remote has no button that RETURNS to fullscreen (double play/pause,
+    # button 21, is upstream noop). Owner directive 2026-07-15: back exits
+    # fullscreen with playback continuing (like the Fire TV remote), and
+    # double-click play/pause toggles fullscreen back. Stop stays on
+    # hold-play/pause and in the OSD. Written with plain open() (the tvOS
+    # xbmcvfs/POSIX split lesson), rewritten only when the payload changes,
+    # then keymaps reload in place. Android/desktop: strict no-op.
+    try:
+        if xbmc.getCondVisibility('System.Platform.TVOS'):
+            _km = '\\n'.join([
+                '<?xml version="1.0" encoding="UTF-8"?>',
+                '<!-- Written by skin.estuary7 (boot service): Fire TV parity for the',
+                '     Siri remote. Back exits fullscreen video with playback continuing;',
+                '     double play/pause toggles fullscreen. Delete this file and run',
+                '     Action(reloadkeymaps) to revert to stock behavior. -->',
+                '<keymap>',
+                '  <FullscreenVideo>',
+                '    <customcontroller name="SiriRemote">',
+                '      <button id="6">Back</button>',
+                '    </customcontroller>',
+                '  </FullscreenVideo>',
+                '  <FullscreenLiveTV>',
+                '    <customcontroller name="SiriRemote">',
+                '      <button id="6">Back</button>',
+                '    </customcontroller>',
+                '  </FullscreenLiveTV>',
+                '  <global>',
+                '    <customcontroller name="SiriRemote">',
+                '      <button id="21">FullScreen</button>',
+                '    </customcontroller>',
+                '  </global>',
+                '</keymap>',
+                '',
+            ])
+            _km_dir = xbmcvfs.translatePath('special://profile/keymaps/')
+            _km_path = os.path.join(_km_dir, 't7b-siriremote.xml')
+            _have = None
+            if os.path.isfile(_km_path):
+                with open(_km_path, 'r') as _kf:
+                    _have = _kf.read()
+            if _have != _km:
+                if not os.path.isdir(_km_dir):
+                    os.makedirs(_km_dir)
+                with open(_km_path, 'w') as _kf:
+                    _kf.write(_km)
+                xbmc.executebuiltin('Action(reloadkeymaps)')
+                xbmc.log('estuary7: wrote Siri remote keymap (Fire TV parity)', level=xbmc.LOGINFO)
+    except Exception as _km_e:
+        xbmc.log('estuary7: siri keymap write failed: %s' % _km_e, level=xbmc.LOGWARNING)
 """
 
 

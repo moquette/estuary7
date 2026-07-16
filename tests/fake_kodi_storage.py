@@ -282,6 +282,15 @@ def make_modules(store):
             store.log.append("builtin: %s" % cmd)
 
         @staticmethod
+        def getCondVisibility(cond):
+            # Platform conditionals only - enough for the seed's tvOS gate.
+            if cond == "System.Platform.TVOS":
+                return store.platform == "tvos"
+            if cond == "System.Platform.Android":
+                return store.platform == "android"
+            return False
+
+        @staticmethod
         def getInfoLabel(label):
             # Not a storage concern (out of this fake's real scope per the
             # module docstring) - just enough for callers that read

@@ -115,7 +115,30 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.48 (current: 1.0.48 RELEASED 2026-07-15)
+## Post-launch hardening, 1.0.28-1.0.49 (current: 1.0.49 RELEASED 2026-07-15)
+
+- **1.0.49 (2026-07-15) - Siri remote Fire TV parity for live TV (tvOS
+  keymap via the boot service)** - owner-reported: on tvOS, backing out
+  of fullscreen live TV STOPS playback; on Fire TV it keeps playing.
+  RECON (empirical, both boxes): inside Kodi both platforms keep playing
+  (JSON-RPC 'back' proved it live on the ATV); the killer is Kodi's
+  SHIPPED customcontroller.SiriRemote.xml, which maps the back/menu
+  button (6) to STOP inside FullscreenVideo - and upstream had a reason:
+  the Siri remote has NO button that returns to fullscreen (owner got
+  stuck exactly there when the stream played in the background). Fix,
+  BOTH halves: a userdata keymap (t7b-siriremote.xml) mapping button 6
+  to Back in FullscreenVideo + FullscreenLiveTV, and double play/pause
+  (21, upstream noop) to FullScreen as the return/toggle gesture; stop
+  remains on hold-play/pause and in the OSD. DELIVERY: skins cannot
+  ship keymaps, so the skin's boot service writes the file on tvOS
+  boxes only (plain open() per the tvOS VFS lesson), idempotent
+  (content-compare, reloadkeymaps only on change), strict no-op on
+  Android/desktop. fake_kodi gains platform getCondVisibility; two new
+  seed tests (tvOS write+idempotence, Android no-op). 106 tests +
+  determinism green. Verification: ATV2 updates via the repo, then the
+  owner presses back during live TV (playback should continue) and
+  double-taps play/pause (fullscreen returns). Also this round: the
+  bench debug overlay was disabled with a clean-exit settings flush.
 
 - **1.0.48 (2026-07-15) - power menu order + capitalization - BENCH-
   VERIFIED + RELEASED** - owner refinements on 1.0.47: 'Customize Main

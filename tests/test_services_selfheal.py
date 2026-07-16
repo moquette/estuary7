@@ -316,3 +316,42 @@ def test_purge_drops_duplicate_key_keeps_posix_file(tmp_path):
     assert posix_file.read_bytes() == b"<owner-shortcuts/>\n"
     _, files2 = store.listdir(str(ssdir))
     assert files2.count("mainmenu.DATA.xml") == 1
+
+
+# ---------------------------------------------------------------------------
+# Siri remote keymap seed (1.0.49): Fire TV parity on tvOS, no-op elsewhere.
+# ---------------------------------------------------------------------------
+
+
+def _keymap_path(tmp_path):
+    return tmp_path / "home" / "userdata" / "keymaps" / "t7b-siriremote.xml"
+
+
+def test_siri_keymap_written_on_tvos_and_idempotent(tmp_path):
+    store, _ = _make_box(tmp_path, "tvos")
+    modules = make_modules(store)
+    _exec_seed(modules)
+    km = _keymap_path(tmp_path)
+    assert km.is_file(), "tvOS boot must write the Siri keymap"
+    body = km.read_text()
+    # back exits fullscreen video (playback continues) - both live-TV and
+    # plain video sections override upstream's button-6 Stop.
+    assert body.count('<button id="6">Back</button>') == 2
+    assert "<FullscreenVideo>" in body and "<FullscreenLiveTV>" in body
+    # double play/pause (upstream noop) toggles fullscreen back.
+    assert '<button id="21">FullScreen</button>' in body
+    assert "builtin: Action(reloadkeymaps)" in store.log
+    # Second boot of the SAME box: content unchanged, NO second reload.
+    reloads = store.log.count("builtin: Action(reloadkeymaps)")
+    _exec_seed(modules)
+    assert km.read_text() == body
+    assert store.log.count("builtin: Action(reloadkeymaps)") == reloads
+
+
+def test_siri_keymap_not_written_on_android(tmp_path):
+    store, _ = _make_box(tmp_path, "android")
+    _exec_seed(make_modules(store))
+    assert not _keymap_path(tmp_path).exists(), (
+        "the Siri keymap is tvOS-only; Fire OS boxes must stay untouched"
+    )
+    assert "builtin: Action(reloadkeymaps)" not in store.log
