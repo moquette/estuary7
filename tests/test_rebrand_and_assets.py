@@ -216,24 +216,34 @@ def test_stock_upstream_shortcuts_survive(built):
         assert (built.tree / "shortcuts" / name).is_file(), name
 
 
-def test_powermenu_leads_with_skin_settings(built):
-    """The power menu leads with 'Skin settings' (owner request). It is a static
-    list with one <content> per display mode; the item must be FIRST in each and
-    open this skin's settings window."""
+def test_powermenu_leads_with_customize_then_skin_settings(built):
+    """The power menu leads with 'Customize Main Menu' then 'Skin Settings'
+    (owner requests 2026-07-15; order swapped + title-cased in 1.0.48). It is
+    a static list with one <content> per display mode; the pair must open
+    the skinshortcuts editor and this skin's settings window respectively."""
     import re
 
     text = (built.tree / "xml" / "DialogButtonMenu.xml").read_text("utf-8")
-    blocks = re.findall(r"<content>\s*(<item>.*?</item>)", text, re.S)
+    blocks = re.findall(
+        r"<content>\s*(<item>.*?</item>)\s*(<item>.*?</item>)", text, re.S
+    )
     assert len(blocks) == 3, "expected 3 power-menu content modes"
-    for first_item in blocks:
-        assert "$LOCALIZE[10035]" in first_item
+    for first_item, second_item in blocks:
+        assert "Customize Main Menu" in first_item
+        assert "script.skinshortcuts,type=manage" in first_item
+        assert "$LOCALIZE[10035]" in second_item
+        assert "ActivateWindow(SkinSettings)" in second_item
         # the power menu is a modal dialog: it MUST close before navigating,
-        # or ActivateWindow is ignored (nothing happens on click).
+        # or the follow-up action is ignored (nothing happens on click).
         assert first_item.index("dialog.close(all,true)") < first_item.index(
+            "RunScript(script.skinshortcuts"
+        )
+        assert second_item.index("dialog.close(all,true)") < second_item.index(
             "ActivateWindow(SkinSettings)"
         )
-    # exactly three inserted (one per mode), no more
+    # exactly three of each inserted (one per mode), no more
     assert text.count("<onclick>ActivateWindow(SkinSettings)</onclick>") == 3
+    assert text.count("type=manage&amp;group=mainmenu") == 3
 
 
 def test_videos_override_removed(built, upstream_tree):

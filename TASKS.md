@@ -115,7 +115,22 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.47 (current: 1.0.47 bench-verified 2026-07-15, release pending; 1.0.46 released)
+## Post-launch hardening, 1.0.28-1.0.48 (current: 1.0.48 RELEASED 2026-07-15)
+
+- **1.0.48 (2026-07-15) - power menu order + capitalization - BENCH-
+  VERIFIED + RELEASED** - owner refinements on 1.0.47: 'Customize Main
+  Menu' now LEADS the power menu (above Skin Settings) and is title-cased
+  via a literal label (owner asked; matches the adjacent 'Skin Settings';
+  the localization loss is nil since 1.0.44 trimmed to English only). The
+  power-menu contract test now pins the pair's order, actions, and the
+  dialog.close-before-action rule for both items. Also: the bench box's
+  debug overlay (owner-side, NOT the build) was disabled properly - the
+  first attempt was silently discarded by a deploy force-stop (the
+  settings-clobber class), the fix used Application.Quit for a clean
+  settings flush. 104 tests + determinism green; screencap-verified.
+  1.0.47 was never released standalone (superseded same hour by the
+  order/case swap); ATV2 self-updated 1.0.39 -> 1.0.46 via the repo
+  today, and gets 1.0.48 the same way.
 
 - **1.0.47 (2026-07-15) - power-menu 'Customize main menu' + lyrics-font
   log-spam fix - BENCH-VERIFIED, not yet released** - (1) owner request:

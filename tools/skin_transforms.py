@@ -1201,9 +1201,11 @@ def _edit_dialogbuttonmenu(text: str, path: str) -> str:
     # macOS; ATV kodi.log showed DialogButtonMenu.xml load then a native
     # shutdown). Every other power-menu item uses a loose
     # special://skin/extras/icons/... file; matching that fixes it (1.0.29).
-    # 'Customize Main Menu' follows it (owner request 2026-07-15, 1.0.47),
-    # opening the skinshortcuts menu editor directly - the same action as
-    # Skin Settings > Home menu > Customize main menu (label 31306). Same
+    # 'Customize Main Menu' LEADS (owner request 2026-07-15; order swapped
+    # and title-cased in 1.0.48 - the literal label matches the adjacent
+    # "Skin Settings" and costs nothing since 1.0.44 trimmed to English
+    # only), opening the skinshortcuts menu editor directly - the same
+    # action as Skin Settings > Home menu > Customize main menu. Same
     # loose-icon rule as above; skinshortcuts is a hard manifest import, so
     # no InstallAddon guard is needed.
     text = _replace(
@@ -1211,17 +1213,17 @@ def _edit_dialogbuttonmenu(text: str, path: str) -> str:
         "\t\t\t\t<content>\n",
         "\t\t\t\t<content>\n"
         "\t\t\t\t\t<item>\n"
-        "\t\t\t\t\t\t<label>$LOCALIZE[10035]</label>\n"
-        "\t\t\t\t\t\t<icon>special://skin/extras/icons/skinsettings.png</icon>\n"
-        "\t\t\t\t\t\t<onclick>dialog.close(all,true)</onclick>\n"
-        "\t\t\t\t\t\t<onclick>ActivateWindow(SkinSettings)</onclick>\n"
-        "\t\t\t\t\t</item>\n"
-        "\t\t\t\t\t<item>\n"
-        "\t\t\t\t\t\t<label>$LOCALIZE[31306]</label>\n"
+        "\t\t\t\t\t\t<label>Customize Main Menu</label>\n"
         "\t\t\t\t\t\t<icon>special://skin/extras/icons/controlpanel.png</icon>\n"
         "\t\t\t\t\t\t<onclick>dialog.close(all,true)</onclick>\n"
         "\t\t\t\t\t\t<onclick>RunScript(script.skinshortcuts,"
         "type=manage&amp;group=mainmenu)</onclick>\n"
+        "\t\t\t\t\t</item>\n"
+        "\t\t\t\t\t<item>\n"
+        "\t\t\t\t\t\t<label>$LOCALIZE[10035]</label>\n"
+        "\t\t\t\t\t\t<icon>special://skin/extras/icons/skinsettings.png</icon>\n"
+        "\t\t\t\t\t\t<onclick>dialog.close(all,true)</onclick>\n"
+        "\t\t\t\t\t\t<onclick>ActivateWindow(SkinSettings)</onclick>\n"
         "\t\t\t\t\t</item>\n",
         path=path,
         count=3,
