@@ -338,6 +338,16 @@ def test_siri_keymap_written_on_tvos_and_idempotent(tmp_path):
     # plain video sections override upstream's button-6 Stop.
     assert body.count('<button id="6">Back</button>') == 2
     assert "<FullscreenVideo>" in body and "<FullscreenLiveTV>" in body
+    # select opens the OSD on live TV ONLY (1.0.54): upstream's select=Pause
+    # is a dead button on non-timeshift live streams; the FullscreenLiveTV
+    # section wins over FullscreenVideo while a PVR channel plays, so movies
+    # keep select=Pause (exactly one id-5 override, inside the live section).
+    assert body.count('<button id="5">OSD</button>') == 1
+    assert (
+        body.index("<FullscreenLiveTV>")
+        < body.index('<button id="5">OSD</button>')
+        < body.index("</FullscreenLiveTV>")
+    )
     # double play/pause (upstream noop) toggles fullscreen back.
     assert '<button id="21">FullScreen</button>' in body
     # back at Home returns to the playing video (upstream opened the

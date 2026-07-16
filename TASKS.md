@@ -115,7 +115,21 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.53 (current: 1.0.53 RELEASED 2026-07-15)
+## Post-launch hardening, 1.0.28-1.0.54 (current: 1.0.54 RELEASED 2026-07-15)
+
+- **1.0.54 (2026-07-15) - select opens the OSD on live TV (tvOS)** - owner
+  report while watching live IPTV on the ATV: 'single select does not work
+  on iptv... nothing happens. maybe is on video or movies'. Diagnosis over
+  JSON-RPC against the live stream: upstream maps Siri select (button 5) to
+  Pause in FullscreenVideo, but the channel reports canseek=false /
+  canchangespeed=false (no timeshift), so Kodi silently swallows Pause - a
+  dead button on live TV, while movies pause fine. Fix: one button-5=OSD
+  line in the keymap seed's FullscreenLiveTV section (consulted FIRST while
+  a PVR channel plays), matching Fire OS where select shows the OSD in
+  fullscreen video. Movies/shows keep select=Pause via the FullscreenVideo
+  fallback; Fire TV untouched (tvOS-gated writer + SiriRemote-scoped
+  mappings). Playbook table updated; selfheal tests pin exactly one id-5
+  override inside the live section.
 
 - **1.0.53 (2026-07-15) - REVERT of 1.0.51/1.0.52: Home exit animations
   removed, Home.xml back to stock bytes.** Owner report: 'you broke my

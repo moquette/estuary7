@@ -24,8 +24,8 @@ physical remote's buttons are not the same thing**:
    identical to Fire TV. So the player logic is platform-agnostic; core
    Kodi was never the problem.
 2. The owner's physical Siri remote back press stopped playback.
-3. Therefore the Siri remote's back button must be mapped to a *different
-   action* than "back" - a keymap issue, not a platform or player issue.
+3. Therefore the Siri remote's back button must be mapped to a _different
+   action_ than "back" - a keymap issue, not a platform or player issue.
 
 General lesson: **when a remote button misbehaves, compare it against the
 equivalent JSON-RPC `Input.*` action.** If JSON behaves and the button does
@@ -45,11 +45,11 @@ per-platform difference was the keymap.
 Kodi ships `system/keymaps/customcontroller.SiriRemote.xml` (verified
 against the Omega branch of xbmc/xbmc). The relevant stock mappings:
 
-| Context | Button 6 (back/menu) | Effect |
-| --- | --- | --- |
-| `<global>` | `Back` | normal navigation |
-| `<FullscreenVideo>` | **`Stop`** | live TV / video DIES on back |
-| `<Home>` | **`ActivateWindow(FavouritesBrowser)`** | back at Home opens Favourites - a blank blue screen on a box with no favourites |
+| Context             | Button 6 (back/menu)                    | Effect                                                                          |
+| ------------------- | --------------------------------------- | ------------------------------------------------------------------------------- |
+| `<global>`          | `Back`                                  | normal navigation                                                               |
+| `<FullscreenVideo>` | **`Stop`**                              | live TV / video DIES on back                                                    |
+| `<Home>`            | **`ActivateWindow(FavouritesBrowser)`** | back at Home opens Favourites - a blank blue screen on a box with no favourites |
 
 And the gesture inventory shows why upstream chose `Stop`: **no button
 returns to fullscreen.** Double play/pause (button 21) and double select
@@ -60,13 +60,13 @@ workaround for the missing return path, not a considered UX choice.
 
 ### Siri remote button-id reference (from the stock keymap)
 
-| id | Physical input | id | Physical input |
-| --- | --- | --- | --- |
-| 1-4 | up/down/left/right | 12 | play/pause |
-| 5 | select | 20 | hold play/pause (= Stop globally) |
-| 6 | menu/back | 21 | double play/pause (stock: noop) |
-| 7 | hold select (= ContextMenu / OSD) | 22 | double select (stock: noop) |
-| 8-11 | swipes | 23-26 | pans |
+| id   | Physical input                    | id    | Physical input                    |
+| ---- | --------------------------------- | ----- | --------------------------------- |
+| 1-4  | up/down/left/right                | 12    | play/pause                        |
+| 5    | select                            | 20    | hold play/pause (= Stop globally) |
+| 6    | menu/back                         | 21    | double play/pause (stock: noop)   |
+| 7    | hold select (= ContextMenu / OSD) | 22    | double select (stock: noop)       |
+| 8-11 | swipes                            | 23-26 | pans                              |
 
 ## The fix (both halves - one alone is worse than none)
 
@@ -74,11 +74,12 @@ A userdata keymap, `userdata/keymaps/t7b-siriremote.xml`, overriding three
 mappings. User keymaps take precedence over system keymaps per button and
 window; everything not listed stays stock.
 
-| Context | Button | Stock | Ours | Why |
-| --- | --- | --- | --- | --- |
-| `FullscreenVideo` + `FullscreenLiveTV` | 6 (back) | Stop | `Back` | exit fullscreen with playback continuing - Fire TV parity |
-| `Home` | 6 (back) | Favourites browser | `FullScreen` | back at Home returns to the playing video (owner expectation, found in live testing); `FullScreen` is a no-op when nothing plays, so an idle back at Home does nothing instead of surprising |
-| `<global>` | 21 (double play/pause) | noop | `FullScreen` | the missing return-to-fullscreen gesture, from any window; free real estate |
+| Context                                | Button                 | Stock                                 | Ours           | Why                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------------------- | ---------------------- | ------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FullscreenVideo` + `FullscreenLiveTV` | 6 (back)               | Stop                                  | `Back`         | exit fullscreen with playback continuing - Fire TV parity                                                                                                                                                                                                                                                                             |
+| `FullscreenLiveTV` only                | 5 (select)             | Pause (falls back to FullscreenVideo) | `OSD` (1.0.54) | Fire TV's select shows the OSD in fullscreen video; upstream's Pause is a DEAD button on live streams without timeshift (Kodi swallows Pause when the stream reports canseek/canchangespeed false - verified over JSON-RPC on a live IPTV channel). Live-TV section wins while a PVR channel plays, so movies/shows keep select=Pause |
+| `Home`                                 | 6 (back)               | Favourites browser                    | `FullScreen`   | back at Home returns to the playing video (owner expectation, found in live testing); `FullScreen` is a no-op when nothing plays, so an idle back at Home does nothing instead of surprising                                                                                                                                          |
+| `<global>`                             | 21 (double play/pause) | noop                                  | `FullScreen`   | the missing return-to-fullscreen gesture, from any window; free real estate                                                                                                                                                                                                                                                           |
 
 Stopping playback remains available exactly where users expect it: hold
 play/pause (button 20, stock `Stop`) and the OSD's stop button (hold
