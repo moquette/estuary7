@@ -115,7 +115,31 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.46 (current: 1.0.46 RELEASED 2026-07-15, live on the office bench)
+## Post-launch hardening, 1.0.28-1.0.47 (current: 1.0.47 bench-verified 2026-07-15, release pending; 1.0.46 released)
+
+- **1.0.47 (2026-07-15) - power-menu 'Customize main menu' + lyrics-font
+  log-spam fix - BENCH-VERIFIED, not yet released** - (1) owner request:
+  a second fork item in the power menu, directly below 'Skin Settings',
+  in all three display modes: 'Customize main menu' (stock label 31306,
+  loose extras/icons/controlpanel.png per the 1.0.29 tvOS icon rule)
+  opening the skinshortcuts menu editor via
+  RunScript(script.skinshortcuts,type=manage&group=mainmenu) -
+  skinshortcuts is a hard manifest import, so no InstallAddon guard.
+  Verified end to end on the bench: power menu shows Skin Settings /
+  Customize main menu / Exit, and selecting it loads
+  script-skinshortcuts.xml (log-proven; a first attempt LOOKED broken -
+  landed in the Videos window - but was input interference, the clean
+  retest passed). (2) Bench-caught 1.0.44 regression: trimming
+  fonts/lyrics/ left the lyr* definitions binding missing files - ~40
+  GUIFontManager::LoadTTF errors at EVERY skin load. New
+  repoint_lyrics_fonts (called from transform_font_xml, mirrored in
+  golden normalization) re-points the DEFAULT fontset's lyrics
+  <filename>s at NotoSans-Regular; alternates stay byte-stock
+  (test_nobold invariant), font-id inventory untouched. Verified: zero
+  lyrics font errors on the post-deploy boot. NOTE: the bench box had
+  Kodi's debug overlay enabled during this round (not by the build;
+  owner-side) - handy for the log proofs, owner can disable in
+  Settings > System > Logging.
 
 - **1.0.46 (2026-07-15) - weather icons BAKED IN + Skin Settings declutter -
   BENCH-VERIFIED, not yet released** - two owner directives in one version:

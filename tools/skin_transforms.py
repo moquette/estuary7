@@ -1201,6 +1201,11 @@ def _edit_dialogbuttonmenu(text: str, path: str) -> str:
     # macOS; ATV kodi.log showed DialogButtonMenu.xml load then a native
     # shutdown). Every other power-menu item uses a loose
     # special://skin/extras/icons/... file; matching that fixes it (1.0.29).
+    # 'Customize Main Menu' follows it (owner request 2026-07-15, 1.0.47),
+    # opening the skinshortcuts menu editor directly - the same action as
+    # Skin Settings > Home menu > Customize main menu (label 31306). Same
+    # loose-icon rule as above; skinshortcuts is a hard manifest import, so
+    # no InstallAddon guard is needed.
     text = _replace(
         text,
         "\t\t\t\t<content>\n",
@@ -1210,6 +1215,13 @@ def _edit_dialogbuttonmenu(text: str, path: str) -> str:
         "\t\t\t\t\t\t<icon>special://skin/extras/icons/skinsettings.png</icon>\n"
         "\t\t\t\t\t\t<onclick>dialog.close(all,true)</onclick>\n"
         "\t\t\t\t\t\t<onclick>ActivateWindow(SkinSettings)</onclick>\n"
+        "\t\t\t\t\t</item>\n"
+        "\t\t\t\t\t<item>\n"
+        "\t\t\t\t\t\t<label>$LOCALIZE[31306]</label>\n"
+        "\t\t\t\t\t\t<icon>special://skin/extras/icons/controlpanel.png</icon>\n"
+        "\t\t\t\t\t\t<onclick>dialog.close(all,true)</onclick>\n"
+        "\t\t\t\t\t\t<onclick>RunScript(script.skinshortcuts,"
+        "type=manage&amp;group=mainmenu)</onclick>\n"
         "\t\t\t\t\t</item>\n",
         path=path,
         count=3,
@@ -2257,6 +2269,41 @@ def transform_font_xml(text: str, *, path: str = "xml/Font.xml") -> str:
             "{}: neutralized {} UI style-bold tags, expected {}".format(
                 path, removed, FONT_STYLE_BOLD_UI_IDS
             )
+        )
+    return repoint_lyrics_fonts(text[:start] + segment + text[end:], path=path)
+
+
+_LYRICS_FILENAME_RE = re.compile(r"<filename>lyrics/[^<]+</filename>")
+
+
+def repoint_lyrics_fonts(text: str, *, path: str = "xml/Font.xml") -> str:
+    """Re-point the DEFAULT fontset's lyrics font FILES at NotoSans-Regular.
+
+    1.0.44 trimmed fonts/lyrics/ (the karaoke faces nobody on the fleet
+    uses), which left the lyr* definitions binding missing files - harmless
+    (Kodi falls back) but it spams ~40 GUIFontManager::LoadTTF errors into
+    the log at EVERY skin load (bench-caught 2026-07-15). Only the ACTIVE
+    fontset's fonts load, so the swap is scoped to Default; the alternate
+    fontsets stay byte-stock (the test_nobold invariant) and never spam.
+    The font-id INVENTORY stays byte-identical (only <filename> values
+    change); the lyr* ids keep their sizes and synthetic-bold styles, so if
+    a lyrics add-on ever appears its overlays render in NotoSans instead of
+    the decorative faces. Public (not _-prefixed): golden parity applies
+    the same repoint to normalize the golden."""
+    start = text.find('<fontset id="Default"')
+    if start == -1:
+        raise TransformError("{}: Default fontset not found".format(path))
+    end = text.find("<fontset id=", start + 1)
+    if end == -1:
+        raise TransformError(
+            "{}: Default fontset is not followed by another fontset".format(path)
+        )
+    segment, swaps = _LYRICS_FILENAME_RE.subn(
+        "<filename>NotoSans-Regular.ttf</filename>", text[start:end]
+    )
+    if swaps == 0:
+        raise TransformError(
+            "{}: no lyrics font filenames found to repoint".format(path)
         )
     return text[:start] + segment + text[end:]
 

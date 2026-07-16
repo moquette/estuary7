@@ -43,7 +43,12 @@ import re
 import pytest
 
 from conftest import GOLDENS
-from skin_transforms import SKIN_ID, UPSTREAM_ID, drop_settings_views_variable
+from skin_transforms import (
+    SKIN_ID,
+    UPSTREAM_ID,
+    drop_settings_views_variable,
+    repoint_lyrics_fonts,
+)
 
 _COMMENT_RE = re.compile(r"[ \t]*<!--.*?-->\n?", re.DOTALL)
 
@@ -650,6 +655,10 @@ def _normalize_golden(name: str, text: str) -> str:
         # 1.0.39: the view-picker image variable is deleted (the same
         # transform the build applies), not normalized pair-by-pair.
         text = drop_settings_views_variable(text, path="golden " + name)
+    if name == "Font.xml":
+        # 1.0.47: the lyrics font files are repointed at NotoSans (the same
+        # transform the build applies) since fonts/lyrics/ was trimmed.
+        text = repoint_lyrics_fonts(text, path="golden " + name)
     for old, new, count in NORMALIZE.get(name, []):
         found = text.count(old)
         assert found == count, (
