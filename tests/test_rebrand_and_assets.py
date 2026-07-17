@@ -68,8 +68,9 @@ def test_helper_script_runs_by_path(built):
         text = xml.read_text(encoding="utf-8")
         assert "RunScript({},".format(SKIN_ID) not in text, xml.name
         total += text.count("RunScript(special://skin/scripts/helpers.py,")
-    # 16 rewired getKodiSetting/reset callers + the Home onload seedPVR (1.0.33).
-    assert total == 17
+    # 16 rewired getKodiSetting/reset callers + the Home onload seedPVR (1.0.33)
+    # + the Home onload syncMenu (1.0.65, tvOS DATA durability reconcile).
+    assert total == 18
 
 
 def test_upstream_id_fully_renamed(built):

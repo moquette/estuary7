@@ -425,6 +425,13 @@ def _edit_home(text: str, path: str) -> str:
         "\t<onload>RunScript(script.skinshortcuts,type=buildxml&amp;"
         "mainmenuID=9000&amp;group=mainmenu)</onload>\n",
         "\t<onload>RunScript(special://skin/scripts/helpers.py,seedPVR)</onload>\n"
+        # tvOS ONLY (strict no-op elsewhere): reconcile the main-menu DATA's POSIX
+        # copy (where skinshortcuts writes/reads the freshest edit) with its durable
+        # NSUserDefaults key BEFORE the buildxml reads it. De-shadows a stale key
+        # onto the fresh edit and re-materializes a purged POSIX copy from the key,
+        # so Customize edits SAVE, DISPLAY, and PERSIST across a cache purge/restart.
+        # Never deletes the user's only copy; no-op when the layers already agree.
+        "\t<onload>RunScript(special://skin/scripts/helpers.py,syncMenu)</onload>\n"
         # Clear a stuck skinshortcuts-isrunning guard (survives ReloadSkin/addon
         # restart; only a reboot clears it otherwise, and a stale True no-ops every
         # build).
@@ -535,6 +542,108 @@ _RESET_MENU_ACTION = (
     "                home.setProperty('t7b_resetmenu', 'reset: ' + ' '.join(report))\n"
     "                xbmc.log('resetMenu: ' + ' '.join(report), xbmc.LOGINFO)\n"
     "                xbmc.executebuiltin('RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')\n"
+)
+
+# tvOS main-menu DATA durability reconcile - the 1.0.65 fix for "Customize Main
+# Menu edits do not save on Apple TV". Fired from Home's onload BEFORE the
+# buildxml (see _edit_home). Strict no-op on Fire TV / desktop and on a
+# consistent box with no pending edit.
+#
+# THE LINCHPIN (re-derived from Kodi Omega TVOSFile.cpp / TVOSNSUserDefaults.mm,
+# encoded in tests/fake_kodi_storage.py):
+#   - A *.xml under userdata is dispatched to CTVOSFile. Its NSUserDefaults KEY
+#     SHADOWS the POSIX file: xbmcvfs read/exists are KEY-FIRST (POSIX only as a
+#     fallback WHEN NO KEY EXISTS), xbmcvfs write is KEY-ONLY, the POSIX copy
+#     lives in a purgeable cache, and Kodi never re-materializes the POSIX file
+#     from the key.
+#   - script.skinshortcuts SAVES the menu with ElementTree.write (plain POSIX)
+#     and READS it back with ETree.parse (plain POSIX) behind an xbmcvfs.exists
+#     GUARD (datafunctions.py:178-180). So the freshest edit always lands on
+#     POSIX, while the DURABLE store is the key.
+# Two failure modes follow, and this heals both without ever deleting a copy:
+#   (1) STALE SHADOW: an earlier-era key holds an old menu and shadows the fresh
+#       POSIX edit for every xbmcvfs consumer -> push the fresh POSIX bytes into
+#       the key so the durable layer matches the edit.
+#   (2) CACHE PURGE: the OS drops the POSIX copy and only the key survives, but
+#       skinshortcuts (a POSIX reader) then finds nothing and reverts to the
+#       shipped default -> re-materialize POSIX from the durable key.
+# The reconcile direction preserves the user's FRESHEST edit: POSIX wins whenever
+# it is present (that is where skinshortcuts just wrote it); the key is only used
+# to rebuild a purged POSIX. It is byte-preserving (no ETree re-serialize, so the
+# skinshortcuts hash never churns) and skips empty/unparseable data so corruption
+# is never propagated into either layer.
+_SYNC_MENU_ACTION = (
+    "        elif sys.argv[1] == 'syncMenu':\n"
+    "            # tvOS main-menu DATA durability reconcile. See docs/playbooks/\n"
+    "            # skinshortcuts-reset-tvos-vfs-split.md. Fire TV / desktop: strict no-op.\n"
+    "            try:\n"
+    "                if xbmc.getCondVisibility('System.Platform.TVOS'):\n"
+    "                    _home = xbmcgui.Window(10000)\n"
+    "                    _pending = _home.getProperty('skinshortcuts-reloadmainmenu') == 'True'\n"
+    "                    _changed = []\n"
+    "                    _seen = set()\n"
+    "                    for _sp in ('special://profile/addon_data/script.skinshortcuts/', 'special://masterprofile/addon_data/script.skinshortcuts/'):\n"
+    "                        _base = xbmcvfs.translatePath(_sp)\n"
+    "                        if _base in _seen:\n"
+    "                            continue\n"
+    "                        _seen.add(_base)\n"
+    "                        # listdir merges POSIX names AND NSUserDefaults key names, so a\n"
+    "                        # menu that survives ONLY as a durable key (POSIX purged) is found.\n"
+    "                        try:\n"
+    "                            _dirs, _files = xbmcvfs.listdir(_sp)\n"
+    "                        except Exception:\n"
+    "                            _files = os.listdir(_base) if os.path.isdir(_base) else []\n"
+    "                        for _name in sorted(set(_files)):\n"
+    "                            if not _name.endswith('.DATA.xml'):\n"
+    "                                continue\n"
+    "                            _sfile = _sp + _name\n"
+    "                            _rfile = os.path.join(_base, _name)\n"
+    "                            if os.path.isfile(_rfile):\n"
+    "                                with open(_rfile, 'rb') as _f:\n"
+    "                                    _bp = _f.read()\n"
+    "                                if not _bp:\n"
+    "                                    continue\n"
+    "                                try:\n"
+    "                                    ET.fromstring(_bp)\n"
+    "                                except Exception:\n"
+    "                                    continue  # never propagate a corrupt POSIX edit\n"
+    "                                with xbmcvfs.File(_sfile) as _vf:\n"
+    "                                    _bv = bytes(_vf.readBytes())\n"
+    "                                if _bv != _bp or _pending:\n"
+    "                                    # Push the fresh POSIX bytes into the durable key:\n"
+    "                                    # de-shadow a stale key AND register the key so the\n"
+    "                                    # edit survives a POSIX cache purge. POSIX is left\n"
+    "                                    # untouched - it already holds the freshest edit.\n"
+    "                                    with xbmcvfs.File(_sfile, 'w') as _vf:\n"
+    "                                        _vf.write(bytearray(_bp))\n"
+    "                                    if _bv != _bp:\n"
+    "                                        _changed.append(_name)\n"
+    "                            elif xbmcvfs.exists(_sfile):\n"
+    "                                # POSIX purged, durable key survived: re-materialize the\n"
+    "                                # POSIX copy so skinshortcuts (a POSIX reader) can load it.\n"
+    "                                with xbmcvfs.File(_sfile) as _vf:\n"
+    "                                    _bv = bytes(_vf.readBytes())\n"
+    "                                if not _bv:\n"
+    "                                    continue\n"
+    "                                try:\n"
+    "                                    ET.fromstring(_bv)\n"
+    "                                except Exception:\n"
+    "                                    continue  # never write corrupt bytes back to POSIX\n"
+    "                                if not os.path.isdir(_base):\n"
+    "                                    os.makedirs(_base)\n"
+    "                                with open(_rfile, 'wb') as _f:\n"
+    "                                    _f.write(_bv)\n"
+    "                                _changed.append(_name)\n"
+    "                    if _changed:\n"
+    "                        # A layer actually changed: rebuild the includes from the\n"
+    "                        # reconciled DATA. Clear the stuck build guard first (it\n"
+    "                        # survives ReloadSkin/addon-restart and no-ops build_menu).\n"
+    "                        _home.clearProperty('skinshortcuts-isrunning')\n"
+    "                        xbmc.executebuiltin('RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')\n"
+    "                    if _changed or _pending:\n"
+    "                        xbmc.log('estuary7: syncMenu changed=%s pending=%s' % (_changed, _pending), xbmc.LOGINFO)\n"
+    "            except Exception as _sm_e:\n"
+    "                xbmc.log('estuary7: syncMenu failed: %s' % _sm_e, xbmc.LOGWARNING)\n"
 )
 
 _SYSTEM_PAGE = (
@@ -1888,11 +1997,15 @@ def _edit_helpers(text: str, path: str) -> str:
     text = _replace(
         text,
         "import xbmc\nimport xbmcvfs\nimport xbmcgui\nimport sys\nimport json\n",
-        "import xbmc\nimport xbmcaddon\nimport xbmcvfs\nimport xbmcgui\nimport os\nimport sys\nimport json\n",
+        "import xbmc\nimport xbmcaddon\nimport xbmcvfs\nimport xbmcgui\nimport os\n"
+        "import xml.etree.ElementTree as ET\nimport sys\nimport json\n",
         path=path,
     )
     return _insert_before(
-        text, _HELPERS_ELSE, _SEED_PVR_ACTION + _RESET_MENU_ACTION, path=path
+        text,
+        _HELPERS_ELSE,
+        _SEED_PVR_ACTION + _SYNC_MENU_ACTION + _RESET_MENU_ACTION,
+        path=path,
     )
 
 

@@ -115,7 +115,47 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.64 (current: 1.0.64, build-verified)
+## Post-launch hardening, 1.0.28-1.0.65 (current: 1.0.65, build-verified)
+
+- **1.0.65 (2026-07-17) - Customize Main Menu edits SAVE + DISPLAY + PERSIST on
+  Apple TV: the standalone tvOS DATA reconcile that 1.0.64 deliberately deferred,
+  done correctly.** 1.0.64 fixed the hash/includes freeze but its own entry noted
+  it "didn't address the tvOS write/guard split" and dropped the DATA self-heal
+  because that heal only worked coupled to a hash-drop. Root cause of the residual
+  break (re-derived from Kodi Omega `TVOSFile.cpp` / `TVOSNSUserDefaults.mm`,
+  encoded in `tests/fake_kodi_storage.py`): on tvOS a `*.xml` under `userdata` is
+  shadowed by an NSUserDefaults KEY. `xbmcvfs` read/exists are KEY-FIRST (POSIX
+  only as a fallback WHEN NO KEY EXISTS), `xbmcvfs` write is KEY-ONLY, and the
+  POSIX copy lives in a purgeable cache. `script.skinshortcuts` SAVES the menu
+  with `ElementTree.write` (plain POSIX) and READS it back with `ETree.parse`
+  (plain POSIX) behind an `xbmcvfs.exists` GUARD (`datafunctions.py:178-180`). So
+  the freshest edit always lands on POSIX while the DURABLE store is the key, and
+  two failure modes follow: (1) a stale key from an earlier era (an EZM++-restored
+  box) shadows the fresh POSIX edit for every `xbmcvfs` consumer, and (2) after a
+  cache purge only the key survives and skinshortcuts (a POSIX reader) reverts to
+  the shipped default. Fix: a new tvOS-only `syncMenu` helper action fired from
+  Home's onload BEFORE the buildxml (`_SYNC_MENU_ACTION` in
+  `tools/skin_transforms.py`). For each `*.DATA.xml` it reconciles the two layers
+  in the direction that preserves the user's FRESHEST edit - POSIX wins whenever
+  present: it pushes the fresh POSIX bytes into the durable key (de-shadowing a
+  stale key AND registering the key so the edit survives a purge), and when the
+  POSIX copy was purged it re-materializes POSIX from the durable key so
+  skinshortcuts can read it. It NEVER deletes either copy, skips empty/unparseable
+  data (never propagates corruption), is byte-preserving (no `ETree` re-serialize,
+  so the skinshortcuts hash never churns), fires its own `buildxml` (guard cleared
+  first) only when a layer actually changed, and is a strict no-op on Fire TV /
+  desktop and on a consistent box with no pending edit. This is self-standing:
+  unlike the 1.0.64-dropped heal it does not depend on a coupled hash-drop, and it
+  never touches skinshortcuts' hash. LINCHPIN: the fake's `exists()` is key-first
+  with a POSIX fallback (fake_kodi_storage.py:147-152), so the durability write is
+  gated on the pending-edit flag (the one state - key absent, POSIX present - that
+  content comparison cannot detect), while the purge-recovery is gated on the
+  unambiguous `xbmcvfs.exists && !os.path.exists` state. New test file
+  `tests/test_syncmenu_tvos.py` (10 tests) execs the REAL payload against the
+  two-layer fake: de-shadow, durable-key registration, purge recovery, strict
+  no-op / idempotence, off-tvOS no-op, corruption-never-propagated,
+  never-deletes. Golden onload NORMALIZE + helper-invocation count (17 -> 18)
+  updated; 124 tests pass; determinism check green (sha256 d9de2911...).
 
 - **1.0.64 (2026-07-17) - Home main-menu edits finally PERSIST across a full
   restart (owner: removing a test item in the Skin Shortcuts editor left it in
