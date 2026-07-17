@@ -202,6 +202,11 @@ revert toward stock - flag it during transform work, ask the owner:
   animated group (1.0.57) - an inner per-item gate on the grouplist made
   every exit play on an empty box, upstream's included. Hardware-proven
   root cause and forensics: TASKS.md 1.0.55/1.0.56/1.0.57 entries.
+- Home-cover watched/status badge at the TOP-RIGHT of the poster (owner
+  request 2026-07-16, 1.0.60; upstream draws it bottom-left), with an
+  opt-in Skin Settings switch to hide it ('Hide watched check mark on
+  covers'). Home covers only; library views keep upstream's placement
+  until a deliberate sweep is requested.
 - MOD V2's FUNCTIONAL mods (PVR integration, widgets, custom windows) stay -
   the mandate is about look and feel, not features
 

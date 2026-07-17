@@ -855,7 +855,37 @@ def _edit_variables(text: str, path: str) -> str:
     return text
 
 
+
+# 1.0.60: hide switch for the home-cover watched/status badge (see
+# _edit_view54). Plain-text label per house precedent; unused id.
+_HIDE_WATCHED_TOGGLE = (
+    '\t\t\t\t<control type="radiobutton" id="10090">\n'
+    "\t\t\t\t\t<label>Hide watched check mark on covers</label>\n"
+    "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+    "\t\t\t\t\t<onclick>Skin.ToggleSetting(hide_watched_icon)</onclick>\n"
+    "\t\t\t\t\t<selected>Skin.HasSetting(hide_watched_icon)</selected>\n"
+    "\t\t\t\t</control>\n"
+)
+
+_GREYEDOUT_HOME_ROW = (
+    '\t\t\t\t<control type="radiobutton" id="10017">\n'
+    "\t\t\t\t\t<label>$LOCALIZE[31364]</label>\n"
+    "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+    "\t\t\t\t\t<onclick>Skin.ToggleSetting(greyedout_watched_home)</onclick>\n"
+    "\t\t\t\t\t<selected>Skin.HasSetting(greyedout_watched_home)</selected>\n"
+    "\t\t\t\t</control>\n"
+)
+
+
 def _edit_skinsettings(text: str, path: str) -> str:
+    # Watched-badge hide switch, directly below the grey-out-watched (home)
+    # toggle it belongs beside.
+    text = _insert_after(
+        text,
+        _GREYEDOUT_HOME_ROW,
+        _HIDE_WATCHED_TOGGLE,
+        path=path,
+    )
     # System-info toggle: General category, below "Disable zoom effect"
     # (stock structure, no custom tab - THE FIRST MANDATE).
     text = _insert_before(
@@ -2203,6 +2233,41 @@ def _edit_services(text: str, path: str) -> str:
     )
 
 
+
+
+# Watched/status badge on the HOME video covers (owner request 2026-07-16,
+# 1.0.60): upstream draws the 32px WallWatchedIconVar badge at the poster
+# tile's BOTTOM-LEFT (23,263). The owner wants it at the TOP-RIGHT of the
+# cover, plus an opt-in Skin Settings switch to hide it entirely. The badge
+# control below is HOME-ONLY by upstream's own gate (Container(9000) personal
+# widget panes), so library views keep stock; poster art spans 35..285 x
+# 10..370 inside the tile, putting the 32px badge at 245,18 with an 8px
+# inset. Default off = badge shown at the new spot, zero settings writes.
+_V54_BADGE_STOCK = (
+    '\t\t\t<control type="image">\n'
+    "\t\t\t\t<left>23</left>\n"
+    "\t\t\t\t<top>263</top>\n"
+    "\t\t\t\t<width>32</width>\n"
+    "\t\t\t\t<height>32</height>\n"
+    "\t\t\t\t<texture>$VAR[WallWatchedIconVar]</texture>\n"
+    '\t\t\t\t<visible>String.IsEqual(Container(9000).ListItem.Property(widget),PersonalWidgetList) | String.IsEqual(Container(9000).ListItem.Property(widget),PersonalWidgetPanel)</visible>\n'
+)
+_V54_BADGE_TOPRIGHT = (
+    '\t\t\t<control type="image">\n'
+    "\t\t\t\t<left>245</left>\n"
+    "\t\t\t\t<top>18</top>\n"
+    "\t\t\t\t<width>32</width>\n"
+    "\t\t\t\t<height>32</height>\n"
+    "\t\t\t\t<texture>$VAR[WallWatchedIconVar]</texture>\n"
+    '\t\t\t\t<visible>!Skin.HasSetting(hide_watched_icon)</visible>\n'
+    '\t\t\t\t<visible>String.IsEqual(Container(9000).ListItem.Property(widget),PersonalWidgetList) | String.IsEqual(Container(9000).ListItem.Property(widget),PersonalWidgetPanel)</visible>\n'
+)
+
+
+def _edit_view54(text: str, path: str) -> str:
+    return _replace(text, _V54_BADGE_STOCK, _V54_BADGE_TOPRIGHT, path=path)
+
+
 FILE_EDITS = {
     "xml/Home.xml": _edit_home,
     "xml/Settings.xml": _edit_settings,
@@ -2229,6 +2294,7 @@ FILE_EDITS = {
     "xml/DialogVideoInfo.xml": _edit_dialogvideoinfo,
     "xml/DialogMusicInfo.xml": _edit_dialogmusicinfo,
     "xml/DialogFullScreenInfo.xml": _edit_dialogfullscreeninfo,
+    "xml/View_54_InfoWall.xml": _edit_view54,
 }
 
 

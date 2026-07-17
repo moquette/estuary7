@@ -44,6 +44,8 @@ import pytest
 
 from conftest import GOLDENS
 from skin_transforms import (
+    _GREYEDOUT_HOME_ROW,
+    _HIDE_WATCHED_TOGGLE,
     SKIN_ID,
     UPSTREAM_ID,
     drop_settings_views_variable,
@@ -487,6 +489,8 @@ NORMALIZE = {
     + _BACKGROUND_INVERSIONS,
     "SkinSettings.xml": [
         _runscript_rewire(3),
+        # 1.0.60: the hide-watched-badge switch below the grey-out (home) row
+        (_GREYEDOUT_HOME_ROW, _GREYEDOUT_HOME_ROW + _HIDE_WATCHED_TOGGLE, 1),
         (_DEBUG_HEADER, _MEDIA_SOURCES_BLOCK + _DEBUG_HEADER, 1),
         (
             "\t\t\t\t\t<onclick>RunScript(script.skinshortcuts,type=resetall)</onclick>",

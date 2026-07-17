@@ -115,7 +115,24 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.59 (current: 1.0.59, CI-published)
+## Post-launch hardening, 1.0.28-1.0.60 (current: 1.0.60, CI-published)
+
+- **1.0.60 (2026-07-16) - home-cover watched badge: top-right + hide
+  switch (owner request)** - upstream draws the 32px status badge
+  (watched check / resume / playing / recording / collection / versions,
+  one shared WallWatchedIconVar control) at the poster tile's BOTTOM-LEFT.
+  Owner wants it at the cover's TOP-RIGHT plus a way to turn it off. The
+  home poster tile's badge (View_54_InfoWall InfoWallMovieLayout - the
+  control is HOME-gated upstream, so library views keep stock) moves to
+  245,18 (8px inset inside the 35..285 x 10..370 poster art) and gains
+  '!Skin.HasSetting(hide_watched_icon)'. New Skin Settings radiobutton
+  'Hide watched check mark on covers' (id 10090, beside the grey-out
+  watched (home) row; opt-in, zero settings writes). Golden parity
+  mirrors the SkinSettings row; anchors 25->26. FOLLOW-UP if wanted: the
+  badge also renders bottom-left in 12 more library view files (View_50,
+  51, 53, 55, 501, 503, 506-510, plus the square/banner home tile
+  variants with their corner-gradient bg) - sweeping those to match is a
+  separate deliberate pass.
 
 - **1.0.59 (2026-07-16) - the baked addon.xml <news> stops lying** - the
   transform stamped the CURRENT version onto hardcoded 1.0.39-era prose,
