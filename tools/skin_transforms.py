@@ -422,18 +422,30 @@ def _edit_home(text: str, path: str) -> str:
         "\t<onload>RunScript(script.skinshortcuts,type=buildxml&amp;"
         "mainmenuID=9000&amp;group=mainmenu)</onload>\n",
         "\t<onload>RunScript(special://skin/scripts/helpers.py,seedPVR)</onload>\n"
+        # Clear a stuck skinshortcuts-isrunning guard (survives ReloadSkin/addon
+        # restart; only a reboot clears it otherwise, and a stale True no-ops every
+        # build). At a bare Home load no build runs concurrently; the one window is
+        # the 15s-deferred first build (below), a ~1s op, so a torn write is possible
+        # but very unlikely and self-heals on the next build.
         "\t<onload>ClearProperty(skinshortcuts-isrunning,10000)</onload>\n"
         # A menu edit sets skinshortcuts-reloadmainmenu; honor it IMMEDIATELY on the
         # next Home load exactly like upstream (buildMenu -> shouldwerun sees the flag
         # BEFORE any hash check -> rebuild + ReloadSkin now), so the edited menu is
-        # written the instant you return Home. This is the whole "detects a change"
-        # path; it must never be gated behind the first-boot defer.
-        '\t<onload condition="!String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu))">'
+        # written the instant you return Home. Gated on !firstbuild_done so it can
+        # NEVER fire on the first Home load per boot: reloadmainmenu is a session-
+        # global Window(10000) property shared by ALL skinshortcuts skins, so a LIVE
+        # switch into Estuary 7 (no reboot) could carry a stale True from the prior
+        # skin - firing an immediate ReloadSkin there would kill Kodi's keep-skin
+        # dialog (the silent-revert bug). A real edit lands on a LATER load (Home has
+        # painted at least once, so firstbuild_done is already set), so this costs no
+        # real user flow. The first-boot path below always defers past the keep-dialog.
+        '\t<onload condition="!String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu)) + !String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
         "RunScript(script.skinshortcuts,type=buildxml&amp;mainmenuID=9000&amp;"
         "group=mainmenu)</onload>\n"
-        # No pending edit + first Home load per boot: defer the reconcile build past
-        # Kodi's ~10s keep-skin timer (belt-and-suspenders to the boot hash seed).
-        '\t<onload condition="String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu)) + String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+        # First Home load per boot (edit pending or not): defer the build past Kodi's
+        # ~10s keep-skin timer (belt-and-suspenders to the boot hash seed). The
+        # deferred build still honors any reloadmainmenu via shouldwerun when it fires.
+        '\t<onload condition="String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
         "AlarmClock(t7bbuild,RunScript(script.skinshortcuts,type=buildxml&amp;"
         "mainmenuID=9000&amp;group=mainmenu),00:15,silent)</onload>\n"
         # No pending edit + later loads: reconcile immediately.

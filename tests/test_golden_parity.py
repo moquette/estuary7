@@ -342,10 +342,10 @@ NORMALIZE = {
             "mainmenuID=9000&amp;group=mainmenu)</onload>",
             "\t<onload>RunScript(special://skin/scripts/helpers.py,seedPVR)</onload>\n"
             "\t<onload>ClearProperty(skinshortcuts-isrunning,10000)</onload>\n"
-            '\t<onload condition="!String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu))">'
+            '\t<onload condition="!String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu)) + !String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
             "RunScript(script.skinshortcuts,type=buildxml&amp;mainmenuID=9000&amp;"
             "group=mainmenu)</onload>\n"
-            '\t<onload condition="String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu)) + String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+            '\t<onload condition="String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
             "AlarmClock(t7bbuild,RunScript(script.skinshortcuts,type=buildxml&amp;"
             "mainmenuID=9000&amp;group=mainmenu),00:15,silent)</onload>\n"
             '\t<onload condition="String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu)) + !String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'

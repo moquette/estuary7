@@ -115,7 +115,22 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.62 (current: 1.0.62, CI-published)
+## Post-launch hardening, 1.0.28-1.0.63 (current: 1.0.63, CI-published)
+
+- **1.0.63 (2026-07-17) - harden the 1.0.62 menu-refresh against the keep-skin
+  silent-revert.** Adversarial QA of 1.0.62 flagged one narrow re-exposure: the
+  immediate reloadmainmenu build was ungated by t7b_firstbuild_done, and
+  skinshortcuts-reloadmainmenu is a session-global Window(10000) property shared
+  by every skinshortcuts skin. A LIVE switch into Estuary 7 (no reboot) carrying
+  a stale True from the prior skin could fire an immediate ReloadSkin inside
+  Kodi's ~10s keep-skin dialog and silently revert the switch (the bug class the
+  first-boot defer exists to prevent). Fix: the immediate build is now gated on
+  !IsEmpty(t7b_firstbuild_done), so it can only fire on a LATER Home load (a real
+  edit always lands after Home has painted once); the first Home load per boot
+  ALWAYS defers past the keep-dialog regardless of the flag, and that deferred
+  build still honors reloadmainmenu via shouldwerun when it fires. No cost to the
+  real edit-then-return flow. Also documented the (very unlikely) concurrent-build
+  window from the unconditional isrunning clear. 114 tests pass; determinism green.
 
 - **1.0.62 (2026-07-17) - main-menu edits appear on return to Home again
   (owner: "menu still broken... custom link took ~5 min to show up... UPSTREAM
