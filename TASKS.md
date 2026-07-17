@@ -748,6 +748,66 @@ landed on the bench box(es) ahead of it). In order:
   to release v1.0.40); atv2 (192.168.7.183) still on 1.0.39 pending a repo
   update at the owner's leisure; `script.ezmaintenanceplusplus` 2026.07.14.1.
 
+## Open hardening (owner-reported 2026-07-17, atv2) - TRACKED, not yet fixed
+
+- **HARDEN: the skin closes Kodi entirely on some Back/window-close paths
+  (owner: "temperamental... I backed up from a view and it closed and had
+  to be reopened... happening quite frequently").** Reported on atv2 (tvOS)
+  after the clean restore. NOT the same as the Fire OS Activity.performStop
+  crash-on-stop seen on the office box this session (that is Android-side, on
+  app STOP, not a Back press). This is a within-Kodi window-close path taking
+  the whole app down. NEXT STEP is INSTRUMENTATION, not a blind fix: the
+  on-device log could not be pulled live this session (bedroom ATV sleeps;
+  tvOS has no adb; the webserver /vfs endpoint 401s the archive's kodi:kodi
+  creds while JSON-RPC on the same port accepts them - a known Kodi auth
+  split, so the log is only reachable while the box is awake AND via a
+  working vfs path). Plan: (1) turn on Kodi debug logging on the box
+  (Settings > System > Logging, or seed `debug.showloginfo=true` +
+  `debug.extralogging`); (2) reproduce the Back-closes-Kodi path and capture
+  the crashlog (tvOS writes one under the app container); (3) suspect list to
+  check in the log first - the fork's Home.xml onload chain (RunScript
+  helpers.py seedPVR + the buildxml AlarmClock, lines 4-8), any window whose
+  close animation the fork touched (the 1.0.51-1.0.53 WindowClose saga proved
+  the fork edits close paths), and the tvOS Siri-remote boot keymap
+  (back-at-Home / double-play-pause return-to-fullscreen - a mis-fire here
+  could exit a window unexpectedly). Owner directive: "begin logging why in
+  order to resolve." No fix until the log names the window/action.
+
+- **HARDEN: menu edits take 1-2 min (sometimes a Kodi restart) to show;
+  upstream MOD V2 reflects them immediately (owner, 2026-07-17:
+  "unacceptable").** ROOT CAUSE located in code (fork vs pinned upstream
+  Home.xml onload):
+  - Upstream (upstream-cache .../xml/Home.xml:4) rebuilds the menu
+    UNCONDITIONALLY on every Home load:
+    `<onload>RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)</onload>`
+    - so returning to Home after a Customize-Main-Menu edit rebuilds right
+    then. Immediate.
+  - The fork (xml/Home.xml:6-8) split this into: FIRST Home load per session
+    (Window(10000).Property(t7b_firstbuild_done) empty) DEFERS the buildxml by
+    an `AlarmClock(t7bbuild,...,00:15,silent)` - a hard 15-second delay -
+    then sets t7b_firstbuild_done=1; subsequent loads (line 7) rebuild
+    immediately. The 15s deferral was added in 1.0.33 to kill the
+    first-launch rebuild+ReloadSkin black flash / keep-skin-timer collision
+    on a fresh install.
+  - The likely user-visible failure: skinshortcuts' own save does a rebuild +
+    ReloadSkin; ReloadSkin reloads Home and (suspected) resets the
+    Window(10000) property, so the NEXT onload sees t7b_firstbuild_done empty
+    again and re-arms the 15s AlarmClock instead of rebuilding now - the edit
+    does not show until the alarm fires. Compounded by (a) the stuck
+    `skinshortcuts-isrunning` guard (the reboot-only no-op bug the fork
+    already fights with a ClearProperty on onload, Home.xml:5 - a race here
+    would need a full restart, matching "sometimes even a kodi restart"), and
+    (b) the shipped pre-built `script-skinshortcuts-includes.xml` + seeded
+    hash (1.0.33): if the boot service re-seeds a hash matching the OLD menu,
+    skinshortcuts can decide nothing changed and skip the rebuild.
+  - FIX DIRECTION (needs bench iteration + owner sign-off, do NOT ship blind):
+    keep the install-flash mitigation without taxing every later edit - e.g.
+    gate the 15s defer on a TRUE first-install marker (addon_data flag), not a
+    per-session Window property ReloadSkin can reset; or detect a menu-DATA
+    change and force an immediate buildxml + hash refresh on the edit-return
+    path. Verify on the office bench that a Customize-Main-Menu edit reflects
+    within one Home return, with no reintroduced install flash.
+
 ## Deferred / revisit later
 
 - **Labeled poster-tile look (1.0.40) - REVISIT (owner, 2026-07-15).** The
