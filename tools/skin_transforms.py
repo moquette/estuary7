@@ -400,16 +400,29 @@ def _edit_home(text: str, path: str) -> str:
     # build runs concurrently at Home load) and is what the reset helper already
     # does.
     #
-    # Then run ONE unconditional buildxml on every LATER Home load, exactly like
-    # upstream's single onload (upstream-cache/.../xml/Home.xml line 4). buildMenu
-    # -> shouldwerun() reads-and-clears skinshortcuts-reloadmainmenu FIRST, then
+    # Then run ONE buildxml on every LATER Home load, exactly like upstream's
+    # single onload (upstream-cache/.../xml/Home.xml line 4). buildMenu ->
+    # shouldwerun() reads-and-clears skinshortcuts-reloadmainmenu FIRST, then
     # checks includes-exists, then the hash. So this single onload self-heals on
     # BOTH triggers with no branching on our side: a menu EDIT (reloadmainmenu set)
     # rebuilds the instant you return Home, AND an edited addon_data DATA that no
-    # longer matches the on-disk hash rebuilds too. This is the whole fix: the boot
-    # service no longer seeds a hash, so the very first real build writes a REAL
-    # hash from the owner's actual DATA, and every subsequent edit trips the hash
-    # mismatch and rebuilds. Nothing can freeze the on-disk includes anymore.
+    # longer matches the on-disk hash rebuilds too. The boot service no longer
+    # seeds a hash, so the very first real build writes a REAL hash from the
+    # owner's actual DATA. Nothing can freeze the on-disk includes anymore.
+    #
+    # WHO fires that later-load build differs by platform, and the difference is
+    # load-bearing. On Fire OS / desktop the onload fires it directly (upstream
+    # parity). On tvOS it must NOT: syncMenu (the DATA reconcile) and a parallel
+    # onload buildxml are two ASYNC RunScripts with no ordering guarantee, and a
+    # build that wins the race reads the DATA BEFORE the reconcile re-materialized
+    # a purged POSIX copy - baking the shipped default into the includes and (via
+    # shouldwerun's blindness to files absent at build time; 2.0.3's writexml
+    # drops absent-file hash entries) sticking there. So on tvOS the onload only
+    # SETS a t7b_chainbuild marker - a synchronous builtin, ordered BEFORE the
+    # syncMenu spawn - and syncMenu itself fires the ONE build strictly after the
+    # reconcile completes. First load per boot sets no marker, so syncMenu never
+    # fires a build inside the keep-skin window; the AlarmClock build (below)
+    # owns the first build on both platforms.
     #
     # The ONLY thing the old machinery legitimately bought us was deferring the
     # single FIRST-per-boot build past Kodi's ~10s "keep this skin?" dialog (an
@@ -435,14 +448,26 @@ def _edit_home(text: str, path: str) -> str:
         # works) never even spawns the helper subprocess - no Home-nav perf hit. The
         # gate is NOT combined with skinshortcuts-reloadmainmenu: purge recovery runs
         # on a cold boot with no pending flag, so it MUST fire every tvOS Home load.
+        #
+        # t7b_chainbuild MUST be set before the syncMenu RunScript spawns:
+        # SetProperty is a synchronous builtin, RunScript is async, and onload
+        # lines execute in order - so the marker is guaranteed visible to the
+        # helper. syncMenu read-and-clears it AFTER reconciling and fires the one
+        # tvOS build; a helper crash leaves it set, and the next Home load re-arms
+        # it (self-healing, at worst one stale load).
+        '\t<onload condition="System.Platform.TVOS + !String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+        "SetProperty(t7b_chainbuild,1,10000)</onload>\n"
         '\t<onload condition="System.Platform.TVOS">RunScript(special://skin/scripts/helpers.py,syncMenu)</onload>\n'
         # Clear a stuck skinshortcuts-isrunning guard (survives ReloadSkin/addon
         # restart; only a reboot clears it otherwise, and a stale True no-ops every
         # build).
         "\t<onload>ClearProperty(skinshortcuts-isrunning,10000)</onload>\n"
-        # Later loads: ONE unconditional buildxml (upstream semantics). Honors a
-        # pending menu edit OR a hash mismatch every Home load via shouldwerun.
-        '\t<onload condition="!String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+        # Later loads, Fire OS / desktop ONLY: ONE unconditional buildxml (upstream
+        # semantics). Honors a pending menu edit OR a hash mismatch every Home load
+        # via shouldwerun. tvOS later-load builds are chained by syncMenu instead
+        # (see the t7b_chainbuild note above) so the build can never race the
+        # reconcile.
+        '\t<onload condition="!System.Platform.TVOS + !String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
         "RunScript(script.skinshortcuts,type=buildxml&amp;mainmenuID=9000&amp;"
         "group=mainmenu)</onload>\n"
         # First Home load per boot: defer the one first-boot build past Kodi's ~10s
@@ -479,6 +504,57 @@ _SEED_PVR_ACTION = (
     "                xbmc.log('estuary7: seedPVR failed: %s' % e, xbmc.LOGWARNING)\n"
 )
 
+# Power-menu "Customize Main Menu" wrapper - the missing PRODUCER in the refresh
+# chain. The manage dialog is a WindowXMLDialog opened OVER a still-loaded Home;
+# closing a dialog never re-fires Home's <onload>, which is the only place a
+# rebuild is triggered. Upstream never hits this because its sole editor entry
+# lives behind the SkinSettings WINDOW: returning to Home re-inits it. The
+# power-menu entry (1.0.47) bypassed that, so a save sat un-rendered until the
+# user happened to leave Home once - the "edits don't refresh" report. This
+# wrapper waits for the dialog to close and fires the rebuild itself, so the
+# edit renders immediately no matter which window is underneath.
+_CUSTOMIZE_MENU_ACTION = (
+    "        elif sys.argv[1] == 'customizeMenu':\n"
+    "            _home = xbmcgui.Window(10000)\n"
+    "            _stamp0 = _home.getProperty('skinshortcuts')\n"
+    "            xbmc.executebuiltin('RunScript(script.skinshortcuts,type=manage&group=mainmenu)')\n"
+    "            # Property(skinshortcuts) is stamped exactly once, unconditionally,\n"
+    "            # right after the manage dialog's doModal() returns (skinshortcuts\n"
+    "            # 2.0.3 skinshortcuts.py:351) - a deterministic close signal on\n"
+    "            # save AND cancel. Poll it, abort-aware, hard 30-min ceiling.\n"
+    "            _mon = xbmc.Monitor()\n"
+    "            _waited = 0.0\n"
+    "            while _waited < 1800.0 and not _mon.abortRequested():\n"
+    "                if _home.getProperty('skinshortcuts') != _stamp0:\n"
+    "                    break\n"
+    "                if _mon.waitForAbort(0.5):\n"
+    "                    break\n"
+    "                _waited += 0.5\n"
+    "            if _home.getProperty('skinshortcuts-reloadmainmenu') == 'True':\n"
+    "                # Saved. Rebuild NOW - shouldwerun consumes the reloadmainmenu\n"
+    "                # flag, so the rebuild is flag-driven, never hash-driven (the\n"
+    "                # 2.0.3 hash is blind to files absent at the last build).\n"
+    "                if xbmc.getCondVisibility('System.Platform.TVOS'):\n"
+    "                    # tvOS: the save landed POSIX-only (purgeable cache), and a\n"
+    "                    # mid-session purge can even leave OTHER DATA files key-only,\n"
+    "                    # so the reconcile must complete BEFORE the build reads the\n"
+    "                    # DATA. Firing build and syncMenu as two parallel RunScripts\n"
+    "                    # would recreate the exact onload race this design removed -\n"
+    "                    # so reuse the ordered chain instead: arm the marker, spawn\n"
+    "                    # ONLY syncMenu, and it fires the ONE build (guard cleared\n"
+    "                    # there) strictly after reconciling. The durable key also\n"
+    "                    # registers immediately instead of at the next Home load.\n"
+    "                    _home.setProperty('t7b_chainbuild', '1')\n"
+    "                    xbmc.executebuiltin('RunScript(special://skin/scripts/helpers.py,syncMenu)')\n"
+    "                else:\n"
+    "                    # No key layer off tvOS: fire the build directly. Clear a\n"
+    "                    # stuck isrunning guard first; it survives ReloadSkin and\n"
+    "                    # silently no-ops build_menu.\n"
+    "                    _home.clearProperty('skinshortcuts-isrunning')\n"
+    "                    xbmc.executebuiltin('RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')\n"
+    "                xbmc.log('estuary7: customizeMenu rebuild fired', xbmc.LOGINFO)\n"
+)
+
 _RESET_MENU_ACTION = (
     "        elif sys.argv[1] == 'resetMenu':\n"
     "            if xbmcgui.Dialog().yesno('Reset main menu', 'Reset the main menu back to the skin defaults?'):\n"
@@ -510,6 +586,32 @@ _RESET_MENU_ACTION = (
     "                            except Exception:\n"
     "                                pass\n"
     "                report.append('wiped=%i' % wiped)\n"
+    "                # tvOS: os.remove cannot touch the NSUserDefaults key layer, and\n"
+    "                # xbmcvfs.delete on a vectored userdata *.xml drops ONLY the key,\n"
+    "                # never a POSIX file (TVOSFile.cpp: the POSIX fallback in Delete\n"
+    "                # is unreachable for dispatched files). Drop every stale menu key\n"
+    "                # here or a Caches purge resurrects the pre-reset menu via the\n"
+    "                # surviving key, and the ~500KB NSUD budget only ever ratchets\n"
+    "                # up. listdir lists key-layer names even when POSIX is gone.\n"
+    "                # settings.xml is excluded - its key is the addon settings'\n"
+    "                # durable copy, not menu data. Do NOT verify with xbmcvfs.exists\n"
+    "                # afterwards: it falls back to the fresh POSIX defaults and\n"
+    "                # proves nothing about the key.\n"
+    "                if xbmc.getCondVisibility('System.Platform.TVOS'):\n"
+    "                    dropped = 0\n"
+    "                    for _sp in ('special://profile/addon_data/script.skinshortcuts/', 'special://masterprofile/addon_data/script.skinshortcuts/'):\n"
+    "                        try:\n"
+    "                            _kd, _kf = xbmcvfs.listdir(_sp)\n"
+    "                        except Exception:\n"
+    "                            _kf = []\n"
+    "                        for _kn in set(_kf):\n"
+    "                            if _kn != 'settings.xml' and _kn.endswith('.DATA.xml'):\n"
+    "                                try:\n"
+    "                                    if xbmcvfs.delete(_sp + _kn):\n"
+    "                                        dropped += 1\n"
+    "                                except Exception:\n"
+    "                                    pass\n"
+    "                    report.append('keydrop=%i' % dropped)\n"
     "                try:\n"
     "                    if os.path.exists(includes):\n"
     "                        os.remove(includes)\n"
@@ -578,25 +680,33 @@ _RESET_MENU_ACTION = (
 # is never propagated into either layer.
 _SYNC_MENU_ACTION = (
     "        elif sys.argv[1] == 'syncMenu':\n"
-    "            # tvOS main-menu DATA durability reconcile. See docs/playbooks/\n"
-    "            # skinshortcuts-reset-tvos-vfs-split.md. Fire TV / desktop: strict no-op.\n"
+    "            # tvOS main-menu DATA durability reconcile + ordered build chain.\n"
+    "            # See docs/playbooks/skinshortcuts-reset-tvos-vfs-split.md.\n"
+    "            # Fire TV / desktop: strict no-op.\n"
     "            try:\n"
     "                if xbmc.getCondVisibility('System.Platform.TVOS'):\n"
     "                    _home = xbmcgui.Window(10000)\n"
-    "                    _pending = _home.getProperty('skinshortcuts-reloadmainmenu') == 'True'\n"
-    "                    _changed = []\n"
+    "                    _key_changed = []\n"
+    "                    _posix_changed = []\n"
     "                    _seen = set()\n"
     "                    for _sp in ('special://profile/addon_data/script.skinshortcuts/', 'special://masterprofile/addon_data/script.skinshortcuts/'):\n"
     "                        _base = xbmcvfs.translatePath(_sp)\n"
     "                        if _base in _seen:\n"
     "                            continue\n"
     "                        _seen.add(_base)\n"
-    "                        # listdir merges POSIX names AND NSUserDefaults key names, so a\n"
-    "                        # menu that survives ONLY as a durable key (POSIX purged) is found.\n"
+    "                        # listdir merges POSIX names AND NSUserDefaults key names\n"
+    "                        # WITHOUT dedupe (TVOSDirectory.cpp), so (a) a menu that\n"
+    "                        # survives ONLY as a durable key (POSIX purged) is found,\n"
+    "                        # and (b) a name listed ONCE alongside a present POSIX\n"
+    "                        # file provably has NO durable key yet - the one state a\n"
+    "                        # byte-compare cannot see, because with no key both\n"
+    "                        # xbmcvfs reads and exists fall back to POSIX.\n"
+    "                        _dup_ok = True\n"
     "                        try:\n"
     "                            _dirs, _files = xbmcvfs.listdir(_sp)\n"
     "                        except Exception:\n"
     "                            _files = os.listdir(_base) if os.path.isdir(_base) else []\n"
+    "                            _dup_ok = False\n"
     "                        for _name in sorted(set(_files)):\n"
     "                            if not _name.endswith('.DATA.xml'):\n"
     "                                continue\n"
@@ -613,15 +723,19 @@ _SYNC_MENU_ACTION = (
     "                                    continue  # never propagate a corrupt POSIX edit\n"
     "                                with xbmcvfs.File(_sfile) as _vf:\n"
     "                                    _bv = bytes(_vf.readBytes())\n"
-    "                                if _bv != _bp or _pending:\n"
+    "                                _no_key = _dup_ok and _files.count(_name) < 2\n"
+    "                                if _bv != _bp or _no_key:\n"
     "                                    # Push the fresh POSIX bytes into the durable key:\n"
-    "                                    # de-shadow a stale key AND register the key so the\n"
-    "                                    # edit survives a POSIX cache purge. POSIX is left\n"
-    "                                    # untouched - it already holds the freshest edit.\n"
+    "                                    # de-shadow a stale key AND register a missing key\n"
+    "                                    # so the edit survives a POSIX cache purge. POSIX\n"
+    "                                    # is left untouched - it already holds the\n"
+    "                                    # freshest edit. Flag-free on purpose: the old\n"
+    "                                    # gate on skinshortcuts-reloadmainmenu raced the\n"
+    "                                    # builder's read-and-clear of the same property\n"
+    "                                    # and could skip this push forever.\n"
     "                                    with xbmcvfs.File(_sfile, 'w') as _vf:\n"
     "                                        _vf.write(bytearray(_bp))\n"
-    "                                    if _bv != _bp:\n"
-    "                                        _changed.append(_name)\n"
+    "                                    _key_changed.append(_name)\n"
     "                            elif xbmcvfs.exists(_sfile):\n"
     "                                # POSIX purged, durable key survived: re-materialize the\n"
     "                                # POSIX copy so skinshortcuts (a POSIX reader) can load it.\n"
@@ -637,17 +751,37 @@ _SYNC_MENU_ACTION = (
     "                                    os.makedirs(_base)\n"
     "                                with open(_rfile, 'wb') as _f:\n"
     "                                    _f.write(_bv)\n"
-    "                                _changed.append(_name)\n"
-    "                    if _changed:\n"
-    "                        # A layer actually changed: rebuild the includes from the\n"
-    "                        # reconciled DATA. Clear the stuck build guard first (it\n"
-    "                        # survives ReloadSkin/addon-restart and no-ops build_menu).\n"
-    "                        _home.clearProperty('skinshortcuts-isrunning')\n"
-    "                        xbmc.executebuiltin('RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')\n"
-    "                    if _changed or _pending:\n"
-    "                        xbmc.log('estuary7: syncMenu changed=%s pending=%s' % (_changed, _pending), xbmc.LOGINFO)\n"
+    "                                _posix_changed.append(_name)\n"
+    "                    if _posix_changed:\n"
+    "                        # The bytes skinshortcuts READS changed: force the next\n"
+    "                        # build to rebuild regardless of hash state. 2.0.3's\n"
+    "                        # writexml drops hash entries for files absent at build\n"
+    "                        # time, so a re-materialized DATA is INVISIBLE to the\n"
+    "                        # hash check - this flag is the only reliable trigger.\n"
+    "                        # It survives a guard-dropped build: build_menu's\n"
+    "                        # isrunning early-return happens BEFORE shouldwerun's\n"
+    "                        # read-and-clear, so the flag persists to the retry.\n"
+    "                        _home.setProperty('skinshortcuts-reloadmainmenu', 'True')\n"
+    "                    if _key_changed or _posix_changed:\n"
+    "                        xbmc.log('estuary7: syncMenu key=%s posix=%s' % (_key_changed, _posix_changed), xbmc.LOGINFO)\n"
     "            except Exception as _sm_e:\n"
     "                xbmc.log('estuary7: syncMenu failed: %s' % _sm_e, xbmc.LOGWARNING)\n"
+    "            # Ordered tvOS build chain: Home's onload SET t7b_chainbuild (later\n"
+    "            # loads only, a synchronous builtin) BEFORE spawning this script and\n"
+    "            # no longer fires its own parallel buildxml on tvOS - so this fire,\n"
+    "            # strictly AFTER the reconcile above, is the ONE later-load build\n"
+    "            # and can never race it. Deliberately outside the try above: a\n"
+    "            # reconcile crash must not strand the upstream-parity build (that\n"
+    "            # build is then no worse than the old racy one). shouldwerun still\n"
+    "            # decides whether anything is actually rebuilt.\n"
+    "            try:\n"
+    "                _chome = xbmcgui.Window(10000)\n"
+    "                if _chome.getProperty('t7b_chainbuild'):\n"
+    "                    _chome.clearProperty('t7b_chainbuild')\n"
+    "                    _chome.clearProperty('skinshortcuts-isrunning')\n"
+    "                    xbmc.executebuiltin('RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')\n"
+    "            except Exception as _cb_e:\n"
+    "                xbmc.log('estuary7: syncMenu chainbuild failed: %s' % _cb_e, xbmc.LOGWARNING)\n"
 )
 
 _SYSTEM_PAGE = (
@@ -1363,8 +1497,13 @@ def _edit_dialogbuttonmenu(text: str, path: str) -> str:
     # 'Customize Main Menu' LEADS (owner request 2026-07-15; order swapped
     # and title-cased in 1.0.48 - the literal label matches the adjacent
     # "Skin Settings" and costs nothing since 1.0.44 trimmed to English
-    # only), opening the skinshortcuts menu editor directly - the same
-    # action as Skin Settings > Home menu > Customize main menu. Same
+    # only), opening the skinshortcuts menu editor - the same editor as
+    # Skin Settings > Home menu > Customize main menu, but through the
+    # helpers.py customizeMenu wrapper, NOT a direct RunScript: the editor
+    # is a dialog over a still-loaded Home, so nothing re-fires Home's
+    # <onload> when it closes and a direct launch leaves the saved edit
+    # un-rendered until the user happens to leave Home (the 1.0.47-1.0.65
+    # "menu doesn't refresh" bug; see _CUSTOMIZE_MENU_ACTION). Same
     # loose-icon rule as above; skinshortcuts is a hard manifest import, so
     # no InstallAddon guard is needed.
     text = _replace(
@@ -1375,8 +1514,8 @@ def _edit_dialogbuttonmenu(text: str, path: str) -> str:
         "\t\t\t\t\t\t<label>Customize Main Menu</label>\n"
         "\t\t\t\t\t\t<icon>special://skin/extras/icons/controlpanel.png</icon>\n"
         "\t\t\t\t\t\t<onclick>dialog.close(all,true)</onclick>\n"
-        "\t\t\t\t\t\t<onclick>RunScript(script.skinshortcuts,"
-        "type=manage&amp;group=mainmenu)</onclick>\n"
+        "\t\t\t\t\t\t<onclick>RunScript(special://skin/scripts/helpers.py,"
+        "customizeMenu)</onclick>\n"
         "\t\t\t\t\t</item>\n"
         "\t\t\t\t\t<item>\n"
         "\t\t\t\t\t\t<label>$LOCALIZE[10035]</label>\n"
@@ -2008,7 +2147,10 @@ def _edit_helpers(text: str, path: str) -> str:
     return _insert_before(
         text,
         _HELPERS_ELSE,
-        _SEED_PVR_ACTION + _SYNC_MENU_ACTION + _RESET_MENU_ACTION,
+        _SEED_PVR_ACTION
+        + _SYNC_MENU_ACTION
+        + _CUSTOMIZE_MENU_ACTION
+        + _RESET_MENU_ACTION,
         path=path,
     )
 

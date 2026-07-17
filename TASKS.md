@@ -117,6 +117,55 @@ prevention checklist:
 
 ## Post-launch hardening, 1.0.28-1.0.65 (current: 1.0.65, build-verified)
 
+- **1.0.66 (2026-07-17) - immediate on-demand menu refresh: the missing
+  PRODUCER + the ordered tvOS pipeline (4-agent panel: 2 QA + 2 architects;
+  both reviewers SHIP/APPROVED). HARDWARE-VERIFIED by the owner same day:
+  power menu > Customize > disable Pictures > back -> menu updated
+  IMMEDIATELY (first hardware-verified menu-refresh release since 1.0.38).
+  Incident record:
+  `~/Code/moquette/kodi/repo/docs/incident-2026-07-17-estuary7-menu-refresh-missing-producer.md`.**
+  1.0.62-1.0.65 all fixed the CONSUMER side of the refresh chain; the panel
+  found the primary owner-visible defect was a missing producer: the
+  power-menu "Customize Main Menu" entry (1.0.47) launches the editor as a
+  dialog OVER a still-loaded Home, so closing it never re-fires Home's
+  `<onload>` and a saved edit sits un-rendered until the user happens to leave
+  Home once (all platforms; presentation tvOS-heavy because the Siri keymap
+  parks users on Home). Plus three tvOS defects: the syncMenu-vs-onload-build
+  async race (the build could read DATA before the reconcile re-materialized
+  it and consume the reloadmainmenu flag syncMenu depended on); the durability
+  push gated on that racy flag; and resetMenu leaving stale NSUD keys (purge
+  could resurrect the pre-reset menu). Fixes, all in
+  `tools/skin_transforms.py`: (1) `customizeMenu` wrapper wired to all 3
+  power-menu items - stamp-watch on `Window(10000).Property(skinshortcuts)`
+  (set once after doModal returns, save AND cancel), then flag-checked: Fire
+  OS fires one buildxml directly; tvOS arms `t7b_chainbuild` and spawns ONLY
+  syncMenu (never build+reconcile in parallel); (2) ordered tvOS pipeline -
+  Home onload sets `t7b_chainbuild` synchronously (later loads only) before
+  the syncMenu spawn, the parallel onload buildxml is now
+  `!System.Platform.TVOS`-gated, syncMenu fires the one build strictly after
+  reconciling (separate try: a reconcile crash cannot strand the build; no
+  marker on first boot, so the keep-skin window stays build-free); (3)
+  syncMenu flag-free key registration via the listdir no-dedupe dup-count
+  (name listed once + POSIX present = no key), and it SETS reloadmainmenu on
+  POSIX-layer changes - load-bearing because 2.0.3's writexml drops hash
+  entries for files absent at build time, making a re-materialized DATA
+  invisible to the hash (on-demand refresh rides the flag, never the hash);
+  (4) resetMenu drops every stale `*.DATA.xml` key post-wipe
+  (`settings.xml` excluded), `keydrop=N` reported. Tests: 138 passing incl.
+  new `tests/test_menu_triggers.py` (resetMenu keydrop/purge-resurrection,
+  customizeMenu wrapper, end-to-end one-build chain) and rewritten
+  `tests/test_syncmenu_tvos.py` (ordered chain, crash resilience, flag-free
+  registration); determinism check PASSED. Full write-up + panel findings:
+  `docs/playbooks/skinshortcuts-reset-tvos-vfs-split.md` ("Post-1.0.65").
+  DISCLOSED TRADEOFF: the reconcile dual-layers every DATA file, so tvOS File
+  Manager lists them twice - deliberate durability cost, not the 07-08
+  corruption. GATES before release (house rule, both reviewers): version
+  bump + rebuild, then REAL-DEVICE verify on the bench ATV (power-menu edit
+  renders immediately; purge recovery renders custom not stock; reset
+  keydrop; log forensics: exactly one ReloadSkin per trigger; later-load
+  chained build fires at all - helpers.py is now the single build producer on
+  tvOS later loads). NOT committed, NOT released; 192.168.7.162 untouched.
+
 - **1.0.65 (2026-07-17) - Customize Main Menu edits SAVE + DISPLAY + PERSIST on
   Apple TV: the standalone tvOS DATA reconcile that 1.0.64 deliberately deferred,
   done correctly.** 1.0.64 fixed the hash/includes freeze but its own entry noted

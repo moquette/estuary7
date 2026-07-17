@@ -69,8 +69,10 @@ def test_helper_script_runs_by_path(built):
         assert "RunScript({},".format(SKIN_ID) not in text, xml.name
         total += text.count("RunScript(special://skin/scripts/helpers.py,")
     # 16 rewired getKodiSetting/reset callers + the Home onload seedPVR (1.0.33)
-    # + the Home onload syncMenu (1.0.65, tvOS DATA durability reconcile).
-    assert total == 18
+    # + the Home onload syncMenu (1.0.65, tvOS DATA durability reconcile)
+    # + the 3 power-menu customizeMenu launches (one per content mode; the
+    # wrapper that fires the rebuild the direct editor launch never did).
+    assert total == 21
 
 
 def test_upstream_id_fully_renamed(built):
@@ -221,7 +223,13 @@ def test_powermenu_leads_with_customize_then_skin_settings(built):
     """The power menu leads with 'Customize Main Menu' then 'Skin Settings'
     (owner requests 2026-07-15; order swapped + title-cased in 1.0.48). It is
     a static list with one <content> per display mode; the pair must open
-    the skinshortcuts editor and this skin's settings window respectively."""
+    the skinshortcuts editor and this skin's settings window respectively.
+
+    The editor MUST launch through helpers.py customizeMenu, never a direct
+    RunScript(script.skinshortcuts,type=manage): the editor is a dialog over
+    a still-loaded Home, so a direct launch has NO rebuild trigger when it
+    closes and the saved edit does not render until the user happens to
+    leave Home (the 1.0.47-1.0.65 "menu doesn't refresh" bug)."""
     import re
 
     text = (built.tree / "xml" / "DialogButtonMenu.xml").read_text("utf-8")
@@ -231,20 +239,23 @@ def test_powermenu_leads_with_customize_then_skin_settings(built):
     assert len(blocks) == 3, "expected 3 power-menu content modes"
     for first_item, second_item in blocks:
         assert "Customize Main Menu" in first_item
-        assert "script.skinshortcuts,type=manage" in first_item
+        assert "special://skin/scripts/helpers.py,customizeMenu" in first_item
         assert "$LOCALIZE[10035]" in second_item
         assert "ActivateWindow(SkinSettings)" in second_item
         # the power menu is a modal dialog: it MUST close before navigating,
         # or the follow-up action is ignored (nothing happens on click).
         assert first_item.index("dialog.close(all,true)") < first_item.index(
-            "RunScript(script.skinshortcuts"
+            "RunScript(special://skin/scripts/helpers.py"
         )
         assert second_item.index("dialog.close(all,true)") < second_item.index(
             "ActivateWindow(SkinSettings)"
         )
     # exactly three of each inserted (one per mode), no more
     assert text.count("<onclick>ActivateWindow(SkinSettings)</onclick>") == 3
-    assert text.count("type=manage&amp;group=mainmenu") == 3
+    assert text.count("helpers.py,customizeMenu)</onclick>") == 3
+    # no direct editor launches anywhere in the power menu: every entry point
+    # must go through the wrapper so the close always triggers a rebuild.
+    assert "script.skinshortcuts,type=manage" not in text
 
 
 def test_videos_override_removed(built, upstream_tree):

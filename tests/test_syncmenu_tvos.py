@@ -21,9 +21,22 @@ consistent box with no pending edit.
 
 THE LINCHPIN, made explicit: the fake's `exists()` is key-first with a POSIX
 fallback WHEN NO KEY EXISTS (fake_kodi_storage.py:147-152). That is why a fresh
-keyless POSIX write passes the datafunctions.py:178 guard, and why the only
-undetectable-by-content state - "key absent, POSIX present" - is handled by
-writing the durable key whenever an edit is pending, not by comparing bytes.
+keyless POSIX write passes the datafunctions.py:178 guard, and why the state
+"key absent, POSIX present" is undetectable by content compare. It IS detectable
+structurally: listdir merges POSIX and key names WITHOUT dedupe
+(TVOSDirectory.cpp), so a name listed once alongside a present POSIX file has no
+key. syncMenu registers the key from that signal - flag-free, because the old
+gate on skinshortcuts-reloadmainmenu raced the builder's read-and-clear of the
+same property and could skip the durability push forever.
+
+THE ORDERING CONTRACT (the 4-agent panel's race findings, 2026-07-17): Home's
+tvOS onload no longer fires a buildxml in parallel with syncMenu. It SETS
+t7b_chainbuild (later loads only, synchronous builtin) before the spawn; syncMenu
+fires the ONE build strictly after reconciling, and sets
+skinshortcuts-reloadmainmenu whenever it changed the bytes skinshortcuts reads
+(the POSIX layer) so the build can never be skipped by the hash - 2.0.3's
+writexml drops hash entries for files absent at build time, making a
+re-materialized DATA invisible to the hash check.
 """
 
 from __future__ import annotations
@@ -81,7 +94,7 @@ class _XbmcGui:
     Window = _Window
 
 
-def _run_syncmenu(store, pending=False):
+def _run_syncmenu(store, pending=False, chainbuild=False, sabotage_vfs_file=False):
     """Execute the real syncMenu payload once. Returns the xbmc module (for its
     log/builtin trace)."""
     import xml.etree.ElementTree as ET
@@ -90,7 +103,17 @@ def _run_syncmenu(store, pending=False):
     store.log.clear()  # scope the returned trace to THIS invocation
     _Window._store = {}
     if pending:
+        # Legacy flag: the payload must IGNORE it now (flag-free reconcile).
         _Window._store["skinshortcuts-reloadmainmenu"] = "True"
+    if chainbuild:
+        _Window._store["t7b_chainbuild"] = "1"
+    if sabotage_vfs_file:
+        # Crash the reconcile mid-flight: the chained build must still fire.
+        class _Boom:
+            def __init__(self, *a, **k):
+                raise RuntimeError("sabotaged xbmcvfs.File")
+
+        xbmcvfs_mod.File = _Boom
 
     # The payload is an `elif` fragment indented for the helpers.py dispatch.
     # Dedent it and turn the leading `elif` into `if` so it stands alone.
@@ -161,43 +184,68 @@ def test_stale_shadow_deshadowed_posix_preserved(tmp_path):
     assert (ssdir / _MENU).read_bytes() == _FRESH, (
         "POSIX (the freshest copy) must be untouched"
     )
-    assert _built(xbmc_mod), "a real content change must trigger a rebuild"
+    # A key-layer-only change does not alter what skinshortcuts READS, so no
+    # build fires without the chainbuild marker and no rebuild flag is set -
+    # the on-screen menu already matches POSIX.
+    assert not _built(xbmc_mod)
+    assert _Window._store.get("skinshortcuts-reloadmainmenu") != "True"
     # byte-preserving: exact bytes, no ETree re-serialize / whitespace churn.
     assert _get_key(store) == (ssdir / _MENU).read_bytes()
 
 
 # ---------------------------------------------------------------------------
-# (2) Pending edit, no prior key: content is equal (exists() fell back to POSIX),
-#     so nothing "differs" - yet the durable key MUST be registered or the edit
-#     dies at the next cache purge. Gated on the pending flag.
+# (2) Fresh edit, no prior key: content compares equal (reads fall back to
+#     POSIX), so bytes cannot detect it - yet the durable key MUST be registered
+#     or the edit dies at the next cache purge. Detected structurally via the
+#     listdir dup-count, FLAG-FREE: the old skinshortcuts-reloadmainmenu gate
+#     raced the builder's read-and-clear of the same property (panel finding
+#     2026-07-17) and could skip this push forever.
 # ---------------------------------------------------------------------------
 
 
-def test_pending_edit_registers_durable_key(tmp_path):
+def test_keyless_posix_registers_durable_key_flag_free(tmp_path):
     store, ssdir = _make_box(tmp_path)
     _set_posix(ssdir, _FRESH)
     assert _get_key(store) is None  # virgin: no durable key yet
 
-    xbmc_mod = _run_syncmenu(store, pending=True)
+    xbmc_mod = _run_syncmenu(store, pending=False)  # NO flag - must still push
 
     assert _get_key(store) == _FRESH, (
-        "a pending edit must register the durable NSUserDefaults key so the edit "
-        "survives a purge of the POSIX cache"
+        "a keyless POSIX menu must register the durable NSUserDefaults key so "
+        "the edit survives a purge of the POSIX cache - without any pending flag"
     )
     assert (ssdir / _MENU).read_bytes() == _FRESH
-    # Registration when bytes already agree is not a visible content change, so no
-    # rebuild is forced (the onload buildxml handles the pending edit's render).
+    # Registration is not a visible content change: no rebuild is forced.
+    assert not _built(xbmc_mod)
+    assert _Window._store.get("skinshortcuts-reloadmainmenu") != "True"
+
+
+def test_legacy_pending_flag_is_ignored_and_survives(tmp_path):
+    """The payload must not consume or depend on skinshortcuts-reloadmainmenu:
+    that property belongs to the builder (shouldwerun reads-and-clears it)."""
+    store, ssdir = _make_box(tmp_path)
+    _set_posix(ssdir, _FRESH)
+    _set_key(store, _FRESH)  # consistent box
+
+    xbmc_mod = _run_syncmenu(store, pending=True)
+
+    assert _Window._store.get("skinshortcuts-reloadmainmenu") == "True", (
+        "a pending edit flag must be left for the builder, never consumed here"
+    )
     assert not _built(xbmc_mod)
 
 
 # ---------------------------------------------------------------------------
 # (3) Cache purge: POSIX gone, only the durable key survives. syncMenu
-#     re-materializes POSIX so skinshortcuts (a POSIX reader) can load it, and
-#     keeps the key. This is what makes the edit PERSIST across a restart.
+#     re-materializes POSIX so skinshortcuts (a POSIX reader) can load it, keeps
+#     the key, and sets the rebuild flag: 2.0.3's writexml drops hash entries
+#     for files absent at build time, so a re-materialized DATA is INVISIBLE to
+#     the hash check - without the flag the next build would no-op and the menu
+#     would stay on the shipped default forever (panel finding F1/B4c).
 # ---------------------------------------------------------------------------
 
 
-def test_cache_purge_rematerializes_posix(tmp_path):
+def test_cache_purge_rematerializes_posix_and_flags_rebuild(tmp_path):
     store, ssdir = _make_box(tmp_path)
     _set_key(store, _FRESH)  # POSIX absent (purged), durable key holds the edit
     assert not (ssdir / _MENU).exists()
@@ -208,7 +256,79 @@ def test_cache_purge_rematerializes_posix(tmp_path):
         "POSIX must be rebuilt from the durable key"
     )
     assert _get_key(store) == _FRESH, "the durable key must be preserved, never deleted"
-    assert _built(xbmc_mod), "re-materializing a purged menu must trigger a rebuild"
+    assert _Window._store.get("skinshortcuts-reloadmainmenu") == "True", (
+        "a POSIX-layer change must set the rebuild flag: the hash cannot see a "
+        "re-materialized file, the flag is the only reliable trigger"
+    )
+    # First-boot load (no chainbuild marker): no build fires here - the deferred
+    # AlarmClock build owns it and will honor the flag. Later loads chain it.
+    assert not _built(xbmc_mod)
+
+
+# ---------------------------------------------------------------------------
+# (3b) The ordered build chain. Home's tvOS onload sets t7b_chainbuild (later
+#      loads only) BEFORE spawning syncMenu and fires no parallel buildxml;
+#      syncMenu fires the ONE build strictly after the reconcile. The marker is
+#      consumed, the stuck-guard is cleared, and the fire happens even when the
+#      reconcile crashes (a crash must not strand the upstream-parity build).
+# ---------------------------------------------------------------------------
+
+
+def test_chainbuild_fires_one_build_after_reconcile(tmp_path):
+    store, ssdir = _make_box(tmp_path)
+    _set_key(store, _FRESH)  # purge case: reconcile has real work to do
+    _Window._store = {}
+
+    log = _run_syncmenu(store, chainbuild=True)
+
+    builds = [
+        m for m in log if "builtin: RunScript(script.skinshortcuts,type=buildxml" in m
+    ]
+    assert len(builds) == 1, "exactly ONE chained build"
+    # Ordering: the reconcile's own log line precedes the build fire.
+    sync_idx = next(i for i, m in enumerate(log) if "syncMenu key=" in m)
+    build_idx = next(i for i, m in enumerate(log) if "type=buildxml" in m)
+    assert sync_idx < build_idx, "the build must fire AFTER the reconcile"
+    assert "t7b_chainbuild" not in _Window._store, "marker must be consumed"
+    assert "skinshortcuts-isrunning" not in _Window._store
+    assert _Window._store.get("skinshortcuts-reloadmainmenu") == "True"
+
+
+def test_chainbuild_fires_even_on_consistent_box(tmp_path):
+    """Upstream parity: the later-load build always runs (shouldwerun decides
+    whether anything is actually rebuilt), even when the reconcile no-ops."""
+    store, ssdir = _make_box(tmp_path)
+    _set_posix(ssdir, _FRESH)
+    _set_key(store, _FRESH)
+
+    log = _run_syncmenu(store, chainbuild=True)
+
+    assert _built(log)
+    assert "t7b_chainbuild" not in _Window._store
+
+
+def test_chainbuild_fires_despite_reconcile_crash(tmp_path):
+    store, ssdir = _make_box(tmp_path)
+    _set_posix(ssdir, _FRESH)
+    _set_key(store, _STALE)  # forces the reconcile into the sabotaged File call
+
+    log = _run_syncmenu(store, chainbuild=True, sabotage_vfs_file=True)
+
+    assert any("syncMenu failed" in m for m in log), "crash must be logged"
+    assert _built(log), "a reconcile crash must not strand the chained build"
+    assert "t7b_chainbuild" not in _Window._store
+
+
+def test_no_build_without_chainbuild_marker(tmp_path):
+    """First load per boot (or a customizeMenu-spawned reconcile): no marker,
+    no build - the AlarmClock (or the wrapper) owns that build."""
+    store, ssdir = _make_box(tmp_path)
+    _set_posix(ssdir, _FRESH)
+    _set_key(store, _STALE)
+
+    log = _run_syncmenu(store, chainbuild=False)
+
+    assert not _built(log)
 
 
 # ---------------------------------------------------------------------------

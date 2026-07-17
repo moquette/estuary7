@@ -335,16 +335,20 @@ NORMALIZE = {
         ),
         _runscript_rewire(1),
         # Clear the stuck skinshortcuts-isrunning guard; then upstream's single
-        # unconditional buildxml on every later Home load (self-heals a menu edit
-        # OR a hash mismatch via shouldwerun), with the one first-per-boot build
-        # deferred past the keep-dialog timer.
+        # buildxml on every later Home load (self-heals a menu edit OR a hash
+        # mismatch via shouldwerun), with the one first-per-boot build deferred
+        # past the keep-dialog timer. On tvOS the later-load build is CHAINED by
+        # syncMenu (t7b_chainbuild marker, set synchronously before the spawn)
+        # instead of racing it as a parallel RunScript.
         (
             "\t<onload>RunScript(script.skinshortcuts,type=buildxml&amp;"
             "mainmenuID=9000&amp;group=mainmenu)</onload>",
             "\t<onload>RunScript(special://skin/scripts/helpers.py,seedPVR)</onload>\n"
+            '\t<onload condition="System.Platform.TVOS + !String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+            "SetProperty(t7b_chainbuild,1,10000)</onload>\n"
             '\t<onload condition="System.Platform.TVOS">RunScript(special://skin/scripts/helpers.py,syncMenu)</onload>\n'
             "\t<onload>ClearProperty(skinshortcuts-isrunning,10000)</onload>\n"
-            '\t<onload condition="!String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+            '\t<onload condition="!System.Platform.TVOS + !String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
             "RunScript(script.skinshortcuts,type=buildxml&amp;mainmenuID=9000&amp;"
             "group=mainmenu)</onload>\n"
             '\t<onload condition="String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'

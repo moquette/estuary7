@@ -194,9 +194,83 @@ with no pending edit. This obeys the core lesson above: skinshortcuts always rea
 POSIX, so POSIX is what we keep correct for it; the key write is a durability
 sidecar, never something we make skinshortcuts read.
 
-The durability write is gated on the pending-edit flag - the one state (key
-absent, POSIX present) that content comparison cannot detect, because
-`exists()` falls back to POSIX. The purge-recovery is gated on the unambiguous
+The durability write was originally gated on the pending-edit flag - superseded
+by the flag-free redesign below. The purge-recovery is gated on the unambiguous
 `xbmcvfs.exists && !os.path.exists` state (only a surviving key can make exists
 True while POSIX is gone). Coverage: `tests/test_syncmenu_tvos.py` execs the REAL
 payload against the two-layer fake.
+
+## Post-1.0.65: immediate on-demand refresh (the 4-agent panel findings, 2026-07-17)
+
+1.0.65 shipped the reconcile but edits STILL did not render immediately. A
+2-QA + 2-architect panel traced the full trigger graph and found four defects;
+all four are fixed together (this section describes the current design):
+
+1. **The power-menu "Customize Main Menu" entry had NO rebuild trigger at all**
+   (all platforms - the primary owner-visible bug). The editor is a dialog
+   opened OVER a still-loaded Home; closing a dialog never re-fires Home's
+   `<onload>`, the only rebuild producer. Upstream never hits this because its
+   sole editor entry is behind the SkinSettings WINDOW (whose close path
+   re-inits Home). Four releases (1.0.62-1.0.65) fixed the consumer side and
+   missed the missing producer. Fix: the `customizeMenu` helper wrapper - it
+   launches the editor, waits for the deterministic close signal
+   (`Window(10000).Property(skinshortcuts)` is stamped exactly once after
+   `doModal()` returns, on save AND cancel; skinshortcuts.py:351), then if
+   `skinshortcuts-reloadmainmenu` is set: on Fire OS/desktop it clears the
+   stuck `isrunning` guard and fires ONE buildxml directly; on tvOS it arms
+   `t7b_chainbuild` and spawns ONLY `syncMenu`, which fires the one build
+   strictly after reconciling - never build-and-reconcile as two parallel
+   RunScripts (a mid-session purge would make syncMenu WRITE POSIX while the
+   build reads it). The durable key also registers immediately this way,
+   not at the next Home load.
+
+2. **The tvOS onload raced its own reconcile.** `syncMenu` and the later-load
+   buildxml were two ASYNC RunScripts with no ordering; the build could read
+   DATA before the reconcile re-materialized it (baking the shipped default)
+   and consume `reloadmainmenu` before syncMenu read it. Fix: the ordered
+   chain - Home's onload sets `t7b_chainbuild` (later loads only, a
+   SYNCHRONOUS builtin, before the spawn), the parallel onload buildxml is now
+   `!System.Platform.TVOS`-gated, and syncMenu fires the one build strictly
+   after reconciling. The chain fire lives in its own try block so a reconcile
+   crash cannot strand the build; a helper crash leaves the marker set and the
+   next Home load re-arms it. No marker is set on the first load per boot, so
+   no build can fire inside the keep-skin dialog window (the AlarmClock defer
+   still owns the first build on both platforms).
+
+3. **The durability push was gated on a flag another thread consumes.**
+   `shouldwerun` reads-AND-clears `skinshortcuts-reloadmainmenu` first thing,
+   so the key-registration for a fresh keyless edit rode a 50/50 race. Fix:
+   flag-free detection - `xbmcvfs.listdir` merges POSIX and key names WITHOUT
+   dedupe (TVOSDirectory.cpp), so a name listed ONCE alongside a present POSIX
+   file provably has no key. syncMenu registers the key from that structural
+   signal and never touches `reloadmainmenu` except to SET it when the POSIX
+   layer changed (re-materialize). That set is load-bearing: skinshortcuts
+   2.0.3's `writexml` drops hash entries for files absent at build time
+   (`if hexdigest:` - hash_utils returns None for a missing file), so a
+   re-materialized DATA is INVISIBLE to the hash check and only the flag can
+   trigger the rebuild. On-demand refresh must always ride the flag, never
+   the hash.
+
+4. **resetMenu left stale NSUD keys behind.** The POSIX wipe cannot reach the
+   key layer, so a Caches purge could resurrect the pre-reset menu through a
+   surviving key (and the ~500KB NSUD budget only ever ratcheted up). Fix:
+   after the wipe, a tvOS-gated `xbmcvfs.delete` of every listed `*.DATA.xml`
+   key (`settings.xml` excluded - its key is the addon settings' durable
+   copy). This is the ONE correct use of `xbmcvfs.delete` here: on tvOS it
+   drops ONLY the key, never a POSIX file.
+
+**Deliberate tradeoff (do not "fix"):** the reconcile dual-layers every
+`*.DATA.xml` (POSIX + durable key). tvOS File Manager lists such files TWICE
+(listdir does not dedupe) - that is the expected cosmetic side effect of
+durability, NOT the incident-2026-07-08 duplicate-userdata corruption, which
+was about EZM++ vectoring files it should not have. One coherent entity per
+file still holds: both layers carry identical bytes after every reconcile.
+
+Coverage: `tests/test_syncmenu_tvos.py` (ordered chain, flag-free
+registration, crash resilience) and `tests/test_menu_triggers.py` (resetMenu
+keydrop, purge-after-reset, customizeMenu wrapper) exec the REAL payloads
+against the two-layer fake. Residual known windows (accepted): SkinSettings'
+`onunload` buildxml can still race the Home-onload chain when leaving Skin
+Settings (both converge; loser no-ops via hash); a Customize session longer
+than the wrapper's 30-min poll ceiling falls back to the old
+refresh-on-next-Home-init behavior for that one save.
