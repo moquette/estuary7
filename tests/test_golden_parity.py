@@ -343,7 +343,13 @@ NORMALIZE = {
             "mainmenuID=9000&amp;group=mainmenu)</onload>",
             "\t<onload>RunScript(special://skin/scripts/helpers.py,seedPVR)</onload>\n"
             "\t<onload>ClearProperty(skinshortcuts-isrunning,10000)</onload>\n"
-            '\t<onload condition="!String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+            '\t<onload condition="!String.IsEmpty(Window(10000).Property(t7b_firstbuild_done)) + '
+            "System.Platform.TVOS + "
+            '!String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu))">'
+            "RunScript(special://skin/scripts/helpers.py,reconcileMenu)</onload>\n"
+            '\t<onload condition="!String.IsEmpty(Window(10000).Property(t7b_firstbuild_done)) + '
+            "[!System.Platform.TVOS | "
+            'String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu))]">'
             "RunScript(script.skinshortcuts,type=buildxml&amp;mainmenuID=9000&amp;"
             "group=mainmenu)</onload>\n"
             '\t<onload condition="String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'

@@ -115,7 +115,51 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.64 (current: 1.0.64, build-verified)
+## Post-launch hardening, 1.0.28-1.0.65 (current: 1.0.65, build-verified)
+
+- **1.0.65 (2026-07-17) - tvOS-ONLY: Customize Main Menu edits now SAVE, DISPLAY
+  and PERSIST on Apple TV (owner: on atv2, adding e.g. Live TV > Guide or "111"
+  did not stick - back out showed nothing, and re-entering Customize showed the
+  item gone; survived a full Kodi restart).** This is the standalone tvOS
+  follow-up 1.0.64 deferred. Root cause is the tvOS storage split, source-cited
+  from Kodi's `TVOSFile.cpp` (transcribed into `tests/fake_kodi_storage.py`): a
+  userdata `*.xml` is "vectored" - Kodi shadows the on-disk POSIX file with an
+  NSUserDefaults KEY, and that key is the DURABLE store (the POSIX copy lives in
+  purgeable `Library/Caches`). `xbmcvfs` reads/writes the KEY (POSIX fallback
+  ONLY when no key exists); `script.skinshortcuts` SAVES the edited menu with
+  `ElementTree.write` = POSIX only, so the durable key never sees the edit and
+  the two layers DIVERGE. LINCHPIN RESOLVED: `xbmcvfs.exists` is key-first with a
+  POSIX fallback (fake_kodi_storage.py:147-152, `TVOSFile.cpp:113-122`), so the
+  `datafunctions.py:178` read guard is NOT the break; the break is the diverged
+  durable key (and a Caches purge that can drop the POSIX copy entirely). Fix: a
+  new `scripts/helpers.py` `reconcileMenu` action (injected by
+  `tools/skin_transforms.py`), fired from Home's onload ONLY when
+  `skinshortcuts-reloadmainmenu` is set AND `System.Platform.TVOS`. It clears the
+  stuck `skinshortcuts-isrunning` guard, then for every `*.DATA.xml` under the
+  real `addon_data/script.skinshortcuts` dir reads the just-saved POSIX bytes and
+  writes those EXACT bytes back through `xbmcvfs.File(special,'w')` (registering /
+  refreshing the durable key to the SAME content), re-asserts them on POSIX, and
+  fires ONE buildxml serialized after the sync. After it runs key == POSIX == the
+  user's edit, so no read path can revert. SAFE BY CONSTRUCTION: it runs only
+  while an edit is pending (the one instant POSIX is guaranteed freshest, so a
+  stale cache copy can never be pushed over a good key), NEVER deletes, never
+  re-serializes (raw bytes => content hash unchanged => no rebuild-loop churn),
+  and skips any empty/unparseable file - it can never destroy the user's only
+  menu copy. `.properties` files are not `*.xml`, so tvOS never vectors them and
+  they are left untouched. STRICT NO-OP on Fire TV/desktop (the onload condition
+  never fires it; an internal tvOS guard is a second gate) and when no edit is
+  pending. The Home onload splits the later-load buildxml into two mutually
+  exclusive branches (tvOS+pending -> reconcileMenu; everything else -> plain
+  buildxml), so exactly one build path runs per Home load - no double build, no
+  race; the first-per-boot AlarmClock defer is unchanged. Tests: new
+  `tests/test_reconcile_menu.py` execs the real payload against the two-layer
+  tvOS fake (durable-key registration surviving a simulated Caches purge, stale
+  key overwritten, idempotent/byte-preserving, never-deletes, no-op off the hot
+  path, onload wiring); `test_golden_parity` onload NORMALIZE + the helpers-path
+  caller count (17 -> 18) updated. 122 tests pass; determinism check green
+  (sha256 152b7a37...). Not yet real-device verified (atv2 is OFF; Office Fire TV
+  is hands-off) - the fix is tvOS-only, so the Fire TV bench cannot exercise it;
+  needs owner verification on an Apple TV before release.
 
 - **1.0.64 (2026-07-17) - Home main-menu edits finally PERSIST across a full
   restart (owner: removing a test item in the Skin Shortcuts editor left it in

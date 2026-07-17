@@ -429,9 +429,23 @@ def _edit_home(text: str, path: str) -> str:
         # restart; only a reboot clears it otherwise, and a stale True no-ops every
         # build).
         "\t<onload>ClearProperty(skinshortcuts-isrunning,10000)</onload>\n"
-        # Later loads: ONE unconditional buildxml (upstream semantics). Honors a
-        # pending menu edit OR a hash mismatch every Home load via shouldwerun.
-        '\t<onload condition="!String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+        # Later loads, tvOS + a pending menu edit: reconcileMenu FIRST. On Apple TV
+        # skinshortcuts saves the edit POSIX-only while the durable NSUserDefaults
+        # key keeps shadowing pre-edit bytes; reconcileMenu unifies the two layers
+        # for the just-saved bytes, THEN fires the buildxml itself (serialized after
+        # the sync, since RunScript is async). This branch and the plain-buildxml
+        # branch below are mutually exclusive, so exactly one runs per Home load and
+        # there is never a double build or a race.
+        '\t<onload condition="!String.IsEmpty(Window(10000).Property(t7b_firstbuild_done)) + '
+        "System.Platform.TVOS + "
+        '!String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu))">'
+        "RunScript(special://skin/scripts/helpers.py,reconcileMenu)</onload>\n"
+        # Later loads, everything else (Fire TV/desktop, OR tvOS with no pending
+        # edit): ONE unconditional buildxml (upstream semantics). Honors a pending
+        # menu edit OR a hash mismatch every Home load via shouldwerun.
+        '\t<onload condition="!String.IsEmpty(Window(10000).Property(t7b_firstbuild_done)) + '
+        "[!System.Platform.TVOS | "
+        'String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu))]">'
         "RunScript(script.skinshortcuts,type=buildxml&amp;mainmenuID=9000&amp;"
         "group=mainmenu)</onload>\n"
         # First Home load per boot: defer the one first-boot build past Kodi's ~10s
@@ -535,6 +549,84 @@ _RESET_MENU_ACTION = (
     "                home.setProperty('t7b_resetmenu', 'reset: ' + ' '.join(report))\n"
     "                xbmc.log('resetMenu: ' + ' '.join(report), xbmc.LOGINFO)\n"
     "                xbmc.executebuiltin('RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')\n"
+)
+
+# tvOS main-menu PERSISTENCE reconcile. Fired from Home's onload ONLY when a menu
+# edit is pending (skinshortcuts-reloadmainmenu set) AND the box is tvOS. On Apple
+# TV a userdata *.xml is "vectored": Kodi shadows the on-disk file with an
+# NSUserDefaults KEY, and that key - not the POSIX copy (which lives in purgeable
+# Library/Caches) - is the durable store. xbmcvfs reads/writes the KEY (it only
+# falls back to POSIX when NO key exists); skinshortcuts saves the edited menu with
+# ElementTree = POSIX only, so the two layers DIVERGE and the durable key never
+# reflects the edit. Whatever read path skinshortcuts then takes (key-first via
+# xbmcvfs, or POSIX via ETree.parse after a Caches purge), a divergent pair can
+# surface pre-edit bytes - the "edit vanishes / reverts" report.
+#
+# This action removes the divergence for the user's FRESHEST bytes: for every
+# *.DATA.xml under the real addon_data/script.skinshortcuts dir it reads the POSIX
+# copy (the bytes skinshortcuts just wrote) and writes those EXACT bytes back
+# through xbmcvfs, so CTVOSFile::Write registers/refreshes the durable key with the
+# same content, then re-asserts them on POSIX. After it runs, key == POSIX == the
+# user's edit, so no read path can revert. It fires ONLY while an edit is pending -
+# the one instant the POSIX copy is guaranteed to be the freshest bytes (so we
+# never propagate a stale cache copy over a good key) - and it NEVER deletes, never
+# re-serializes (raw bytes => content hash unchanged => no rebuild-loop churn), and
+# skips any empty/unparseable file. It therefore cannot destroy the user's only
+# menu copy. .properties files are not *.xml, so tvOS never vectors them (POSIX
+# only, no divergence possible); they are left untouched. On Fire TV/desktop the
+# onload condition never fires this action, and the internal tvOS guard makes it a
+# strict no-op even if invoked directly. Finally it re-asserts the pending flag
+# (the bytes are unchanged, so shouldwerun's hash check alone would say "up to
+# date") and fires ONE buildxml, serialized after the sync (RunScript is async, so
+# the build is triggered from inside this script, not as a sibling onload).
+_RECONCILE_MENU_ACTION = (
+    "        elif sys.argv[1] == 'reconcileMenu':\n"
+    "            import xml.etree.ElementTree as _RET\n"
+    "            home = xbmcgui.Window(10000)\n"
+    "            _pending = home.getProperty('skinshortcuts-reloadmainmenu') == 'True'\n"
+    "            _tvos = xbmc.getCondVisibility('System.Platform.TVOS')\n"
+    "            home.clearProperty('skinshortcuts-isrunning')\n"
+    "            home.clearProperty('skinshortcuts-loading')\n"
+    "            if _pending and _tvos:\n"
+    "                report = []\n"
+    "                synced = 0\n"
+    "                seen = set()\n"
+    "                for _sp in ('special://profile/addon_data/script.skinshortcuts/', 'special://masterprofile/addon_data/script.skinshortcuts/'):\n"
+    "                    base_real = xbmcvfs.translatePath(_sp)\n"
+    "                    if base_real in seen or not os.path.isdir(base_real):\n"
+    "                        continue\n"
+    "                    seen.add(base_real)\n"
+    "                    for name in sorted(os.listdir(base_real)):\n"
+    "                        if not name.endswith('.DATA.xml'):\n"
+    "                            continue\n"
+    "                        real = os.path.join(base_real, name)\n"
+    "                        try:\n"
+    "                            with open(real, 'rb') as _f:\n"
+    "                                _b = _f.read()\n"
+    "                        except Exception:\n"
+    "                            continue\n"
+    "                        if not _b:\n"
+    "                            continue\n"
+    "                        try:\n"
+    "                            _RET.fromstring(_b)\n"
+    "                        except Exception:\n"
+    "                            continue\n"
+    "                        try:\n"
+    "                            _vf = xbmcvfs.File(_sp + name, 'w')\n"
+    "                            _vf.write(bytearray(_b))\n"
+    "                            _vf.close()\n"
+    "                            with open(real, 'wb') as _f:\n"
+    "                                _f.write(_b)\n"
+    "                            synced += 1\n"
+    "                        except Exception:\n"
+    "                            report.append('err:' + name)\n"
+    "                report.append('synced=%i' % synced)\n"
+    "                home.setProperty('t7b_reconcilemenu', 'reconcile: ' + ' '.join(report))\n"
+    "                xbmc.log('estuary7 reconcileMenu: ' + ' '.join(report), xbmc.LOGINFO)\n"
+    "            if _pending:\n"
+    "                home.setProperty('skinshortcuts-reloadmainmenu', 'True')\n"
+    "            home.clearProperty('skinshortcuts-isrunning')\n"
+    "            xbmc.executebuiltin('RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)')\n"
 )
 
 _SYSTEM_PAGE = (
@@ -1892,7 +1984,10 @@ def _edit_helpers(text: str, path: str) -> str:
         path=path,
     )
     return _insert_before(
-        text, _HELPERS_ELSE, _SEED_PVR_ACTION + _RESET_MENU_ACTION, path=path
+        text,
+        _HELPERS_ELSE,
+        _SEED_PVR_ACTION + _RESET_MENU_ACTION + _RECONCILE_MENU_ACTION,
+        path=path,
     )
 
 
