@@ -2331,10 +2331,13 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
         text,
         "        <news>\nFor a complete view of changes visit "
         "https://github.com/b-jesch/skin.estuary.modv2/tree/Omega\n        </news>",
-        "        <news>\nv{}: the Viewtype button in the media sidebar now "
-        "cycles views like stock Estuary. The MOD V2 view-picker dialog (its "
-        "preview images were removed to slim the install, leaving it showing "
-        "placeholder art) is gone, along with the MOD V2 splash artwork.\n"
+        # Version-stamped POINTER, not prose: a baked changelog sentence goes
+        # stale the release after it is written (1.0.40-1.0.58 all shipped the
+        # 1.0.39 text with only the version stamp moving). The curated
+        # user-facing "What's new" lives in the hub mirror's addon.xml, which
+        # is bumped per release; the zip just points at the release history.
+        "        <news>\nv{}: release notes at "
+        "https://github.com/moquette/estuary7/releases\n"
         "        </news>".format(version),
         path=path,
     )

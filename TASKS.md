@@ -115,7 +115,25 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.57 (current: 1.0.57 RELEASED 2026-07-16)
+## Post-launch hardening, 1.0.28-1.0.59 (current: 1.0.59, CI-published)
+
+- **1.0.59 (2026-07-16) - the baked addon.xml <news> stops lying** - the
+  transform stamped the CURRENT version onto hardcoded 1.0.39-era prose,
+  so every zip from 1.0.40 through 1.0.58 shipped a wrong changelog. The
+  baked news is now a version-stamped POINTER to the GitHub release
+  history; the curated per-release "What's new" remains the hub mirror's
+  addon.xml (bumped every release - that is what Kodi's repo browser
+  actually shows). First release published through the 1.0.58 CI
+  auto-publish flow: push a green main with a bumped lock and CI builds,
+  releases, sha-verifies the asset, and dispatches the hub rebuild.
+
+- **1.0.58 (2026-07-16, owner-side) - CI publishes releases** - new ci.yml
+  publish job: green main (test suite + anchored double-build) builds and
+  publishes the release asset once per our_version and dispatches the hub
+  catalog rebuild. No hand-run release commands from here on. Also
+  owner-side the same evening: the hub's consumer verify was fixed for the
+  post-retirement canvas (repositories/ + rss/ only, hub commit 9e2811c) -
+  the red verify job flagged in the 1.0.55 session is CLOSED.
 
 - **1.0.57 (2026-07-16) - the pane EXIT finally renders: the inner
   grouplist loses its per-item gate** - owner report after 1.0.56: still
