@@ -119,10 +119,16 @@ def test_home_cover_watched_badge_topright_with_hide_toggle(built):
     """1.0.60 (owner request): the home-cover status badge moves to the
     cover's top-right and gains an opt-in hide switch. Library views keep
     stock (the control is home-gated upstream)."""
-    from skin_transforms import _V54_BADGE_TOPRIGHT, _HIDE_WATCHED_TOGGLE
+    from skin_transforms import (
+        _HIDE_WATCHED_TOGGLE,
+        _V54_BADGE_TOPRIGHT,
+        _V54_MOVIE_BADGE_TOPRIGHT,
+    )
 
     view = (built.tree / "xml" / "View_54_InfoWall.xml").read_text("utf-8")
     assert _V54_BADGE_TOPRIGHT in view
+    assert _V54_MOVIE_BADGE_TOPRIGHT in view
+    assert "<top>290</top>" not in view.split(_V54_MOVIE_BADGE_TOPRIGHT)[0][-3000:]
     assert "<top>263</top>" not in view.split(_V54_BADGE_TOPRIGHT)[0][-2000:]
     settings = (built.tree / "xml" / "SkinSettings.xml").read_text("utf-8")
     assert _HIDE_WATCHED_TOGGLE in settings

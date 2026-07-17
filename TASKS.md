@@ -115,7 +115,22 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.60 (current: 1.0.60, CI-published)
+## Post-launch hardening, 1.0.28-1.0.61 (current: 1.0.61, CI-published)
+
+- **1.0.61 (2026-07-16) - the watched badge move actually lands on the
+  MOVIE tiles** - 1.0.60 relocated the badge inside InfoWallMusicLayout
+  (the square-tile variant; the WallWatchedIconVar occurrence at 23,263
+  sits in THAT include, which starts 1200 lines before InfoWallMovieLayout)
+  and the office-box screenshot showed the movie posters' check unmoved.
+  The movie tiles draw a SEPARATE composition inside InfoWallMovieLayout:
+  an 80x80 corner gradient + 32px icon grouped at the art's bottom-left
+  (35,290). That group now moves to the art's top-right (205,10, gradient
+  flipx+flipy, icon at absolute 245,18) and gains the hide_watched_icon
+  gate. Hardware-verified by screenshot: check at the cover's top-right on
+  watched items, bottom-left clean (the rating chips there are BAKED INTO
+  the POV/RPDB poster art - not skin-drawn, not movable). LESSON: View_54
+  hosts four look-alike badge compositions across its layout includes -
+  anchor by enclosing include, not by first texture match.
 
 - **1.0.60 (2026-07-16) - home-cover watched badge: top-right + hide
   switch (owner request)** - upstream draws the 32px status badge

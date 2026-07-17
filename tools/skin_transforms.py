@@ -2264,8 +2264,61 @@ _V54_BADGE_TOPRIGHT = (
 )
 
 
+
+# The MOVIE poster tile's badge is a separate composition inside
+# InfoWallMovieLayout: an 80x80 corner gradient (overlay-bg) + the 32px
+# WallWatchedIconVar, grouped at the art's BOTTOM-LEFT (35,290 within the
+# 35..285 x 10..370 poster). 1.0.60 moved only the InfoWallMusicLayout
+# badge (the square-tile variant) - hardware screenshot showed the movie
+# tiles' check unmoved, riding the corner gradient at art-bottom-left. The
+# whole group moves to the art's TOP-RIGHT (205,10) with the gradient
+# flipped into that corner and the icon at the corner inset (absolute
+# 245,18 - matching the music-layout badge's new spot).
+_V54_MOVIE_BADGE_STOCK = (
+    '\t\t\t<control type="group">\n'
+    "\t\t\t\t<left>35</left>\n"
+    "\t\t\t\t<top>290</top>\n"
+    "\t\t\t\t<visible>![String.IsEqual(listitem.dbtype,genre) | String.IsEqual(listitem.dbtype,studio)]</visible>\n"
+    '\t\t\t\t<control type="image">\n'
+    "\t\t\t\t\t<width>80</width>\n"
+    "\t\t\t\t\t<height>80</height>\n"
+    "\t\t\t\t\t<texture>overlays/overlay-bg.png</texture>\n"
+    "\t\t\t\t</control>\n"
+    '\t\t\t\t<control type="image">\n'
+    "\t\t\t\t\t<top>48</top>\n"
+    "\t\t\t\t\t<width>32</width>\n"
+    "\t\t\t\t\t<height>32</height>\n"
+    "\t\t\t\t\t<texture>$VAR[WallWatchedIconVar]</texture>\n"
+    "\t\t\t\t</control>\n"
+    "\t\t\t</control>\n"
+)
+_V54_MOVIE_BADGE_TOPRIGHT = (
+    '\t\t\t<control type="group">\n'
+    "\t\t\t\t<left>205</left>\n"
+    "\t\t\t\t<top>10</top>\n"
+    "\t\t\t\t<visible>!Skin.HasSetting(hide_watched_icon)</visible>\n"
+    "\t\t\t\t<visible>![String.IsEqual(listitem.dbtype,genre) | String.IsEqual(listitem.dbtype,studio)]</visible>\n"
+    '\t\t\t\t<control type="image">\n'
+    "\t\t\t\t\t<width>80</width>\n"
+    "\t\t\t\t\t<height>80</height>\n"
+    '\t\t\t\t\t<texture flipx="true" flipy="true">overlays/overlay-bg.png</texture>\n'
+    "\t\t\t\t</control>\n"
+    '\t\t\t\t<control type="image">\n'
+    "\t\t\t\t\t<left>40</left>\n"
+    "\t\t\t\t\t<top>8</top>\n"
+    "\t\t\t\t\t<width>32</width>\n"
+    "\t\t\t\t\t<height>32</height>\n"
+    "\t\t\t\t\t<texture>$VAR[WallWatchedIconVar]</texture>\n"
+    "\t\t\t\t</control>\n"
+    "\t\t\t</control>\n"
+)
+
+
 def _edit_view54(text: str, path: str) -> str:
-    return _replace(text, _V54_BADGE_STOCK, _V54_BADGE_TOPRIGHT, path=path)
+    text = _replace(text, _V54_BADGE_STOCK, _V54_BADGE_TOPRIGHT, path=path)
+    return _replace(
+        text, _V54_MOVIE_BADGE_STOCK, _V54_MOVIE_BADGE_TOPRIGHT, path=path
+    )
 
 
 FILE_EDITS = {
