@@ -1672,27 +1672,50 @@ def _edit_overrides(text: str, path: str) -> str:
 # different pane type (Live TV) animates. Hardware-proven on the office box:
 # the 2026-07-15 21:04 backup (distinct MoviesWidget/TVShowsWidget - animated)
 # vs the 04:56 state (both PersonalWidgetList - cut), same skin 1.0.54 bytes.
-# Fix: gate each generated pane instance per ITEM (skinshortcuts resolves the
-# <skinshortcuts>visibility</skinshortcuts> tag to the item's
-# submenuVisibility condition) and replace the shared Conditional include
-# with the SAME effects as Vis_FadeSlide_Right_Delayed_Home triggered on the
-# group's own Visible/Hidden - so same-pane switches animate exactly like
-# cross-pane ones. The no_slide_animations fallback mirrors Visible_Fade.
+# Fix: gate each generated pane instance per ITEM and give it upstream's
+# EXACT animation structure - a per-item-keyed Conditional (delayed
+# fade+slide in from the right, REVERSING out to the right when the
+# condition flips; the 1.0.55 attempt used type="Visible", which never
+# reverses - owner rejected the exit on the bench) plus upstream's verbatim
+# Hidden. The per-item value rides $SKINSHORTCUTS[submenuVis] substitution
+# INSIDE the condition attribute (template.py substitutes mid-attribute and
+# leaves children intact); the property declaration below extracts each
+# item's submenuVisibility. The engine's OTHER hook - the attribute form
+# skinshortcuts="visibility" - must NOT be used on <animation>: template.py
+# replace_elements rebuilds the element from tag+text+attribs only,
+# silently DROPPING the <effect> children (proven by running the engine
+# code offline before deploy). The element form
+# <skinshortcuts>visibility</skinshortcuts> still supplies the per-item
+# <visible> gate on the group.
+_TEMPLATE_SUBMENUVIS_PROPERTY = (
+    '\t\t<property name="submenuVis" tag="property" '
+    'attribute="name|submenuVisibility" />\n'
+)
 _TEMPLATE_PANE_ANIMS = (
     "\t\t\t\t<skinshortcuts>visibility</skinshortcuts>\n"
-    '\t\t\t\t<animation type="Visible" condition="!Skin.HasSetting(no_slide_animations)">\n'
+    '\t\t\t\t<animation type="Conditional" condition="String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),$SKINSHORTCUTS[submenuVis])">\n'
     '\t\t\t\t\t<effect type="fade" start="0" end="100" time="300" tween="sine" delay="300" easing="out" />\n'
     '\t\t\t\t\t<effect type="slide" start="320" end="0" time="400" delay="300" tween="cubic" easing="out" />\n'
     "\t\t\t\t</animation>\n"
-    '\t\t\t\t<animation type="Hidden" condition="!Skin.HasSetting(no_slide_animations)">\n'
+    '\t\t\t\t<animation type="Hidden">\n'
     '\t\t\t\t\t<effect type="fade" start="100" end="0" time="300" tween="sine" easing="out" />\n'
     '\t\t\t\t\t<effect type="slide" start="0" end="320" time="300" tween="cubic" easing="out" />\n'
     "\t\t\t\t</animation>\n"
-    '\t\t\t\t<animation effect="fade" time="300" condition="Skin.HasSetting(no_slide_animations)">VisibleChange</animation>\n'
 )
 
 
 def _edit_template(text: str, path: str) -> str:
+    # Declared in the SAME <template> whose <controls> holds the pane groups
+    # (the mainmenuid line alone appears once per template block - anchor on
+    # its unique WidgetStyle1 neighbour).
+    text = _insert_after(
+        text,
+        '\t\t<property name="id" tag="mainmenuid" />\n'
+        '\t\t<property name="WidgetStyle1" tag="property" '
+        'attribute="name|widgetAspect.1" value="31338">ListPoster</property>\n',
+        _TEMPLATE_SUBMENUVIS_PROPERTY,
+        path=path,
+    )
     for pane in ("PersonalWidgetList", "PersonalWidgetPanel"):
         text = _replace(
             text,

@@ -115,7 +115,29 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.55 (current: 1.0.55 built 2026-07-16, on the office box; owner-side catalog publish pending)
+## Post-launch hardening, 1.0.28-1.0.56 (current: 1.0.56 RELEASED 2026-07-16)
+
+- **1.0.56 (2026-07-16) - the personal-widget pane transition now MATCHES
+  upstream exactly (owner rejected 1.0.55's exit)** - owner report on the
+  office box: the 1.0.55 pane switch 'only fades in... does not fade to
+  the right like the other modules'. Root cause: 1.0.55 translated
+  upstream's Vis_FadeSlide_Right_Delayed_Home Conditional into
+  type="Visible"/"Hidden", losing Conditional's REVERSAL semantics. Fix:
+  per-item-keyed Conditional + verbatim Hidden, byte-equal to upstream's
+  include. TWO ENGINE LESSONS, both proven by running skinshortcuts'
+  template.py code offline against the built template BEFORE deploying:
+  (1) the skinshortcuts="visibility" ATTRIBUTE hook rebuilds the element
+  from tag+text+attribs and silently DROPS ITS CHILDREN - an <animation>
+  carrying it deploys EMPTY; never use it on elements with children.
+  (2) $SKINSHORTCUTS[...] substitutes inside attributes with children
+  intact - the per-item key rides a new submenuVis template property
+  (tag="property" attribute="name|submenuVisibility"). CONFIRMED on the
+  office box by 30fps screenrecord frame analysis: Movies->TV Shows now
+  measures identical to the reference TV->TV Shows switch (1-frame exit +
+  ~300ms gap + fade/slide entrance from the right settling at the same x).
+  Side note: mid-verify the box slept and Kodi died in FireOS's known
+  crash-on-stop (Activity.performStop) - the black screens were sleep, not
+  a skin fault; the broken attribute-form build never rendered anywhere.
 
 - **1.0.55 (2026-07-16) - personal-widget panes animate per ITEM (the
   'Movies <-> TV Shows transition is gone' report)** - owner report on the
@@ -147,6 +169,7 @@ prevention checklist:
   box whose first menu uses personal widgets would render no pane until the
   first rebuild (fleet-safe today: owner DATA always forces a rebuild) -
   candidate re-capture if shipped defaults ever adopt personal widgets;
+  (superseded detail: 1.0.56 corrected the animation structure, see above)
   (2) the 1.0.40/1.0.41 hide_tile_labels polarity flip suppresses
   upstream's 45px on-focus widget slide under default settings - deliberate
   part of the owner-approved labeled-tile redesign, recorded here so it is

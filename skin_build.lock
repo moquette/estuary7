@@ -5,6 +5,6 @@
   "upstream_version": "21.4+omega.4",
   "upstream_tarball_sha256": "d79be3426a6f04c130bb0977bacfeea7b167a6f6cf4760bd281c3c79358bd3e2",
   "pin_evidence": "2026-07-10: addon.xml + stock .bak snapshots of Home.xml, Font.xml, Includes_PVR.xml, DialogPVRChannelGuide.xml on the Office Fire TV all md5-match this commit; upstream head is already 21.4+omega.5 (15e10710) - the omega.5 rebase is a deliberate later exercise, not the baseline",
-  "our_version": "1.0.55",
-  "zip_sha256": "5bdd6e2fc5ea61f74123710717cd2fff974a0fd36fb98b38fa318b7441f79358"
+  "our_version": "1.0.56",
+  "zip_sha256": "46eeec4a19d53e69bb5dd2f8f5e6abdfff436b679f6862ebcd7c53febcebabe7"
 }

@@ -193,10 +193,13 @@ revert toward stock - flag it during transform work, ask the owner:
   owner-picked widgets (the fleet's Movies and TV Shows, both POV widget
   rows) swap panes with a hard cut, while a move to any other pane type
   animates. The fork gates each generated pane instance on its own item
-  (submenuVisibility) and copies Vis_FadeSlide_Right_Delayed_Home's effects
-  onto the group's Visible/Hidden, so same-pane and cross-pane switches
-  read identically. Hardware-proven root cause and forensics: TASKS.md
-  1.0.55 entry.
+  (submenuVisibility) and gives it upstream's Vis_FadeSlide_Right_Delayed_
+  Home structure VERBATIM - a per-item-keyed Conditional (delayed fade +
+  slide in from the right, reversing out on exit) plus the verbatim Hidden
+  (1.0.56; the 1.0.55 Visible/Hidden translation lost the reversal and was
+  owner-rejected). Same-pane and cross-pane switches measure identical on
+  30fps frame analysis. Hardware-proven root cause and forensics: TASKS.md
+  1.0.55/1.0.56 entries.
 - MOD V2's FUNCTIONAL mods (PVR integration, widgets, custom windows) stay -
   the mandate is about look and feel, not features
 
