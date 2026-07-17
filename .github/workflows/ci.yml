@@ -70,3 +70,75 @@ jobs:
 
       - name: Anchored double-build against pinned upstream (determinism gate)
         run: python3 tools/build_skin.py --check
+
+  # Publishing is CI's job, not a hand-run command. Once BOTH gates above are green
+  # on main (the golden/transform/self-heal contract AND the anchored double-build
+  # determinism check), this builds and publishes the GitHub Release asset, then
+  # dispatches the hub catalog rebuild. The test suite IS this skin's build contract
+  # (anchored transforms fail loud, goldens pin the proven bytes), so a green main is
+  # a proven build - auto-publish cannot ship an unverified skin. Idempotent per
+  # version: a re-push of the same our_version publishes nothing.
+  publish:
+    needs: [test, anchored-build-check]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build the skin zip from the pinned upstream
+        run: python3 tools/build_skin.py
+
+      - name: Publish the GitHub Release asset (once per version) + verify
+        id: pub
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          SKIN=skin.estuary7
+          REPO="${GITHUB_REPOSITORY}"
+          VERSION=$(python3 -c "import json;print(json.load(open('skin_build.lock'))['our_version'])")
+          ZIP="dist/${SKIN}-${VERSION}.zip"
+          TAG="v${VERSION}"
+          SHA256=$(shasum -a 256 "$ZIP" | awk '{print $1}')
+          ASSET_URL="https://github.com/${REPO}/releases/download/${TAG}/${SKIN}-${VERSION}.zip"
+          echo "version=${VERSION} tag=${TAG} sha256=${SHA256}"
+
+          if gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            echo "release ${TAG} already exists - nothing to publish (idempotent no-op)."
+            exit 0
+          fi
+
+          gh release create "$TAG" "$ZIP" \
+            --repo "$REPO" \
+            --target "${GITHUB_SHA}" \
+            --title "Estuary 7 ${VERSION}" \
+            --notes "sha256: ${SHA256}"
+
+          echo "verifying the asset is anonymously downloadable and byte-correct..."
+          TMP=$(mktemp).zip
+          curl -sSfL "$ASSET_URL" -o "$TMP"
+          DOWNLOADED_SHA=$(shasum -a 256 "$TMP" | awk '{print $1}')
+          rm -f "$TMP"
+          if [ "$DOWNLOADED_SHA" != "$SHA256" ]; then
+            echo "FATAL: published asset sha256 mismatch (expected ${SHA256}, got ${DOWNLOADED_SHA})" >&2
+            exit 1
+          fi
+          echo "OK - ${ASSET_URL} sha256-verified against the CI build"
+          echo "published=1" >> "$GITHUB_OUTPUT"
+
+      # GITHUB_TOKEN-created releases do not emit `release: published`, so notify-hub.yml
+      # will not auto-fire. Dispatch the hub catalog rebuild directly (only when this run
+      # actually published). Benign on failure: the hub cron still catches it within 24h.
+      - name: Dispatch hub catalog rebuild
+        if: steps.pub.outputs.published == '1'
+        env:
+          GH_TOKEN: ${{ secrets.T7B_DISPATCH_TOKEN }}
+        run: >
+          gh api repos/tony7bones/tony7bones.github.io/dispatches
+          -f event_type=estuary7-release
