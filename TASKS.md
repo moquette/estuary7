@@ -115,7 +115,25 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.61 (current: 1.0.61, CI-published)
+## Post-launch hardening, 1.0.28-1.0.62 (current: 1.0.62, CI-published)
+
+- **1.0.62 (2026-07-17) - main-menu edits appear on return to Home again
+  (owner: "menu still broken... custom link took ~5 min to show up... UPSTREAM
+  WRITES THE MENU AFTER EVERY CHANGE AS SOON AS RETURNING TO THE HOME
+  SCREEN").** Root cause: skinshortcuts `shouldwerun()` (xmlfunctions.py) checks
+  `Window(10000).Property(skinshortcuts-reloadmainmenu)` - set True by the menu
+  editor - BEFORE any hash comparison, and returns True (rebuild + ReloadSkin)
+  when it is set. That flag is upstream's entire "detects a change" path, and
+  upstream's single unconditional buildxml onload honors it the instant you
+  return Home. The fork's 1.0.32/1.0.33 boot-speed change replaced that with a
+  first-per-boot AlarmClock defer gated on `t7b_firstbuild_done`; when the FIRST
+  menu edit of a session landed on the first Home load, the deferred/gated build
+  swallowed the reloadmainmenu signal, so the edit only surfaced minutes later
+  on some unrelated rebuild. Fix: the Home onload now runs buildxml IMMEDIATELY
+  whenever reloadmainmenu is set (never deferred); the first-per-boot defer past
+  the keep-skin dialog is kept ONLY for the no-edit reconcile case. The boot
+  hash seed remains the primary keep-dialog protection. Transform +
+  golden-parity test updated; 114 skin tests pass; determinism check green.
 
 - **1.0.61 (2026-07-16) - the watched badge move actually lands on the
   MOVIE tiles** - 1.0.60 relocated the badge inside InfoWallMusicLayout
@@ -781,7 +799,7 @@ landed on the bench box(es) ahead of it). In order:
     UNCONDITIONALLY on every Home load:
     `<onload>RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)</onload>`
     - so returning to Home after a Customize-Main-Menu edit rebuilds right
-    then. Immediate.
+      then. Immediate.
   - The fork (xml/Home.xml:6-8) split this into: FIRST Home load per session
     (Window(10000).Property(t7b_firstbuild_done) empty) DEFERS the buildxml by
     an `AlarmClock(t7bbuild,...,00:15,silent)` - a hard 15-second delay -

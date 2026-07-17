@@ -398,28 +398,46 @@ def _edit_home(text: str, path: str) -> str:
     # resets it. A stuck flag is exactly a menu that "won't complete until a hard
     # restart". Clearing it on every Home load (before the build fires) is safe (no
     # build runs concurrently at Home load) and is what the reset helper already
-    # does. Then defer the FIRST-per-boot buildxml past Kodi's ~10s "keep this
-    # skin?" timer - this also gives the boot service's hash seed its head start
-    # (the service seeds in <1s, inside the 15s window, so the deferred buildxml
-    # finds a matching hash and no-ops: no rebuild, no ReloadSkin). If the seed
-    # loses the race, the ReloadSkin fires AFTER the keep-dialog is answered, so it
-    # can't destroy it (the silent-revert bug). The gate is a per-SESSION
-    # Home(10000) property, NOT a persisted skin bool (a bool survives
-    # uninstall/reinstall and would wrongly skip the defer on a reinstalled box);
-    # it is empty at every boot, so the first Home load per session defers and
-    # later loads (e.g. after a menu edit) build immediately. The shipped includes
-    # render the menu during the wait. The added RunScripts target
-    # script.skinshortcuts, not the skin id, so the RunScript rewire (15) is intact.
+    # does. Then decide the buildxml timing by whether a menu EDIT is pending:
+    # the skinshortcuts editor sets Window(10000).Property(skinshortcuts-reloadmainmenu)
+    # =True when the main menu changes, and shouldwerun() honors that flag BEFORE any
+    # hash check (rebuild + ReloadSkin now). Upstream's single unconditional buildxml
+    # onload is what makes an edit appear the instant you return Home; the fork MUST
+    # keep that. So: if reloadmainmenu is set, build IMMEDIATELY (never deferred) -
+    # this is the "detects a change" path the owner relies on. Only when NO edit is
+    # pending do we defer the FIRST-per-boot buildxml past Kodi's ~10s "keep this
+    # skin?" timer (belt-and-suspenders to the boot hash seed: the service seeds in
+    # <1s, so the deferred no-op build finds a matching hash and never ReloadSkins;
+    # if the seed loses the race, the reload fires after the keep-dialog is answered).
+    # The earlier design deferred the FIRST build unconditionally and only built
+    # immediately on LATER loads - that swallowed the edit flag when the edit landed
+    # on the first Home load per boot, so a fresh box's first menu edits took minutes
+    # to appear. The gate is a per-SESSION Home(10000) property, NOT a persisted skin
+    # bool (a bool survives uninstall/reinstall and would wrongly skip the defer on a
+    # reinstalled box); it is empty at every boot. The shipped includes render the
+    # menu during any wait. The added RunScripts target script.skinshortcuts, not the
+    # skin id, so the RunScript rewire (15) is intact.
     text = _replace(
         text,
         "\t<onload>RunScript(script.skinshortcuts,type=buildxml&amp;"
         "mainmenuID=9000&amp;group=mainmenu)</onload>\n",
         "\t<onload>RunScript(special://skin/scripts/helpers.py,seedPVR)</onload>\n"
         "\t<onload>ClearProperty(skinshortcuts-isrunning,10000)</onload>\n"
-        '\t<onload condition="String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+        # A menu edit sets skinshortcuts-reloadmainmenu; honor it IMMEDIATELY on the
+        # next Home load exactly like upstream (buildMenu -> shouldwerun sees the flag
+        # BEFORE any hash check -> rebuild + ReloadSkin now), so the edited menu is
+        # written the instant you return Home. This is the whole "detects a change"
+        # path; it must never be gated behind the first-boot defer.
+        '\t<onload condition="!String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu))">'
+        "RunScript(script.skinshortcuts,type=buildxml&amp;mainmenuID=9000&amp;"
+        "group=mainmenu)</onload>\n"
+        # No pending edit + first Home load per boot: defer the reconcile build past
+        # Kodi's ~10s keep-skin timer (belt-and-suspenders to the boot hash seed).
+        '\t<onload condition="String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu)) + String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
         "AlarmClock(t7bbuild,RunScript(script.skinshortcuts,type=buildxml&amp;"
         "mainmenuID=9000&amp;group=mainmenu),00:15,silent)</onload>\n"
-        '\t<onload condition="!String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+        # No pending edit + later loads: reconcile immediately.
+        '\t<onload condition="String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu)) + !String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
         "RunScript(script.skinshortcuts,type=buildxml&amp;mainmenuID=9000&amp;"
         "group=mainmenu)</onload>\n"
         '\t<onload condition="String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
@@ -853,7 +871,6 @@ def _edit_variables(text: str, path: str) -> str:
         path=path,
     )
     return text
-
 
 
 # 1.0.60: hide switch for the home-cover watched/status badge (see
@@ -2233,8 +2250,6 @@ def _edit_services(text: str, path: str) -> str:
     )
 
 
-
-
 # Watched/status badge on the HOME video covers (owner request 2026-07-16,
 # 1.0.60): upstream draws the 32px WallWatchedIconVar badge at the poster
 # tile's BOTTOM-LEFT (23,263). The owner wants it at the TOP-RIGHT of the
@@ -2250,7 +2265,7 @@ _V54_BADGE_STOCK = (
     "\t\t\t\t<width>32</width>\n"
     "\t\t\t\t<height>32</height>\n"
     "\t\t\t\t<texture>$VAR[WallWatchedIconVar]</texture>\n"
-    '\t\t\t\t<visible>String.IsEqual(Container(9000).ListItem.Property(widget),PersonalWidgetList) | String.IsEqual(Container(9000).ListItem.Property(widget),PersonalWidgetPanel)</visible>\n'
+    "\t\t\t\t<visible>String.IsEqual(Container(9000).ListItem.Property(widget),PersonalWidgetList) | String.IsEqual(Container(9000).ListItem.Property(widget),PersonalWidgetPanel)</visible>\n"
 )
 _V54_BADGE_TOPRIGHT = (
     '\t\t\t<control type="image">\n'
@@ -2259,10 +2274,9 @@ _V54_BADGE_TOPRIGHT = (
     "\t\t\t\t<width>32</width>\n"
     "\t\t\t\t<height>32</height>\n"
     "\t\t\t\t<texture>$VAR[WallWatchedIconVar]</texture>\n"
-    '\t\t\t\t<visible>!Skin.HasSetting(hide_watched_icon)</visible>\n'
-    '\t\t\t\t<visible>String.IsEqual(Container(9000).ListItem.Property(widget),PersonalWidgetList) | String.IsEqual(Container(9000).ListItem.Property(widget),PersonalWidgetPanel)</visible>\n'
+    "\t\t\t\t<visible>!Skin.HasSetting(hide_watched_icon)</visible>\n"
+    "\t\t\t\t<visible>String.IsEqual(Container(9000).ListItem.Property(widget),PersonalWidgetList) | String.IsEqual(Container(9000).ListItem.Property(widget),PersonalWidgetPanel)</visible>\n"
 )
-
 
 
 # The MOVIE poster tile's badge is a separate composition inside
@@ -2316,9 +2330,7 @@ _V54_MOVIE_BADGE_TOPRIGHT = (
 
 def _edit_view54(text: str, path: str) -> str:
     text = _replace(text, _V54_BADGE_STOCK, _V54_BADGE_TOPRIGHT, path=path)
-    return _replace(
-        text, _V54_MOVIE_BADGE_STOCK, _V54_MOVIE_BADGE_TOPRIGHT, path=path
-    )
+    return _replace(text, _V54_MOVIE_BADGE_STOCK, _V54_MOVIE_BADGE_TOPRIGHT, path=path)
 
 
 FILE_EDITS = {
