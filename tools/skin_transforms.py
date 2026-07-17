@@ -425,13 +425,17 @@ def _edit_home(text: str, path: str) -> str:
         "\t<onload>RunScript(script.skinshortcuts,type=buildxml&amp;"
         "mainmenuID=9000&amp;group=mainmenu)</onload>\n",
         "\t<onload>RunScript(special://skin/scripts/helpers.py,seedPVR)</onload>\n"
-        # tvOS ONLY (strict no-op elsewhere): reconcile the main-menu DATA's POSIX
-        # copy (where skinshortcuts writes/reads the freshest edit) with its durable
-        # NSUserDefaults key BEFORE the buildxml reads it. De-shadows a stale key
-        # onto the fresh edit and re-materializes a purged POSIX copy from the key,
-        # so Customize edits SAVE, DISPLAY, and PERSIST across a cache purge/restart.
-        # Never deletes the user's only copy; no-op when the layers already agree.
-        "\t<onload>RunScript(special://skin/scripts/helpers.py,syncMenu)</onload>\n"
+        # tvOS ONLY: reconcile the main-menu DATA's POSIX copy (where skinshortcuts
+        # writes/reads the freshest edit) with its durable NSUserDefaults key BEFORE
+        # the buildxml reads it. De-shadows a stale key onto the fresh edit and
+        # re-materializes a purged POSIX copy from the key, so Customize edits SAVE,
+        # DISPLAY, and PERSIST across a cache purge/restart. Never deletes the user's
+        # only copy; no-op when the layers already agree. GATED AT THE ONLOAD with
+        # condition="System.Platform.TVOS" so the 5-box Fire TV fleet (which already
+        # works) never even spawns the helper subprocess - no Home-nav perf hit. The
+        # gate is NOT combined with skinshortcuts-reloadmainmenu: purge recovery runs
+        # on a cold boot with no pending flag, so it MUST fire every tvOS Home load.
+        '\t<onload condition="System.Platform.TVOS">RunScript(special://skin/scripts/helpers.py,syncMenu)</onload>\n'
         # Clear a stuck skinshortcuts-isrunning guard (survives ReloadSkin/addon
         # restart; only a reboot clears it otherwise, and a stale True no-ops every
         # build).

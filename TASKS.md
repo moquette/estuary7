@@ -135,7 +135,12 @@ prevention checklist:
   cache purge only the key survives and skinshortcuts (a POSIX reader) reverts to
   the shipped default. Fix: a new tvOS-only `syncMenu` helper action fired from
   Home's onload BEFORE the buildxml (`_SYNC_MENU_ACTION` in
-  `tools/skin_transforms.py`). For each `*.DATA.xml` it reconciles the two layers
+  `tools/skin_transforms.py`), with the onload itself gated
+  `condition="System.Platform.TVOS"` so the 5-box Fire TV fleet never spawns the
+  helper subprocess (no Home-nav perf hit); the gate is deliberately NOT combined
+  with `skinshortcuts-reloadmainmenu`, because purge recovery runs on a cold boot
+  with no pending flag and must fire every tvOS Home load. For each `*.DATA.xml`
+  it reconciles the two layers
   in the direction that preserves the user's FRESHEST edit - POSIX wins whenever
   present: it pushes the fresh POSIX bytes into the durable key (de-shadowing a
   stale key AND registering the key so the edit survives a purge), and when the
@@ -155,7 +160,26 @@ prevention checklist:
   two-layer fake: de-shadow, durable-key registration, purge recovery, strict
   no-op / idempotence, off-tvOS no-op, corruption-never-propagated,
   never-deletes. Golden onload NORMALIZE + helper-invocation count (17 -> 18)
-  updated; 124 tests pass; determinism check green (sha256 d9de2911...).
+  updated; 124 tests pass; determinism check green (sha256 c4fa19dd...).
+  QA POLISH: (1, applied) the syncMenu onload is gated to
+  `condition="System.Platform.TVOS"` (Fire TV never spawns the subprocess).
+  (2, deliberately NOT applied - single-owner tvOS build) left the double-build
+  in place. Source-grounded reason: `build_menu` fires `ReloadSkin()` on EVERY
+  successful build (xmlfunctions.py:123) and `shouldwerun()` reads-and-CLEARS
+  `skinshortcuts-reloadmainmenu` on first read (xmlfunctions.py:146-147). Making
+  syncMenu the sole tvOS builder is unsafe both ways: if it fires buildxml only
+  when it changed a layer OR an edit is pending, it cannot see the hash-mismatch
+  trigger that only `shouldwerun()` knows, so it SKIPS the 1.0.64 self-heal for a
+  DATA change with no reload flag (e.g. an EZM++ restore where POSIX==key already
+  agree) - a skipped legitimate rebuild; if instead it ALWAYS fires buildxml so
+  `shouldwerun()` decides, its immediate `ReloadSkin()` on the first per-boot load
+  bypasses the AlarmClock keep-skin defer and risks the silent skin-revert on the
+  ATV, and an async RunScript cannot reliably read `t7b_firstbuild_done` (set by a
+  later onload in the same chain) to know it is the first load. The double-build is
+  in practice two `shouldwerun()` checks with at most one real rebuild (once
+  syncMenu's build writes a matching hash, the plain build's `shouldwerun()`
+  short-circuits with no second `ReloadSkin`), and QA rated it non-blocking /
+  converges-correct. Revisit if a tvOS-safe single-owner build is wanted.
 
 - **1.0.64 (2026-07-17) - Home main-menu edits finally PERSIST across a full
   restart (owner: removing a test item in the Skin Shortcuts editor left it in
