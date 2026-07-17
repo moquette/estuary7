@@ -186,6 +186,17 @@ revert toward stock - flag it during transform work, ask the owner:
   fullscreen, stop stays on hold-play/pause and in the OSD. Full record,
   root cause, and maintenance notes:
   docs/playbooks/tvos-siri-remote-firetv-parity.md
+- Personal-widget panes animate per ITEM (owner report 2026-07-16, 1.0.55) -
+  a deliberate BEHAVIORAL deviation from upstream MOD V2, whose
+  PersonalWidgetList/Panel template keys the pane fade+slide on the focused
+  item's `widget` property CHANGING: two menu items that both carry
+  owner-picked widgets (the fleet's Movies and TV Shows, both POV widget
+  rows) swap panes with a hard cut, while a move to any other pane type
+  animates. The fork gates each generated pane instance on its own item
+  (submenuVisibility) and copies Vis_FadeSlide_Right_Delayed_Home's effects
+  onto the group's Visible/Hidden, so same-pane and cross-pane switches
+  read identically. Hardware-proven root cause and forensics: TASKS.md
+  1.0.55 entry.
 - MOD V2's FUNCTIONAL mods (PVR integration, widgets, custom windows) stay -
   the mandate is about look and feel, not features
 

@@ -115,7 +115,42 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.54 (current: 1.0.54 RELEASED 2026-07-15)
+## Post-launch hardening, 1.0.28-1.0.55 (current: 1.0.55 built 2026-07-16, on the office box; owner-side catalog publish pending)
+
+- **1.0.55 (2026-07-16) - personal-widget panes animate per ITEM (the
+  'Movies <-> TV Shows transition is gone' report)** - owner report on the
+  office box: no fade/slide moving Movies <-> TV Shows, while TV Shows <->
+  TV still animates; owner suspected the 1.0.53 revert / 1.0.54. EXONERATED
+  by hardware forensics + independent adversarial QA: every animation byte
+  in 1.0.54 is upstream-identical, and the office box's own EZM++ backups
+  prove the box ANIMATED on 1.0.54 at 21:04 (Movies/TV Shows still carried
+  distinct MoviesWidget/TVShowsWidget) and had stopped by 04:56 (both items
+  now widget=PersonalWidgetList carrying the POV 'Movies'/'TV Shows' widget
+  rows assigned overnight), same skin bytes both sides. ROOT CAUSE is
+  upstream design: the pane fade/slide (Visible_Right_Delayed_Home) keys on
+  the focused item's `widget` property CHANGING, so two items sharing
+  PersonalWidgetList swap the inner grouplist with no transition. FIX (new
+  `shortcuts/template.xml` transform, the file's first): each generated
+  PersonalWidgetList/Panel pane instance gains the per-item
+  `<skinshortcuts>visibility</skinshortcuts>` gate plus Visible/Hidden
+  animations copying Vis_FadeSlide_Right_Delayed_Home's effects verbatim
+  (and the no_slide_animations fade fallback), so same-pane switches
+  animate exactly like cross-pane ones. Includes provenance updated WITHOUT
+  re-capture - the pristine stock-menu build instantiates neither block
+  (zero `PersonalWidget*` strings in the vendored includes; new test pins the
+  premise). Tests: tests/test_widget_pane_transition.py (4 tests, incl. an
+  effects-parity drift guard against Includes_Animations.xml); anchors
+  count 24->25. Deployed to the office box by adb (2-file delta:
+  addon.xml + template.xml) with owner permission granted this session.
+  QA-agent side findings logged: (1) the vendored first-boot includes
+  defines NO skinshortcuts-template-PersonalWidget* includes, so a VIRGIN
+  box whose first menu uses personal widgets would render no pane until the
+  first rebuild (fleet-safe today: owner DATA always forces a rebuild) -
+  candidate re-capture if shipped defaults ever adopt personal widgets;
+  (2) the 1.0.40/1.0.41 hide_tile_labels polarity flip suppresses
+  upstream's 45px on-focus widget slide under default settings - deliberate
+  part of the owner-approved labeled-tile redesign, recorded here so it is
+  never mistaken for drift.
 
 - **1.0.54 (2026-07-15) - select opens the OSD on live TV (tvOS)** - owner
   report while watching live IPTV on the ATV: 'single select does not work

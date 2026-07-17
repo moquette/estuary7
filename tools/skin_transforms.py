@@ -1663,6 +1663,52 @@ def _edit_overrides(text: str, path: str) -> str:
     return _replace(text, _OVERRIDES_VIDEO_ICON_LINE, "", path=path)
 
 
+# Personal-widget pane transition (owner report 2026-07-16, 1.0.55): upstream
+# keys the home widget-pane fade+slide (Visible_Right_Delayed_Home) on the
+# focused item's `widget` property CHANGING. Every menu item whose widgets are
+# owner-picked shares widget=PersonalWidgetList (or ...Panel), so moving
+# between two such items (the fleet's Movies <-> TV Shows, both POV widget
+# rows) swaps the inner grouplist with NO transition, while a move to a
+# different pane type (Live TV) animates. Hardware-proven on the office box:
+# the 2026-07-15 21:04 backup (distinct MoviesWidget/TVShowsWidget - animated)
+# vs the 04:56 state (both PersonalWidgetList - cut), same skin 1.0.54 bytes.
+# Fix: gate each generated pane instance per ITEM (skinshortcuts resolves the
+# <skinshortcuts>visibility</skinshortcuts> tag to the item's
+# submenuVisibility condition) and replace the shared Conditional include
+# with the SAME effects as Vis_FadeSlide_Right_Delayed_Home triggered on the
+# group's own Visible/Hidden - so same-pane switches animate exactly like
+# cross-pane ones. The no_slide_animations fallback mirrors Visible_Fade.
+_TEMPLATE_PANE_ANIMS = (
+    "\t\t\t\t<skinshortcuts>visibility</skinshortcuts>\n"
+    '\t\t\t\t<animation type="Visible" condition="!Skin.HasSetting(no_slide_animations)">\n'
+    '\t\t\t\t\t<effect type="fade" start="0" end="100" time="300" tween="sine" delay="300" easing="out" />\n'
+    '\t\t\t\t\t<effect type="slide" start="320" end="0" time="400" delay="300" tween="cubic" easing="out" />\n'
+    "\t\t\t\t</animation>\n"
+    '\t\t\t\t<animation type="Hidden" condition="!Skin.HasSetting(no_slide_animations)">\n'
+    '\t\t\t\t\t<effect type="fade" start="100" end="0" time="300" tween="sine" easing="out" />\n'
+    '\t\t\t\t\t<effect type="slide" start="0" end="320" time="300" tween="cubic" easing="out" />\n'
+    "\t\t\t\t</animation>\n"
+    '\t\t\t\t<animation effect="fade" time="300" condition="Skin.HasSetting(no_slide_animations)">VisibleChange</animation>\n'
+)
+
+
+def _edit_template(text: str, path: str) -> str:
+    for pane in ("PersonalWidgetList", "PersonalWidgetPanel"):
+        text = _replace(
+            text,
+            "\t\t\t\t<visible>String.IsEqual(Container(9000).ListItem."
+            "Property(widget),{})</visible>\n"
+            '\t\t\t\t<include content="Visible_Right_Delayed_Home">\n'
+            '\t\t\t\t\t<param name="id" value="{}"/>\n'
+            "\t\t\t\t</include>\n".format(pane, pane),
+            "\t\t\t\t<visible>String.IsEqual(Container(9000).ListItem."
+            "Property(widget),{})</visible>\n".format(pane)
+            + _TEMPLATE_PANE_ANIMS,
+            path=path,
+        )
+    return text
+
+
 # --- Textures.xbt: shadow the MOD V2 videos.png so stock's loose copy wins ----
 #
 # Kodi's texture loader checks Textures.xbt BEFORE loose media files (bundle
@@ -2116,6 +2162,7 @@ FILE_EDITS = {
     "scripts/services.py": _edit_services,
     "shortcuts/mainmenu.DATA.xml": _edit_mainmenu,
     "shortcuts/overrides.xml": _edit_overrides,
+    "shortcuts/template.xml": _edit_template,
     "xml/SettingsCategory.xml": _edit_settingscategory,
     "xml/DialogAddonSettings.xml": _edit_dialogaddonsettings,
     "xml/SettingsProfile.xml": _edit_settingsprofile,
