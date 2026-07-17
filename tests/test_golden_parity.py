@@ -334,23 +334,21 @@ NORMALIZE = {
             1,
         ),
         _runscript_rewire(1),
-        # Clear the stuck skinshortcuts-isrunning guard; honor a pending menu edit
-        # (skinshortcuts-reloadmainmenu) IMMEDIATELY like upstream; defer only the
-        # no-edit first-per-boot reconcile past the keep-dialog timer.
+        # Clear the stuck skinshortcuts-isrunning guard; then upstream's single
+        # unconditional buildxml on every later Home load (self-heals a menu edit
+        # OR a hash mismatch via shouldwerun), with the one first-per-boot build
+        # deferred past the keep-dialog timer.
         (
             "\t<onload>RunScript(script.skinshortcuts,type=buildxml&amp;"
             "mainmenuID=9000&amp;group=mainmenu)</onload>",
             "\t<onload>RunScript(special://skin/scripts/helpers.py,seedPVR)</onload>\n"
             "\t<onload>ClearProperty(skinshortcuts-isrunning,10000)</onload>\n"
-            '\t<onload condition="!String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu)) + !String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+            '\t<onload condition="!String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
             "RunScript(script.skinshortcuts,type=buildxml&amp;mainmenuID=9000&amp;"
             "group=mainmenu)</onload>\n"
             '\t<onload condition="String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
             "AlarmClock(t7bbuild,RunScript(script.skinshortcuts,type=buildxml&amp;"
             "mainmenuID=9000&amp;group=mainmenu),00:15,silent)</onload>\n"
-            '\t<onload condition="String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu)) + !String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
-            "RunScript(script.skinshortcuts,type=buildxml&amp;mainmenuID=9000&amp;"
-            "group=mainmenu)</onload>\n"
             '\t<onload condition="String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
             "SetProperty(t7b_firstbuild_done,1,10000)</onload>",
             1,

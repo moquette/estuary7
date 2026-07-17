@@ -119,10 +119,15 @@ def add_assets(tree: Path) -> None:
     shortcuts/ (unused by the build) if it is ever wanted per-box.
 
     1.0.32 additionally ships the PRE-BUILT skinshortcuts includes
-    (xml/script-skinshortcuts-includes.xml, into every res folder) so the boot
-    service's hash seed can make shouldwerun() return False and skip the
-    first-launch rebuild+ReloadSkin (the install black flash / silent revert);
-    and the restored startup splash (extras/themes/t7b-splash.jpg = the owner's
+    (xml/script-skinshortcuts-includes.xml, into every res folder) so the menu
+    renders INSTANTLY on first boot (shouldwerun()'s "includes file exists"
+    check passes, so nothing has to build before the first paint). The boot
+    service seeds NO hash (1.0.64: the seed reported "menu up to date" while
+    blind to the owner's addon_data edits, so Home main-menu edits never
+    persisted). With no hash on disk the first real build - deferred one boot by
+    Home's onload past the keep-skin dialog - writes a REAL hash from the owner's
+    actual DATA, and every later edit self-heals via a hash mismatch. Also ships
+    the restored startup splash (extras/themes/t7b-splash.jpg = the owner's
     background.jpg). check_contracts() gates both (byte-equality, res-coverage,
     and a provenance staleness guard for the includes).
     """
@@ -166,11 +171,13 @@ def add_assets(tree: Path) -> None:
         shutil.copyfile(shot, tree / "resources" / shot.name)
     # Pre-built skinshortcuts menu: shipping the generated includes means
     # skinshortcuts' shouldwerun() "includes file exists" check passes on first
-    # launch, so with the boot service's on-device hash seed (see
-    # _SERVICES_SEED) it does NOT rebuild+ReloadSkin - killing the first-launch
-    # black flash AND the reload that used to destroy Kodi's "keep this skin?"
-    # dialog (silent revert to stock). Captured pristine from a live build;
-    # re-capture when menu DATA changes (the provenance test fails loud).
+    # launch, so the menu renders INSTANTLY - nothing has to build before the
+    # first paint. The boot service seeds NO hash (see _SERVICES_SEED): the first
+    # real build is deferred one boot by Home's onload past Kodi's "keep this
+    # skin?" dialog (so its ReloadSkin cannot silently revert the skin), then
+    # writes a REAL hash from the owner's actual DATA and every later edit
+    # self-heals. Captured pristine from a live build; re-capture when menu DATA
+    # changes (the provenance test fails loud).
     inc_dst = tree / "xml" / "script-skinshortcuts-includes.xml"
     inc_dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(ASSETS_DIR / "xml" / "script-skinshortcuts-includes.xml", inc_dst)

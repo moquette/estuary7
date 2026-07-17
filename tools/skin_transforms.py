@@ -398,25 +398,28 @@ def _edit_home(text: str, path: str) -> str:
     # resets it. A stuck flag is exactly a menu that "won't complete until a hard
     # restart". Clearing it on every Home load (before the build fires) is safe (no
     # build runs concurrently at Home load) and is what the reset helper already
-    # does. Then decide the buildxml timing by whether a menu EDIT is pending:
-    # the skinshortcuts editor sets Window(10000).Property(skinshortcuts-reloadmainmenu)
-    # =True when the main menu changes, and shouldwerun() honors that flag BEFORE any
-    # hash check (rebuild + ReloadSkin now). Upstream's single unconditional buildxml
-    # onload is what makes an edit appear the instant you return Home; the fork MUST
-    # keep that. So: if reloadmainmenu is set, build IMMEDIATELY (never deferred) -
-    # this is the "detects a change" path the owner relies on. Only when NO edit is
-    # pending do we defer the FIRST-per-boot buildxml past Kodi's ~10s "keep this
-    # skin?" timer (belt-and-suspenders to the boot hash seed: the service seeds in
-    # <1s, so the deferred no-op build finds a matching hash and never ReloadSkins;
-    # if the seed loses the race, the reload fires after the keep-dialog is answered).
-    # The earlier design deferred the FIRST build unconditionally and only built
-    # immediately on LATER loads - that swallowed the edit flag when the edit landed
-    # on the first Home load per boot, so a fresh box's first menu edits took minutes
-    # to appear. The gate is a per-SESSION Home(10000) property, NOT a persisted skin
-    # bool (a bool survives uninstall/reinstall and would wrongly skip the defer on a
-    # reinstalled box); it is empty at every boot. The shipped includes render the
-    # menu during any wait. The added RunScripts target script.skinshortcuts, not the
-    # skin id, so the RunScript rewire (15) is intact.
+    # does.
+    #
+    # Then run ONE unconditional buildxml on every LATER Home load, exactly like
+    # upstream's single onload (upstream-cache/.../xml/Home.xml line 4). buildMenu
+    # -> shouldwerun() reads-and-clears skinshortcuts-reloadmainmenu FIRST, then
+    # checks includes-exists, then the hash. So this single onload self-heals on
+    # BOTH triggers with no branching on our side: a menu EDIT (reloadmainmenu set)
+    # rebuilds the instant you return Home, AND an edited addon_data DATA that no
+    # longer matches the on-disk hash rebuilds too. This is the whole fix: the boot
+    # service no longer seeds a hash, so the very first real build writes a REAL
+    # hash from the owner's actual DATA, and every subsequent edit trips the hash
+    # mismatch and rebuilds. Nothing can freeze the on-disk includes anymore.
+    #
+    # The ONLY thing the old machinery legitimately bought us was deferring the
+    # single FIRST-per-boot build past Kodi's ~10s "keep this skin?" dialog (an
+    # immediate ReloadSkin there kills the dialog = silent revert). So the first
+    # load per boot instead arms a 15s AlarmClock for that one build; the shipped
+    # pre-built includes render the menu during the wait. The gate is a per-SESSION
+    # Window(10000) property (empty at every boot), NOT a persisted skin bool (a
+    # bool would survive uninstall/reinstall and wrongly skip the defer). The
+    # buildxml RunScripts target script.skinshortcuts, not the skin id, so the
+    # RunScript rewire (15) is intact.
     text = _replace(
         text,
         "\t<onload>RunScript(script.skinshortcuts,type=buildxml&amp;"
@@ -424,34 +427,18 @@ def _edit_home(text: str, path: str) -> str:
         "\t<onload>RunScript(special://skin/scripts/helpers.py,seedPVR)</onload>\n"
         # Clear a stuck skinshortcuts-isrunning guard (survives ReloadSkin/addon
         # restart; only a reboot clears it otherwise, and a stale True no-ops every
-        # build). At a bare Home load no build runs concurrently; the one window is
-        # the 15s-deferred first build (below), a ~1s op, so a torn write is possible
-        # but very unlikely and self-heals on the next build.
+        # build).
         "\t<onload>ClearProperty(skinshortcuts-isrunning,10000)</onload>\n"
-        # A menu edit sets skinshortcuts-reloadmainmenu; honor it IMMEDIATELY on the
-        # next Home load exactly like upstream (buildMenu -> shouldwerun sees the flag
-        # BEFORE any hash check -> rebuild + ReloadSkin now), so the edited menu is
-        # written the instant you return Home. Gated on !firstbuild_done so it can
-        # NEVER fire on the first Home load per boot: reloadmainmenu is a session-
-        # global Window(10000) property shared by ALL skinshortcuts skins, so a LIVE
-        # switch into Estuary 7 (no reboot) could carry a stale True from the prior
-        # skin - firing an immediate ReloadSkin there would kill Kodi's keep-skin
-        # dialog (the silent-revert bug). A real edit lands on a LATER load (Home has
-        # painted at least once, so firstbuild_done is already set), so this costs no
-        # real user flow. The first-boot path below always defers past the keep-dialog.
-        '\t<onload condition="!String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu)) + !String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
+        # Later loads: ONE unconditional buildxml (upstream semantics). Honors a
+        # pending menu edit OR a hash mismatch every Home load via shouldwerun.
+        '\t<onload condition="!String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
         "RunScript(script.skinshortcuts,type=buildxml&amp;mainmenuID=9000&amp;"
         "group=mainmenu)</onload>\n"
-        # First Home load per boot (edit pending or not): defer the build past Kodi's
-        # ~10s keep-skin timer (belt-and-suspenders to the boot hash seed). The
-        # deferred build still honors any reloadmainmenu via shouldwerun when it fires.
+        # First Home load per boot: defer the one first-boot build past Kodi's ~10s
+        # keep-skin dialog so its ReloadSkin cannot silently revert the skin.
         '\t<onload condition="String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
         "AlarmClock(t7bbuild,RunScript(script.skinshortcuts,type=buildxml&amp;"
         "mainmenuID=9000&amp;group=mainmenu),00:15,silent)</onload>\n"
-        # No pending edit + later loads: reconcile immediately.
-        '\t<onload condition="String.IsEmpty(Window(10000).Property(skinshortcuts-reloadmainmenu)) + !String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
-        "RunScript(script.skinshortcuts,type=buildxml&amp;mainmenuID=9000&amp;"
-        "group=mainmenu)</onload>\n"
         '\t<onload condition="String.IsEmpty(Window(10000).Property(t7b_firstbuild_done))">'
         "SetProperty(t7b_firstbuild_done,1,10000)</onload>\n",
         path=path,
@@ -1911,9 +1898,7 @@ def _edit_helpers(text: str, path: str) -> str:
 
 _SERVICES_IMPORT_OLD = "import xbmc\n\n# view switcher\n"
 _SERVICES_IMPORT_NEW = (
-    "import xbmc\nimport xbmcaddon\nimport xbmcvfs\nimport xbmcgui\n"
-    "import os\nimport hashlib\nimport json\n"
-    "import xml.etree.ElementTree as ET\n\n# view switcher\n"
+    "import xbmc\nimport xbmcaddon\nimport xbmcvfs\nimport os\n\n# view switcher\n"
 )
 
 # Anchor: the FIRST statement inside __main__ (before the 1s sleep), so we set
@@ -1921,28 +1906,19 @@ _SERVICES_IMPORT_NEW = (
 # so the very first menu build already has it and no rebuild is ever needed.
 _SERVICES_START_ANCHOR = "    TRANS_TITLE = str(xbmc.getLocalizedString(369))\n"
 
-# The boot service (runs on addon-enable, BEFORE Home's onload buildxml) does two
-# things on a fresh install:
-#  1. Seed skinshortcuts' donthidepvr=true so it never injects System.HasPVRAddon
-#     onto Live TV/Radio (the only reliable way to keep them always-visible like
-#     stock; hardware-verified).
-#  2. Seed a matching skinshortcuts HASH so shouldwerun() (xmlfunctions.py:143)
-#     returns False and build_menu()'s ReloadSkin() (line 123) NEVER fires on
-#     first launch. That reload is the root cause of BOTH the install black flash
-#     AND the silent revert (it destroys Kodi's "keep this skin?" dialog ~270ms
-#     after the switch). We ship the generated includes (add_assets), so the only
-#     thing shouldwerun still needs is the hash - and the hash is device-specific
-#     (absolute paths, Kodi version, profile list) so it CANNOT be a static file;
-#     it is generated here. shouldwerun only checks entries we write and we hash
-#     only files that exist now, so every entry is guaranteed to match. We seed
-#     when the includes exist AND (no hash yet OR the hash is from a different
-#     Estuary 7 version) - so upgrades/reinstalls (which carry a stale hash that
-#     would otherwise block the seed and force a rebuild) are covered too, while
-#     the reset path (which deletes the includes and sets reloadmainmenu) is not
-#     fought. Worst case of any failure/race: the hash is absent/rejected,
-#     shouldwerun returns True, one rebuild - exactly today's behaviour, never
-#     worse (Change 3 defers that fallback build past the keep-dialog). Do NOT set
-#     skinshortcuts-reloadmainmenu (that forces a rebuild).
+# The boot service (runs on addon-enable, BEFORE Home's onload buildxml) does
+# ONE thing on a fresh install: seed skinshortcuts' donthidepvr=true so it never
+# injects System.HasPVRAddon onto Live TV/Radio (the only reliable way to keep
+# them always-visible like stock; hardware-verified). It seeds NO hash. The fork
+# once seeded a skinshortcuts .hash to skip the first-launch rebuild+ReloadSkin,
+# but that hash reported "menu up to date" while blind to the owner's addon_data
+# edits: shouldwerun() saw a matching hash and never rebuilt, so Home main-menu
+# edits never persisted (they survived ReloadSkin AND restart). The hash seed is
+# gone. With no hash on disk, the first real build (deferred one boot by Home's
+# onload past the keep-skin dialog) writes a REAL hash from the owner's actual
+# DATA, and every later edit trips the hash mismatch and self-heals - upstream's
+# own behaviour. The shipped pre-built includes still render the menu instantly
+# during that one deferred first build. The tvOS Siri-remote keymap is kept.
 _SERVICES_SEED = """\
     try:
         _ss = xbmcaddon.Addon('script.skinshortcuts')
@@ -1951,227 +1927,6 @@ _SERVICES_SEED = """\
             xbmc.log('estuary7: seeded skinshortcuts donthidepvr=true', level=xbmc.LOGINFO)
     except Exception as _pvr_e:
         xbmc.log('estuary7: donthidepvr seed failed: %s' % _pvr_e, level=xbmc.LOGWARNING)
-    try:
-        _skindir = xbmc.getSkinDir()
-        _skinver = xbmcaddon.Addon(_skindir).getAddonInfo('version')
-        _master = xbmcvfs.translatePath('special://masterprofile/addon_data/script.skinshortcuts/')
-        _hashfile = os.path.join(_master, '%s.hash' % _skindir)
-        _inc = xbmcvfs.translatePath('special://skin/xml/script-skinshortcuts-includes.xml')
-        # --- SELF-HEAL (tvOS): re-materialize menu DATA orphaned in NSUserDefaults ---
-        # An EZ Maintenance++ restore (<= 2026.07.13.6) vectored EVERY userdata *.xml into
-        # NSUserDefaults and then DELETED the POSIX copy. skinshortcuts reads its
-        # *.DATA.xml with plain open() while GUARDING with xbmcvfs.exists() - and on tvOS
-        # CTVOSFile::Exists checks the NSUserDefaults key FIRST (TVOSFile.cpp:113-122), so
-        # the guard passes, ElementTree's plain open() then raises, skinshortcuts swallows
-        # it and falls through to the SKIN'S SHIPPED DEFAULT menu. The owner's customized
-        # menu silently reverts to the full stock menu on every restore.
-        # The bytes are NOT lost - they are in the key. xbmcvfs.listdir is the only API that
-        # surfaces them (CTVOSDirectory merges the POSIX listing with the keys), so read each
-        # orphan back THROUGH xbmcvfs and write it to disk with plain open() - the API
-        # skinshortcuts actually reads with. Entered ONLY when the POSIX file is missing AND
-        # the VFS can still see it: unreachable on Fire TV / desktop and on a healthy Apple
-        # TV, so a strict no-op everywhere else. Full model: the kodi-storage-map skill.
-        _healed = 0
-        _ssdir = 'special://profile/addon_data/script.skinshortcuts/'
-        _ssreal = xbmcvfs.translatePath(_ssdir)
-        try:
-            _dirs, _vfsfiles = xbmcvfs.listdir(_ssdir)
-            for _fn in _vfsfiles:
-                if not _fn.endswith('.DATA.xml'):
-                    continue
-                _fp = os.path.join(_ssreal, _fn)
-                if os.path.isfile(_fp):
-                    continue
-                _rf = None
-                try:
-                    _rf = xbmcvfs.File(_ssdir + _fn)
-                    _bytes = _rf.readBytes()
-                finally:
-                    try:
-                        if _rf is not None:
-                            _rf.close()
-                    except Exception:
-                        pass
-                if not _bytes:
-                    continue
-                if not os.path.isdir(_ssreal):
-                    os.makedirs(_ssreal)
-                with open(_fp, 'wb') as _out:
-                    _out.write(bytes(_bytes))
-                _healed += 1
-            if _healed:
-                xbmc.log('estuary7: re-materialized %d skinshortcuts DATA file(s) orphaned in NSUserDefaults' % _healed, level=xbmc.LOGWARNING)
-        except Exception as _he:
-            xbmc.log('estuary7: DATA re-materialize skipped: %s' % _he, level=xbmc.LOGWARNING)
-        # --- PURGE the now-redundant NSUserDefaults keys ---
-        # A file living in BOTH layers is listed TWICE by CTVOSDirectory (it merges the POSIX
-        # listing with the keys and never dedupes, TVOSDirectory.cpp:48-106), the stale key
-        # SHADOWS the disk file for any VFS reader (CTVOSFile::Exists/Open check the key
-        # first), and it burns the tvOS defaults budget - which Apple TERMINATES the app over
-        # at 1 MB (warning at 512 KB, whole database). skinshortcuts reads its DATA with plain
-        # open(), so the key is pure liability: drop it and leave one coherent POSIX file.
-        # SAFETY. Verified against Kodi Omega source (xbmc@f8815ee4), NOT against intuition:
-        #   CTVOSFile::Delete       -> DeleteKeyFromPath(); if (!ret) POSIX delete
-        #   DeleteKeyFromPath       -> translatePathIntoKey() succeeds for ANY path under
-        #                              userdata, then DeleteKey()
-        #   DeleteKey               -> removeObjectForKey (SILENT no-op if absent), then
-        #                              `return [defaults synchronize] == YES` -> true
-        # So ret is TRUE whether or not a key existed, and the `if (!ret)` POSIX fallback is
-        # UNREACHABLE for exactly the files CTVOSFile is dispatched for (FileFactory.cpp:117
-        # gates on WantsFile). Net rule, which no doc of ours stated correctly until now:
-        # xbmcvfs.delete() on a userdata *.xml CANNOT delete the POSIX file on tvOS - it drops
-        # the key and reports success. That is precisely what we want here, and it means the
-        # purge cannot destroy the disk copy. We still (a) only touch files whose POSIX copy
-        # EXISTS - never one where the key is the only copy, (b) hold the bytes first, and
-        # (c) re-write from memory if the file vanished anyway. (c) is now known-unreachable
-        # defence-in-depth against a future Kodi changing these semantics on us; it is cheap.
-        # Only files present in BOTH layers (name listed twice by the VFS) are touched, so this
-        # is a strict no-op once clean and on every non-tvOS platform. See: kodi-storage-map.
-        _purged = 0
-        try:
-            _dirs2, _vfs2 = xbmcvfs.listdir(_ssdir)
-            _dupes = set()
-            _once = set()
-            for _fn in _vfs2:
-                if not _fn.endswith('.DATA.xml'):
-                    continue
-                if _fn in _once:
-                    _dupes.add(_fn)
-                _once.add(_fn)
-            for _fn in sorted(_dupes):
-                _fp = os.path.join(_ssreal, _fn)
-                if not os.path.isfile(_fp):
-                    continue  # no POSIX copy: the key may be the ONLY copy - never touch it
-                with open(_fp, 'rb') as _sf:
-                    _keep = _sf.read()
-                if not _keep:
-                    continue
-                try:
-                    xbmcvfs.delete(_ssdir + _fn)
-                except Exception:
-                    pass
-                if not os.path.isfile(_fp):
-                    # the POSIX fallback fired - put the file straight back
-                    with open(_fp, 'wb') as _rw:
-                        _rw.write(_keep)
-                    xbmc.log('estuary7: key purge hit the POSIX-delete fallback; restored %s' % _fn, level=xbmc.LOGWARNING)
-                else:
-                    _purged += 1
-            if _purged:
-                xbmc.log('estuary7: purged %d redundant skinshortcuts NSUserDefaults key(s)' % _purged, level=xbmc.LOGINFO)
-        except Exception as _pe:
-            xbmc.log('estuary7: key purge skipped: %s' % _pe, level=xbmc.LOGWARNING)
-        # Does the owner have a menu of their OWN (restored or hand-edited)?
-        _usermenu = False
-        try:
-            for _fn in os.listdir(_ssreal):
-                if _fn.endswith('.DATA.xml'):
-                    _usermenu = True
-                    break
-        except Exception:
-            _usermenu = False
-        # The seed exists ONLY to kill the first-launch rebuild+ReloadSkin flash on a VIRGIN
-        # box - and a virgin box has NO user DATA by definition. If the owner HAS a menu, we
-        # must NOT suppress the rebuild: a rebuild READS the owner's DATA first
-        # (datafunctions.py: [user_shortcuts, skin_shortcuts, default_shortcuts]) and
-        # REGENERATES their custom menu. Seeding a hash there would freeze whatever includes
-        # happen to be on disk (the SHIPPED DEFAULT on a fresh/updated skin) and permanently
-        # disarm the only mechanism that can rebuild their menu.
-        #
-        # But NOT seeding is all that takes. Do NOT also DELETE their hash: that is THEIR
-        # hash from THEIR last build, and dropping it on every boot makes skinshortcuts
-        # rebuild + ReloadSkin on every boot forever (it just writes a fresh hash, which we
-        # then delete again). 1.0.36/1.0.37 did exactly that. A skin version bump does not
-        # need it either - skinshortcuts compares ::SKINVER:: in the hash ITSELF and rebuilds
-        # from the owner's DATA when it changes.
-        #
-        # The hash is dropped in exactly ONE case: we just re-materialized DATA off the keys.
-        # There the on-disk includes ARE stale - they were generated from the SHIPPED DEFAULT
-        # while the owner's DATA was invisible - so force one rebuild from the restored data.
-        # _healed is 0 on the next boot, so this is self-limiting: one rebuild, not a loop.
-        if _healed:
-            try:
-                if os.path.exists(_hashfile):
-                    os.remove(_hashfile)
-                    xbmc.log('estuary7: dropped stale skinshortcuts hash - rebuilding menu from the re-materialized owner DATA', level=xbmc.LOGINFO)
-            except Exception:
-                pass
-            _needseed = False
-        elif _usermenu:
-            # The owner has their own menu and nothing needed healing: leave it ALONE.
-            # No seed (would freeze the shipped default), no hash drop (would rebuild forever).
-            _needseed = False
-        else:
-            # Virgin box: seed the hash so the first launch does not rebuild + ReloadSkin.
-            # The reset helper deletes the includes (isfile False here), so this never
-            # fights the reset path.
-            _needseed = False
-            if os.path.isfile(_inc):
-                if not os.path.exists(_hashfile):
-                    _needseed = True
-                else:
-                    try:
-                        with open(_hashfile) as _oh:
-                            _old = json.load(_oh)
-                        _oldver = None
-                        for _e in _old:
-                            if _e and _e[0] == '::SKINVER::':
-                                _oldver = _e[1] if len(_e) > 1 else None
-                                break
-                        if _oldver != _skinver:
-                            _needseed = True
-                    except Exception:
-                        _needseed = True
-        if _needseed:
-            _ssa = xbmcaddon.Addon('script.skinshortcuts')
-            def _t7b_md5(_p):
-                _h = hashlib.md5()
-                with open(_p, 'rb') as _f:
-                    for _blk in iter(lambda: _f.read(65536), b''):
-                        _h.update(_blk)
-                return _h.hexdigest()
-            _plist = []
-            _pf = xbmcvfs.translatePath('special://userdata/profiles.xml')
-            try:
-                if os.path.isfile(_pf):
-                    for _pr in ET.parse(_pf).getroot().findall('profile'):
-                        _pnm = _pr.find('name').text
-                        _pdir = _pr.find('directory').text
-                        if '://' in _pdir:
-                            _pdir = xbmcvfs.translatePath(_pdir)
-                        _pdir = xbmcvfs.translatePath(os.path.join('special://masterprofile', _pdir))
-                        _plist.append([_pdir, 'String.IsEqual(System.ProfileName,%s)' % _pnm, _pnm])
-            except Exception:
-                _plist = []
-            if not _plist:
-                _pnm = xbmc.getInfoLabel('System.ProfileName')
-                _plist = [[xbmcvfs.translatePath('special://masterprofile/'), 'String.IsEqual(System.ProfileName,%s)' % _pnm, _pnm]]
-            _hl = [
-                ['::PROFILELIST::', _plist],
-                ['::SCRIPTVER::', _ssa.getAddonInfo('version')],
-                ['::XBMCVER::', xbmc.getInfoLabel('System.BuildVersion').split('.')[0]],
-                ['::HIDEPVR::', _ssa.getSetting('donthidepvr')],
-                ['::SHARED::', _ssa.getSetting('shared_menu')],
-                ['::SKINDIR::', _skindir],
-                ['::FULLMENU::', 'True'],
-                ['::SKINVER::', _skinver],
-            ]
-            _files = [_inc]
-            _scd = xbmcvfs.translatePath('special://skin/shortcuts/')
-            if os.path.isdir(_scd):
-                for _fn in sorted(os.listdir(_scd)):
-                    if _fn.endswith('.DATA.xml') or _fn in ('overrides.xml', 'template.xml'):
-                        _files.append(os.path.join(_scd, _fn))
-            for _fp in _files:
-                if os.path.isfile(_fp):
-                    _hl.append([_fp, _t7b_md5(_fp)])
-            if not os.path.isdir(_master):
-                os.makedirs(_master)
-            with open(_hashfile, 'w') as _hf:
-                _hf.write(json.dumps(_hl, indent=4))
-            xbmc.log('estuary7: seeded skinshortcuts hash (%d entries)' % len(_hl), level=xbmc.LOGINFO)
-    except Exception as _hxe:
-        xbmc.log('estuary7: hash seed failed (falls back to one rebuild): %s' % _hxe, level=xbmc.LOGWARNING)
     # --- Siri remote keymap (tvOS ONLY): Fire TV parity for live TV ---
     # Kodi's shipped customcontroller.SiriRemote.xml maps back/menu (button
     # 6) to STOP inside FullscreenVideo, so live TV dies on back - and the

@@ -115,7 +115,41 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.63 (current: 1.0.63, CI-published)
+## Post-launch hardening, 1.0.28-1.0.64 (current: 1.0.64, build-verified)
+
+- **1.0.64 (2026-07-17) - Home main-menu edits finally PERSIST across a full
+  restart (owner: removing a test item in the Skin Shortcuts editor left it in
+  place even after a full Kodi restart).** Root cause (two independent agents
+  agree): the fork shipped a pre-built `script-skinshortcuts-includes.xml` AND
+  its boot service SEEDED a skinshortcuts `.hash`. Together those disarmed
+  skinshortcuts' self-healing rebuild triggers - the "includes missing" and
+  "hash mismatch" paths in `shouldwerun()` - leaving the transient
+  `Window(10000).Property(skinshortcuts-reloadmainmenu)` flag as the ONLY thing
+  that could trigger a rebuild. `shouldwerun()` reads-and-CLEARS that flag on the
+  first read, so the fork's 6-branch Home onload could consume/lose the single-use
+  flag in a race; once lost, nothing ever rebuilt and the on-disk includes stayed
+  frozen across ReloadSkin AND restart. Upstream self-heals because it ships NO
+  includes and seeds NO hash: every Home load reaches `shouldwerun()` and a hash
+  mismatch (from the user's edited addon_data DATA) forces a rebuild. Fix: (A)
+  collapse the Home onload to upstream semantics - ONE unconditional buildxml on
+  every later Home load (honors reloadmainmenu OR a hash mismatch) plus a single
+  first-per-boot AlarmClock defer past the ~10s keep-skin dialog (the only real
+  reason the machinery ever existed); removed the reloadmainmenu-gated immediate
+  branch and the no-edit reconcile branch. (B) Deleted the boot-service hash seed
+  and the coupled `if _healed: os.remove(_hashfile)` tail; kept `donthidepvr=true`
+  and the tvOS Siri-remote keymap. (C) Kept shipping the pre-built includes (they
+  give instant first-boot display and, with no hash seeded, no longer block edits:
+  the first real build writes a REAL hash from the owner's DATA and edits self-heal
+  thereafter). DECISION: dropped the tvOS DATA self-heal/purge in this cut - it did
+  not cleanly stand alone. Its effect depended on the coupled hash-drop to force a
+  rebuild from the re-materialized DATA; with the hash seed gone, re-materializing
+  alone would not reliably surface the owner's menu (an EZM++-restored box keeps a
+  stale `.hash` that still matches the stale includes), so shipping the heal without
+  its drop would be a broken half. Revisit as a standalone follow-up if the
+  EZM++-restore-on-tvOS recovery is still wanted. Tests + goldens updated
+  (test_golden_parity onload NORMALIZE, test_services_selfheal rewritten to
+  donthidepvr-only + a no-hash-machinery guard); 114 tests pass; determinism check
+  green (sha256 74f9bd22...).
 
 - **1.0.63 (2026-07-17) - harden the 1.0.62 menu-refresh against the keep-skin
   silent-revert.** Adversarial QA of 1.0.62 flagged one narrow re-exposure: the
