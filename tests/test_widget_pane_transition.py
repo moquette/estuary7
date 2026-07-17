@@ -63,6 +63,12 @@ def test_pane_instances_gated_per_item_with_stock_effects(built):
         assert text.count(anchor) == 1, pane
         block = text[text.index(anchor) : text.index(anchor) + 2200]
         assert "<skinshortcuts>visibility</skinshortcuts>" in block, pane
+        # 1.0.57: the INNER grouplist must NOT carry its own per-item gate -
+        # it has no animation, so it would vanish instantly and the outer
+        # group would play its exit on an empty box (owner report: "no fade
+        # out to the right" on the custom panes). One gate per block: the
+        # outer, animated group.
+        assert block.count("<skinshortcuts>visibility</skinshortcuts>") == 1, pane
         assert (
             '<animation type="Conditional" condition="String.IsEqual('
             "Container(9000).ListItem.Property(submenuVisibility),"

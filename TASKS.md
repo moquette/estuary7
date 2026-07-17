@@ -115,7 +115,27 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.56 (current: 1.0.56 RELEASED 2026-07-16)
+## Post-launch hardening, 1.0.28-1.0.57 (current: 1.0.57 RELEASED 2026-07-16)
+
+- **1.0.57 (2026-07-16) - the pane EXIT finally renders: the inner
+  grouplist loses its per-item gate** - owner report after 1.0.56: still
+  'only fade in... did NOT do the fade out right', with the decisive
+  observation that the DEFAULT plain panes during startup animated
+  correctly and only the custom widget panes misbehaved (and stock MOD V2
+  'animates properly' - its menu data on that box still carries distinct
+  MoviesWidget/TVShowsWidget, i.e. the static panes). ROOT CAUSE: the
+  stock template gates the pane CONTENT (grouplist 22001/23001) with the
+  per-item <skinshortcuts>visibility</skinshortcuts> and NO animation, so
+  the content vanishes the instant focus moves and the outer group plays
+  its exit on an EMPTY box - true in 1.0.55, 1.0.56 AND upstream's own
+  template design; the 30fps frame data showed the same single-frame
+  content drop in every variant. FIX: the outer per-item-gated animated
+  group (1.0.56) becomes the ONLY gate; the transform now strips the
+  grouplist's visibility tag, mirroring the static panes' structure
+  (content lives inside the animated group). CONFIRMED on the office box:
+  frame analysis now shows the exit fading over multiple frames with the
+  content shifted right mid-fade (was: 1-frame drop), entrance unchanged
+  (delayed fade+slide from the right, settling at the reference x).
 
 - **1.0.56 (2026-07-16) - the personal-widget pane transition now MATCHES
   upstream exactly (owner rejected 1.0.55's exit)** - owner report on the

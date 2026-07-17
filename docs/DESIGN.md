@@ -198,8 +198,10 @@ revert toward stock - flag it during transform work, ask the owner:
   slide in from the right, reversing out on exit) plus the verbatim Hidden
   (1.0.56; the 1.0.55 Visible/Hidden translation lost the reversal and was
   owner-rejected). Same-pane and cross-pane switches measure identical on
-  30fps frame analysis. Hardware-proven root cause and forensics: TASKS.md
-  1.0.55/1.0.56 entries.
+  30fps frame analysis, and the pane content is gated ONLY by the outer
+  animated group (1.0.57) - an inner per-item gate on the grouplist made
+  every exit play on an empty box, upstream's included. Hardware-proven
+  root cause and forensics: TASKS.md 1.0.55/1.0.56/1.0.57 entries.
 - MOD V2's FUNCTIONAL mods (PVR integration, widgets, custom windows) stay -
   the mandate is about look and feel, not features
 

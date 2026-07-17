@@ -1704,7 +1704,35 @@ _TEMPLATE_PANE_ANIMS = (
 )
 
 
+# The pane CONTENT (the inner grouplist) must NOT carry its own per-item
+# visible: it has no animation, so it vanishes the instant focus moves and
+# the outer group plays its exit on an EMPTY box - the owner-observed
+# "no fade out to the right" on the custom panes while the plain default
+# panes (whose content lives directly in the animated group) exit
+# correctly. The outer group (per-item gated + animated, above) becomes
+# the ONLY gate, mirroring the static panes' structure.
+_TEMPLATE_GROUPLIST_GATES = (
+    (
+        '\t\t\t\t<control type="grouplist" id="22001">\n'
+        "\t\t\t\t\t<include>WidgetGroupListCommon</include>\n"
+        "\t\t\t\t\t<skinshortcuts>visibility</skinshortcuts>\n"
+    ),
+    (
+        '\t\t\t\t<control type="grouplist" id="23001">\n'
+        "\t\t\t\t\t<include>WidgetGroupListCommon</include>\n"
+        "\t\t\t\t\t<skinshortcuts>visibility</skinshortcuts>\n"
+    ),
+)
+
+
 def _edit_template(text: str, path: str) -> str:
+    for gate in _TEMPLATE_GROUPLIST_GATES:
+        text = _replace(
+            text,
+            gate,
+            gate.replace("\t\t\t\t\t<skinshortcuts>visibility</skinshortcuts>\n", ""),
+            path=path,
+        )
     # Declared in the SAME <template> whose <controls> holds the pane groups
     # (the mainmenuid line alone appears once per template block - anchor on
     # its unique WidgetStyle1 neighbour).
