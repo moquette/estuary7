@@ -87,7 +87,7 @@ sibling repo's `docs/playbooks/modv2plus-dev-cycle-and-lessons.md`.
   silently kept.
 - **Pin by SHA.** Upstream (b-jesch/skin.estuary.modv2, `Omega` branch) has no
   usable tags. `skin_build.lock` records `{upstream_sha, upstream_version,
-our_version, zip_sha256}`. Rebase = bump the SHA, rebuild, review anchor
+  our_version, zip_sha256}`. Rebase = bump the SHA, rebuild, review anchor
   failures.
 - **Anchored transforms, fail loud.** Every customization in
   `tools/skin_transforms.py` asserts its anchor string exists in the upstream
