@@ -2,6 +2,35 @@
 
 This file provides guidance to Claude Code when working in this repository.
 
+## READ FIRST: start at `TASKS.md`
+
+**`TASKS.md` is this project's task index** and holds every open item: the two
+owner-reported hardening issues from 2026-07-17, the deferred design items, the
+flagged-but-unfixed upstream typos, and the full release history. Until
+2026-07-18 this file did not point at it, so an agent reading only `CLAUDE.md`
+was never routed to the tracker.
+
+`docs/PLAN.md` is the phase plan and `docs/DESIGN.md` is the design intent;
+both are still required reading before transform work. But neither is the open
+task list. **`TASKS.md` is.**
+
+Note the status contradictions recorded at the top of `TASKS.md` before you
+trust any version number in this repo: the tracker's section headings, its
+bench-state block, and its release entries disagree with each other about what
+is current. `skin_build.lock` and `git log` are the load-bearing facts.
+
+## HARD CONSTRAINT - the office Fire TV is hands-off
+
+The office Fire TV at `192.168.7.162` is HANDS-OFF. Never adb, JSON-RPC, ping
+or otherwise contact it without explicit per-instance owner permission. The
+bedroom Fire TV at `192.168.7.84` is the sanctioned JSON-RPC target. Carry this
+prohibition into any subagent prompt you write.
+
+This supersedes the "instrumented bench" language further down in this file and
+in `TASKS.md`, `docs/PLAN.md` and `docs/verification/phase3/FINDINGS.md`. Those
+predate the rule and describe how the box WAS used; they are not authorization
+to use it now.
+
 ## What this repo is
 
 **Estuary 7** (`skin.estuary7`) is a fork-by-build of the Kodi skin
@@ -14,7 +43,10 @@ machinery (`script.tony7bones.modv2plus`: boot service, markers, version
 sentinels, [B] sweep, wedge-defense shell) gets DELETED once migration
 completes.
 
-**Distribution stays in the sibling repo** `~/Code/moquette/tony7bones.github.io`
+**Distribution stays in the sibling repo** (remote
+`tony7bones/tony7bones.github.io`, local checkout `~/Code/moquette/kodi/repo`;
+the standalone path `~/Code/moquette/tony7bones.github.io` that older docs cite
+DOES NOT EXIST, verified 2026-07-18)
 (the virtual proxy `repository.tony7bones`): the built zip is uploaded as a
 GitHub Release asset on THIS repo, and the proxy's `repository.json` points at
 it (the proxy engine supports `release_asset://` and plain https zip URLs and
@@ -109,10 +141,18 @@ that keeps Live TV/Radio visible like stock - numeric window ids do NOT work
 ## House rules (inherited from the fleet's workflow)
 
 - implement -> TEST -> gate -> adversarial QA -> REAL-DEVICE verify -> document
-  -> only then commit/release. No "fixed in code" claims without hardware proof
-  (Office Fire TV 192.168.7.162 is the instrumented bench; tvOS boxes cannot
-  screenshot).
+  -> only then commit/release. No "fixed in code" claims without hardware proof.
+  (Historical note: the Office Fire TV 192.168.7.162 WAS the instrumented bench
+  and most of the recorded verification came from it. It is now HANDS-OFF, see
+  the constraint at the top of this file. tvOS boxes cannot screenshot. There
+  is currently no designated replacement bench for this project; raise it with
+  the owner rather than improvising a target.)
 - No AI attribution anywhere; no em dashes in written deliverables.
-- The fleet is exposed ONLY during the Phase 5 migration (see docs/PLAN.md),
-  one box at a time; rollback is always one skin-switch back to stock MOD V2
+- STALE, kept for context: "The fleet is exposed ONLY during the Phase 5
+  migration (see docs/PLAN.md), one box at a time." **Phase 5 was DROPPED as a
+  project by owner decision on 2026-07-15** (`TASKS.md:67-76`): boxes switch to
+  Estuary 7 manually, one at a time, at leisure, and `script.tony7bones.modv2plus`
+  is deprecated. `docs/PLAN.md` was never updated for that drop and still
+  documents Phase 5 as live with a 2.0.0 migrator; do not build from it.
+  Rollback is still always one skin-switch back to stock MOD V2
   (repository.kodinerds still serves it).

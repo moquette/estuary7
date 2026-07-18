@@ -3,6 +3,60 @@
 Estuary 7 - fork-by-build of skin.estuary.modv2 for the Tony.7.Bones fleet.
 Full phase plan + locked decisions: `docs/PLAN.md`. Project rules: `CLAUDE.md`.
 
+> **This file is the task index for this project.** Open work is in three
+> places, all near the bottom: "Open hardening" (owner-reported 2026-07-17),
+> "Deferred / revisit later", and the unchecked Phase 6 box in Phase status.
+> Everything between them is a release history and must not be read as a
+> backlog. Fleet meta index: `~/Code/moquette/kodi/TASKS.md`.
+
+## UNRESOLVED status contradictions (audited 2026-07-18, NOT adjudicated)
+
+Read this before trusting any version number or open/closed marker below.
+Nothing was rewritten to resolve these; the owner decides.
+
+1. **What is current: 1.0.65 or 1.0.66?** The "Post-launch hardening" heading
+   (line ~131) says "1.0.28-1.0.65 (current: 1.0.65, build-verified)". The
+   first bullet inside that same section is 1.0.66 and says HARDWARE-VERIFIED
+   by the owner on 2026-07-17. The heading was never updated.
+2. **The 1.0.66 entry contradicts itself.** It claims hardware verification by
+   the owner, and then closes with "NOT committed, NOT released;
+   192.168.7.162 untouched." Verified independently: `skin_build.lock` records
+   `our_version: 1.0.66` with a zip sha256, and commit `4d1958d`
+   ("Estuary 7 1.0.66: immediate on-demand menu refresh") is on `main` with a
+   clean working tree. So "NOT committed" is false as written. Whether a
+   GitHub release v1.0.66 exists was NOT checked (no network calls were made).
+3. **"Open hardening" item 2 (menu edits take 1-2 min to show) is very likely
+   already fixed.** Its root-cause analysis was overtaken by 1.0.62-1.0.66,
+   and the 1.0.66 entry describes fixing exactly that chain with owner
+   hardware verification. Nobody closed the item. It is left OPEN here rather
+   than silently closed. **Owner: confirm and close, or say what still fails.**
+4. **Bench state is stale.** It records 1.0.40 on the office box and 1.0.39 on
+   atv2 "confirmed live 2026-07-15", contradicted by the 1.0.48 entry
+   ("ATV2 self-updated 1.0.39 -> 1.0.46") and by the 1.0.66 verification claim.
+   Its rationale is also stale: it calls modv2plus "the future Phase 5
+   migrator", but Phase 5 was dropped and modv2plus deprecated on 2026-07-15.
+5. **Phase 5 is DROPPED here but still live in `docs/PLAN.md`.** PLAN.md was
+   never updated and still ends with "Next: Phase 5 - fleet migration". The
+   drop (owner decision 2026-07-15) is the newer fact.
+6. **`docs/verification/phase3/FINDINGS.md:90-91` lists two items as OPEN**
+   that are closed elsewhere: the ATV by-eye check (closed per Phase 3 below)
+   and the MOD V2 logo artwork decision (decided per `docs/DESIGN.md:228-234`).
+   The closures were never back-annotated into FINDINGS.md.
+7. **`docs/playbooks/skinshortcuts-reset-tvos-vfs-split.md` documents a
+   REVERTED fix as current.** Its lines 136-144 describe repointing the
+   override at `icons/sidemenu/videos.png`; the shipped fix was the opposite
+   (remove the override entirely plus shadow the `Textures.xbt` entry). Its
+   status header also credits 1.0.24, which this tracker records as the WRONG
+   fix, with 1.0.27 being the real one. That playbook is actively misleading.
+
+## HARD CONSTRAINT - the office Fire TV is hands-off
+
+`192.168.7.162` is HANDS-OFF: no adb, JSON-RPC, ping or any other contact
+without explicit per-instance owner permission. Much of the verification
+recorded below came from that box when it was the instrumented bench. Those are
+historical records, not authorization. There is currently no designated
+replacement bench for this project.
+
 ## Phase status
 
 - [x] **Phase 0 - Scaffold + groundwork** (2026-07-10, commit `13b7ebd`). Upstream
@@ -955,7 +1009,17 @@ landed on the bench box(es) ahead of it). In order:
 
 - **HARDEN: menu edits take 1-2 min (sometimes a Kodi restart) to show;
   upstream MOD V2 reflects them immediately (owner, 2026-07-17:
-  "unacceptable").** ROOT CAUSE located in code (fork vs pinned upstream
+  "unacceptable").**
+  > **CONTESTED (flagged 2026-07-18): this is very likely already FIXED and
+  > nobody closed it.** Releases 1.0.62-1.0.66 fixed exactly this refresh
+  > chain, and the 1.0.66 entry records owner hardware verification the same
+  > day (power menu > Customize > disable Pictures > back -> menu updated
+  > IMMEDIATELY). The analysis below predates those releases and its named
+  > mechanism (the 15s AlarmClock defer keyed on a per-session Window
+  > property) is what 1.0.66 replaced. Left OPEN rather than silently closed.
+  > **Owner: confirm closed, or state what still fails.**
+
+  ROOT CAUSE located in code (fork vs pinned upstream
   Home.xml onload):
   - Upstream (upstream-cache .../xml/Home.xml:4) rebuilds the menu
     UNCONDITIONALLY on every Home load:
