@@ -111,12 +111,18 @@ def extract_tree(tarball: Path, dest: Path) -> Path:
 def add_assets(tree: Path) -> None:
     """Ship the wordmark, artwork, provenance docs, pre-built menu, and splash.
 
-    The home menu is UPSTREAM MOD V2's default (owner directive 2026-07-10):
-    the fork ships NO custom skinshortcuts menu, so upstream's shortcuts/
-    (full default mainmenu.DATA.xml + overrides.xml widget defaults) stands
-    unmodified. This also retires the skinshortcuts-properties seed - stock
-    upstream needs none. The fleet's old trimmed menu lives on in assets/
-    shortcuts/ (unused by the build) if it is ever wanted per-box.
+    The home menu is UPSTREAM MOD V2's shortcuts/ dir, stock-ALIGNED by the
+    transforms - NOT a fork-authored menu and NOT untouched upstream (owner
+    directive 2026-07-10: ship stock Estuary's item set/order). add_assets
+    copies NOTHING into shortcuts/; the edits are anchored transforms in
+    tools/skin_transforms.py: _edit_mainmenu moves Disc into stock's slot and
+    drops the LibreELEC/CoreELEC entries, _edit_overrides removes the "videos"
+    icon override, _edit_template rewrites the widget-pane animation. Upstream's
+    overrides.xml widget defaults otherwise stand, which is what retires the
+    skinshortcuts-properties seed (check_contracts fails the build if a
+    .properties file ever ships again). The fleet's old 14-item trimmed menu
+    lives on in assets/shortcuts/ - referenced by NO build step and NO test,
+    kept only as an archive if it is ever wanted per-box.
 
     1.0.32 additionally ships the PRE-BUILT skinshortcuts includes
     (xml/script-skinshortcuts-includes.xml, into every res folder) so the menu

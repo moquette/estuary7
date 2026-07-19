@@ -1,5 +1,11 @@
 """Shared fixtures: one pristine upstream extract and one transformed tree
-per session (the extract is ~97MB, so both are session-scoped)."""
+per session (the extract is ~110MB, so both are session-scoped).
+
+NOTE: `built` runs transform_tree + add_assets but NOT trim_payload, so the
+fixture tree still contains every TRIM_PATHS target. Assert trimming against
+`build_skin.TRIM_PATHS` (as tests/test_viewpicker.py does), never against the
+absence of a file in this tree.
+"""
 
 from __future__ import annotations
 

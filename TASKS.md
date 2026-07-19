@@ -171,6 +171,59 @@ prevention checklist:
 
 ## Post-launch hardening, 1.0.28-1.0.65 (current: 1.0.65, build-verified)
 
+- **1.0.71 (2026-07-19) - movie and TV titles come back on home widget
+  tiles: the withdrawn build's setting id is RETIRED - BENCH-VERIFIED,
+  NOT YET RELEASED** - owner reported his POV movies widget rendering bare
+  posters with no title and no year. Cause found on his box: the skin
+  setting `hide_video_tile_labels` was sitting at `true` in
+  `userdata/addon_data/skin.estuary7/settings.xml`, and he never set it.
+  The WITHDRAWN first-take 1.0.40 (pulled within the hour on 2026-07-15)
+  published a sub-toggle writing that id; pulling the build did not unwrite
+  the value, it only went dormant, because 1.0.39/1.0.40 read nothing.
+  1.0.41 then re-pointed the SAME id at live behaviour, so any box still
+  carrying the stale `true` silently lost its movie/TV widget labels. This
+  file predicted exactly that at the 1.0.41 entry and assumed "Only the
+  office bench ever ran it (flag now cleared there)" - the owner's box
+  disproves that assumption.
+  FIX: the id is RETIRED, not cleared. The 1103 toggle and all 12 gated
+  controls now read a FRESH id, `video_tile_labels_off` (default OFF =
+  labels visible). Clearing box-by-box would not have closed this: the
+  stale value also lives inside every EZ Maintenance++ backup zip taken
+  during the withdrawn build's window, so a future restore could re-arm it
+  on a box that never saw the bad build. A published name cannot be
+  un-published; the only durable fix is to stop reading it, which makes
+  every stale `true` in the wild - live boxes and archived zips alike -
+  inert forever, with no migration and no write to anyone's storage (which
+  on tvOS would have had to clear the vectored NSUserDefaults KEY, not the
+  file, to work at all). Ship delta vs 1.0.70: `tools/skin_transforms.py`
+  (2 constants) + the tests that mirror them.
+  Gates: 145 tests (new `test_retired_video_label_id_is_never_read`: the
+  retired string must appear in NO built file, so nobody can re-arm the
+  landmine) + `--check` determinism green
+  (sha256 1dba7e8b8cc2cbf31b6a3a938722b0fa469007d75abae3e768916c2b812d7919).
+  BENCH ROUND (local macOS Kodi bench, wiped clean first, 8 seeded movies
+  with DELIBERATELY TEXTLESS poster art so any text on a tile can only be
+  the skin's own label; surface = the Home "Recently added movies" widget
+  row, i.e. `WidgetListPoster`, one of the two patched includes): (1) 1.0.70
+  baseline renders "The Matrix (1999) / Sicario (2015) / Interstellar (2014)
+  / Heat (1995)" on the fade band; (2) setting the stale flag on 1.0.70
+  reproduces the owner's symptom exactly - bare posters, no band, no title,
+  no year; (3) installing 1.0.71 with the stale flag STILL `true` brings
+  every title and year back, which is the whole point; (4) the new id
+  toggled ON hides them and OFF restores them; (5) Skin Settings shows the
+  sub-toggle reading OFF in the real GUI. Screenshots reviewed for all five.
+  BENCH GOTCHA worth keeping: a fresh Kodi profile has none of the skin's
+  three script dependencies, and Kodi then falls back to STOCK Estuary while
+  `lookandfeel.skin` still reports `skin.estuary7`. It looks close enough to
+  the fork to fool you, and every skin XML edit appears to do nothing. The
+  tell is in kodi.log: "Loading skin includes from .../skin.estuary/xml".
+  Install script.skinshortcuts, script.image.resource.select and
+  script.module.autocompletion, then ENABLE them, before trusting anything
+  you see on this bench.
+  IMMEDIATE REMEDY, no release required: on any box already showing the
+  symptom, Skin Settings -> Home menu -> Widgets -> "Do not apply labels to
+  Movies & TV Shows" -> OFF restores the labels straight away.
+
 - **1.0.66 (2026-07-17) - immediate on-demand menu refresh: the missing
   PRODUCER + the ordered tvOS pipeline (4-agent panel: 2 QA + 2 architects;
   both reviewers SHIP/APPROVED). HARDWARE-VERIFIED by the owner same day:
@@ -990,6 +1043,16 @@ landed on the bench box(es) ahead of it). In order:
 
 ## Open hardening (owner-reported 2026-07-17, atv2) - TRACKED, not yet fixed
 
+- **P1 DEFECT (owner-reported 2026-07-19): Skin Settings > Library > "Show
+  Title and Year on Poster Wall View" does not work.** Toggling the setting
+  produces no visible change on the poster wall view. Not yet triaged: unknown
+  whether the setting id is written but nothing reads it, whether the view's
+  label blocks are gated on a different condition, or whether the transform
+  dropped the wiring. Reproduce first, then trace the setting id from
+  `settings.xml` through the poster wall view XML before proposing a fix. Note
+  the related deferred item below (labeled poster-tile look, 1.0.40) - the
+  label-on-fade work touched this same view.
+
 - **HARDEN: the skin closes Kodi entirely on some Back/window-close paths
   (owner: "temperamental... I backed up from a view and it closed and had
   to be reopened... happening quite frequently").** Reported on atv2 (tvOS)
@@ -1057,6 +1120,23 @@ landed on the bench box(es) ahead of it). In order:
     change and force an immediate buildxml + hash refresh on the edit-return
     path. Verify on the office bench that a Customize-Main-Menu edit reflects
     within one Home return, with no reintroduced install flash.
+
+## P1 questions (owner-raised 2026-07-19) - ANSWER, do not act
+
+These are questions, not work orders. Nothing gets changed until they are
+answered. Both concern the EZM++ add-on UI, raised here because that is where
+the owner filed them; move them to `ezmpp/TASKS.md` if that is the right owner.
+
+- **P1 QUESTION: is "Purge stale tvOS keys" still needed in EZM++? Why?**
+  Establish what the action actually does today, which defect it was added for,
+  and whether that defect is still reachable on current Kodi/tvOS. If it has no
+  live justification, it is a candidate for removal.
+
+- **P1 QUESTION: why is "Verify backup archive" not folded into the
+  Backup/Restore section?** It is a backup-lifecycle operation sitting in
+  Tools. If it belongs under Backup/Restore, move it - and note that if the
+  stale-key purge above turns out to be unneeded, the Tools section has nothing
+  left in it and can be removed entirely.
 
 ## Deferred / revisit later
 

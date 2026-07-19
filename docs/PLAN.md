@@ -1,5 +1,24 @@
 # Estuary 7 - fork-by-build the MOD V2 skin as a standalone project
 
+## STATUS BANNER - read before building anything from this plan
+
+This file is the ORIGINAL phase plan plus its phase-completion log. Phases 0-4
+shipped and their entries are accurate history. Two things below are NOT
+current, and this banner is the correction of record:
+
+- **Phase 5 (fleet migration via a `script.tony7bones.modv2plus` 2.0.0
+  migrator) was DROPPED by owner decision on 2026-07-15.** No migrator will be
+  built. Boxes switch to Estuary 7 manually, one at a time, at leisure;
+  rollback is one skin switch back to stock MOD V2 (repository.kodinerds still
+  serves it). `script.tony7bones.modv2plus` is DEPRECATED: no further releases
+  or investment. The Phase 5 section below and every "Next: Phase 5" line are
+  superseded; do not implement them. Authoritative entry: `TASKS.md` Phase
+  status, Phase 5.
+- **Phase 6 is the only phase still open** (retire modv2plus once the last box
+  has left MOD V2; correct the patch-era playbook's wrong "MIT" license note).
+
+Open work is tracked in `TASKS.md`, not here. This plan is a decision record.
+
 ## Context
 
 Today the fleet installs the third-party skin `skin.estuary.modv2` (b-jesch/Kodinerds,
@@ -9,8 +28,10 @@ a 42-file `[B]` sweep + Font.xml), with a boot service, markers, version sentine
 and a wedge-defense shell to survive upstream clobbers. After the 1.8.0 bold sweep,
 "patch" is a fiction: we maintain a fork and apply it on every box at boot.
 
-The original patch-vs-fork decision (recorded in
-`docs/playbooks/modv2plus-dev-cycle-and-lessons.md:24-42`) was right at the time, but
+The original patch-vs-fork decision (recorded in the SIBLING repo, local checkout
+`~/Code/moquette/kodi/repo`, at
+`docs/playbooks/modv2plus-dev-cycle-and-lessons.md:24-42` - it is not in this
+repo) was right at the time, but
 two facts have flipped it:
 
 1. **Divergence**: 50+ files rewritten, one opinionated look, master switch rarely used.
@@ -24,7 +45,7 @@ we ever reconsider): keep our changes as deltas, apply them at build time to the
 latest MOD V2, ship the result as our own rebranded skin."
 
 **Owner decision (2026-07-10):** fork-by-build, as a NEW standalone repository at
-`~/Code/moquette/estuary7` - a learning project that owns the skin build end-to-end.
+`~/Code/moquette/kodi/estuary7` - a learning project that owns the skin build end-to-end.
 tony7bones.github.io remains the distribution channel. End state: all runtime patch
 machinery deleted; skin updates come only from us.
 
@@ -32,7 +53,9 @@ machinery deleted; skin updates come only from us.
 
 - The proxy engine already supports large external zips: `release_asset://` handling at
   `addons/repository.tony7bones/lib/repository.py:137,322-334` + plain-https asset URLs,
-  streamed in 16KB chunks - so the ~94MB zip lives in GitHub Release assets, never in git.
+  streamed in 16KB chunks - so the zip lives in GitHub Release assets, never in git.
+  (Sizing at the time of this decision: ~94MB. The shipped zip is ~21MB since the
+  1.0.39/1.0.44 payload trims; the headroom argument is unchanged.)
 - License: upstream is **GPL-2.0 (code) + CC-BY-SA-4.0 (artwork)** - a rebranded fork is
   permitted with attribution + license retained. (The playbook's "MIT" note at line 42
   is WRONG and gets corrected in Phase 6.)
@@ -52,7 +75,7 @@ each with a one-command rollback.
 
 ## Phase 0 - Scaffold the estuary7 project (first work session there)
 
-Create `~/Code/moquette/estuary7`:
+Create `~/Code/moquette/kodi/estuary7`:
 
 - `git init` (branch `main`), `.gitignore` (`build/`, `upstream-cache/`, `__pycache__/`,
   `.pytest_cache/`, `dist/`)
@@ -182,7 +205,7 @@ service still re-applies.
 | Decision                    | Choice                                                                    |
 | --------------------------- | ------------------------------------------------------------------------- |
 | Architecture                | Fork-by-build (deltas applied at build time to pinned upstream)           |
-| Home                        | NEW standalone repo `~/Code/moquette/estuary7` (owner directive)          |
+| Home                        | NEW standalone repo `~/Code/moquette/kodi/estuary7` (owner directive)          |
 | Skin id / name              | `skin.estuary7` / "Estuary 7" (new id - no Kodinerds version race)        |
 | Upstream pin                | Commit SHA on b-jesch Omega branch, in `skin_build.lock` (no usable tags) |
 | Hosting                     | GitHub Release assets on the estuary7 repo (no git bloat, no 100MB limit) |
@@ -191,7 +214,7 @@ service still re-applies.
 | Runtime machinery end state | Deleted (service, markers, sentinels, sweep, shell)                       |
 
 Estimated total: ~8-12 working days across both repos, fleet exposed only in Phase 5.
-First concrete step on approval: Phase 0 scaffold of `~/Code/moquette/estuary7`.
+First concrete step on approval: Phase 0 scaffold of `~/Code/moquette/kodi/estuary7`.
 
 ---
 
@@ -424,3 +447,8 @@ Shipped as library 1.9.0 + bootstrap 2.3.0 (commit 077a60a, release e564b78).
 
 Next: Phase 5 - fleet migration (modv2plus 2.0.0 one-shot migrator, disarmed
 first; box-by-box; rollback = one skin switch).
+
+**SUPERSEDED 2026-07-15: Phase 5 was DROPPED and no migrator was built.** See
+the status banner at the top of this file. This was the last "Next" line
+written while the plan was live; the project continued as a release stream
+(1.0.1 onward) recorded in `TASKS.md`, not as further plan phases.

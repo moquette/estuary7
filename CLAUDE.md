@@ -69,7 +69,9 @@ DOES NOT EXIST, verified 2026-07-18)
 (the virtual proxy `repository.tony7bones`): the built zip is uploaded as a
 GitHub Release asset on THIS repo, and the proxy's `repository.json` points at
 it (the proxy engine supports `release_asset://` and plain https zip URLs and
-streams in chunks, so the ~94MB zip never enters git).
+streams in chunks, so the zip never enters git). The zip is ~21MB as of 1.0.70;
+the 94MB figure in `docs/PLAN.md`'s Phase 1/2 log is the pre-trim 1.0.0 size and
+is history, not the current build.
 
 Full phase plan and decision record: `docs/PLAN.md`. **The design intent - what
 the skin must LOOK like and why (the owner's font directive, the three bold
@@ -86,9 +88,12 @@ sibling repo's `docs/playbooks/modv2plus-dev-cycle-and-lessons.md`.
   A MOD V2 visual change not on that list gets flagged to the owner, never
   silently kept.
 - **Pin by SHA.** Upstream (b-jesch/skin.estuary.modv2, `Omega` branch) has no
-  usable tags. `skin_build.lock` records `{upstream_sha, upstream_version,
-  our_version, zip_sha256}`. Rebase = bump the SHA, rebuild, review anchor
-  failures.
+  usable tags. `skin_build.lock` records `upstream_repo`, `upstream_branch`,
+  `upstream_sha`, `upstream_version`, `upstream_tarball_sha256`, `our_version`,
+  `zip_sha256` and `pin_evidence`. The tarball sha256 is the load-bearing
+  integrity field: `ensure_tarball` re-verifies it on EVERY build and a
+  mismatch is a hard error. Rebase = bump the SHA AND the tarball sha256,
+  rebuild, review anchor failures.
 - **Anchored transforms, fail loud.** Every customization in
   `tools/skin_transforms.py` asserts its anchor string exists in the upstream
   file. A missing anchor is a BUILD ERROR that names the file - never a silent
@@ -118,7 +123,16 @@ strip upstream copyright headers.
 python3 tools/build_skin.py            # fetch pinned upstream, transform, package
 python3 tools/build_skin.py --check    # build twice, byte-compare (determinism gate)
 python3 -m pytest tests/ -q            # transform anchors, golden parity, sweep contracts
+
+# Release provenance guard (network + gh CLI; also run by .github/workflows/release-guard.yml)
+python3 tools/verify_release.py --tag v1.0.70            # provenance only (fast)
+python3 tools/verify_release.py --tag v1.0.70 --rebuild  # + deterministic rebuild byte-compare
+python3 tools/verify_release.py --all                    # sweep every release
 ```
+
+`verify_release.py` is DETECTION, not prevention: it makes a hand-made
+`gh release create` bypass loudly red. Explicit `--tag` always verifies;
+`--all` honours the pre-CI enforcement window and the `KNOWN_BYPASSES` waiver.
 
 ## tvOS Siri remote behavior is FORK-AUTHORED, not stock
 
@@ -135,7 +149,10 @@ JSON-RPC-vs-physical-button diagnosis method that found it.
 The skin ships a `scripts/helpers.py` `resetMenu` action (injected by
 `tools/skin_transforms.py`) that restores the stock skinshortcuts menu. Two
 hard-won lessons, fully written up in
-`docs/playbooks/skinshortcuts-reset-tvos-vfs-split.md` (resolved 1.0.23/1.0.24):
+`docs/playbooks/skinshortcuts-reset-tvos-vfs-split.md` (reset resolved 1.0.23;
+the Videos-icon half was resolved 1.0.27, NOT the reverted 1.0.24 attempt; the
+tvOS DATA-durability reconcile and the on-demand refresh design are at the end
+of that same playbook):
 
 - **tvOS `xbmcvfs` vs real-path split.** On Apple TV, `xbmcvfs` operations on
   `special://` paths do NOT reliably affect the same bytes that Python

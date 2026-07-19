@@ -87,5 +87,15 @@ Pushed 1.8.0 directly (adb + boot rescan) so the baseline was the proven
 - Box: MOD V2 + overlay 1.8.0 active (fleet-standard), Estuary 7 1.0.0
   installed alongside + enabled, properties seeded (inert under MOD V2),
   modv2plus at 1.8.0.
-- OPEN: ATV by-eye check (tvOS cannot screenshot) - owner's call.
-- OPEN: Finding 3 decision (MOD V2 logo artwork in SkinSettings).
+- ~~OPEN~~ **CLOSED 2026-07-10: ATV by-eye check.** The owner installed 1.0.1
+  on the ATV via Install-from-repository (the first real repo-path install -
+  proxy resolved, release asset streamed on tvOS) and verified the look by eye.
+  Record: `TASKS.md` Phase 3 entry. Phase 3 is fully complete.
+- ~~OPEN~~ **CLOSED 2026-07-10: Finding 3 decision.** The MOD V2 logo artwork
+  was REMOVED from both windows (SkinSettings and the media-menu blade) -
+  stock Estuary shows nothing in either spot. Decision and rationale:
+  `docs/DESIGN.md`, "Flagged deviations and their decisions". Bench-verified in
+  the 1.0.1 round (`docs/verification/round-1.0.1/FINDINGS.md`, tweak 4).
+
+The findings above this line are the historical record of the 2026-07-10 round
+and are not rewritten. Only these forward-looking status lines were closed out.

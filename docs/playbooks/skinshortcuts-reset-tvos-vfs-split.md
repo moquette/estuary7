@@ -1,7 +1,11 @@
 # Playbook: the "Reset main menu" that only a reboot could fix (tvOS VFS split)
 
-Status: RESOLVED in skin.estuary7 1.0.23 (real-path reset) + 1.0.24 (Videos
-icon). This document exists so nobody burns days on it again.
+Status: RESOLVED in skin.estuary7 1.0.23 (real-path reset) + 1.0.27 (Videos
+icon; the 1.0.24 attempt was wrong and was reverted - see the Videos section
+below). Later rounds extended the reset/refresh design: 1.0.65 (tvOS DATA
+durability reconcile) and post-1.0.65 (immediate on-demand refresh), both
+documented at the end of this file. This document exists so nobody burns days
+on it again.
 
 ## TL;DR (read this first)
 
@@ -113,8 +117,12 @@ The reset now, in order:
    and fires the canonical
    `RunScript(script.skinshortcuts,type=buildxml&mainmenuID=9000&group=mainmenu)`.
 
-Verified on the bench ATV (192.168.1.162): disable Games, Reset, Games returns
-on screen in-session, no reboot. `get_shortcuts` reads clean.
+Verified on the bench Apple TV: disable Games, Reset, Games returns on screen
+in-session, no reboot. `get_shortcuts` reads clean. (The IP recorded here
+originally, `192.168.1.162`, is not on the fleet's `192.168.7.0/24` subnet and
+could not be reconciled with any known box - it is removed rather than left as
+a target someone might contact. Do not restore an IP here without confirming
+it, and note that the office Fire TV `192.168.7.162` is HANDS-OFF.)
 
 ## Prevention checklist (for any future skin-side file work on tvOS)
 
@@ -133,15 +141,37 @@ on screen in-session, no reboot. `get_shortcuts` reads clean.
       `xbmcvfs.copy` may not overwrite an existing destination. Do not trust their
       return values for the "the file is now clean" conclusion.
 
-## Related: the blank Videos icon (fixed 1.0.24)
+## Related: the blank Videos icon (attempted 1.0.24, REALLY fixed 1.0.27)
 
 Separate but found during the same incident. `shortcuts/overrides.xml` mapped the
 `videos` labelID icon to `DefaultAddonVideo.png`, which renders blank in the menu
 editor and on the tile (unlike the `livetv`/`radio` overrides whose `Default*`
 icons exist). skinshortcuts applies that override on top of the data icon, so the
-shipped `icons/sidemenu/videos.png` (present in Textures.xbt) never showed. Fix:
-`tools/skin_transforms.py` `_edit_overrides` repoints the override at
-`icons/sidemenu/videos.png`.
+shipped `icons/sidemenu/videos.png` (present in Textures.xbt) never showed.
+
+**The 1.0.24 fix - repointing the override at `icons/sidemenu/videos.png` - was
+WRONG and was REVERTED. Do not reinstate it.** ANY `<icon labelID="videos">`
+override that resolves to a SKIN image draws BLANK in the editor: skinshortcuts'
+`gui.py` calls `setArt({'icon': 'icon'})` with the literal string `'icon'`
+whenever `skinHasImage` is True. Repointing at a skin image swapped one blank
+for another. `livetv`/`radio` survive only because their `Default*` overrides are
+NOT skin images.
+
+**The shipped fix (1.0.27) is two changes, both in `tools/skin_transforms.py`:**
+
+1. `_edit_overrides` REMOVES the `videos` override line entirely, so the entry
+   falls back to the DATA icon `icons/sidemenu/videos.png`.
+2. That path exists in MOD V2's `Textures.xbt` as a REDRAWN film-reel, and Kodi's
+   loader checks the bundle BEFORE loose files - so `shadow_videos_texture`
+   renames the bundled entry in place to `icons/sidemenu/__videos_shadowed__.png`.
+   The XBTF name field is a fixed 256-byte null-padded slot, so the rewrite
+   touches no frame offsets and needs no offset math; the build stays
+   deterministic. Kodi then falls back to the loose stock Estuary `videos.png` that
+   `build_skin.add_assets` ships at `media/icons/sidemenu/videos.png`.
+
+Net: no override in play, editor icon fixed, and the glyph matches original
+Estuary per THE FIRST MANDATE. `check_contracts` fails the build if either half
+regresses (missing loose file, or the bundle entry still present).
 
 ## Related: Live TV / Radio always-visible
 

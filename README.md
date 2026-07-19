@@ -2,10 +2,10 @@
 
 A fork-by-build of the Kodi skin [Estuary MOD V2](https://github.com/b-jesch/skin.estuary.modv2)
 (Omega branch) for the Tony.7.Bones fleet: one opinionated look - thin,
-sharp, Estuary-weight fonts everywhere ("no bold anywhere"), a trimmed home
-menu, crisp wordmark, reordered settings, Outline HD weather icons - applied
-at **build time** to a **pinned upstream commit** and shipped as a complete
-skin, `skin.estuary7`.
+sharp, Estuary-weight fonts everywhere ("no bold anywhere"), stock Estuary's
+home menu (fully editable), crisp wordmark, reordered settings, baked-in
+Outline HD weather icons - applied at **build time** to a **pinned upstream
+commit** and shipped as a complete skin, `skin.estuary7`.
 
 This replaced a runtime patch add-on that rewrote 50+ skin files on every box
 at boot. Same look, zero runtime machinery: what we build is what runs,

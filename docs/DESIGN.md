@@ -13,8 +13,9 @@ What this means in practice:
   arises - a weight, a size, a color, a layout detail - the answer is:
   whatever original Estuary does, rendered thin.
 - **Every visual deviation from stock Estuary must be DELIBERATE and listed**
-  (the curated set at the bottom of this file: wordmark, trimmed menu, gear
-  order, Outline HD weather, plain backgrounds, top-bar weather). Anything MOD
+  (the curated set at the bottom of this file: wordmark, stock-aligned home
+  menu, gear order, Outline HD weather, plain backgrounds, top-bar weather).
+  Anything MOD
   V2 changed visually that is NOT on that list is a candidate to revert toward
   stock during transform work - flag it, ask the owner, do not silently keep it.
 - **Thin fonts everywhere** is the one place we go beyond stock: stock Estuary
@@ -120,8 +121,11 @@ revert toward stock - flag it during transform work, ask the owner:
 - MOD V2's "Media sources" quick-launcher leaves the System page and moves
   into Skin Settings > Extras as an "Add media sources" section (header +
   Videos/Music/Pictures/Games file-browser buttons) directly above the
-  Debug section. The Custom_1120 dialog is now unreferenced (harmless dead
-  weight; the buttons open the file browsers directly).
+  Debug section. The buttons open the file browsers directly, so nothing
+  calls `ActivateWindow(1120)` any more: since 1.0.44 the dialog is DELETED,
+  not merely unreferenced - `xml/Custom_1120_SourcesDialog.xml` is a
+  `TRIM_PATHS` entry in `tools/build_skin.py`, and custom windows load by
+  filename, so deleting the XML deletes the window.
 - Boot splash: NO splash on a fresh box (owner directive 2026-07-12: the
   flag is a plain opt-in `ShowSplashScreen`), and since 1.0.46 there is NO
   Skin Settings switch for it either (owner directive 2026-07-15: the

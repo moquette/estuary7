@@ -265,8 +265,8 @@ _VIDEO_LABEL_OPTOUT_TOGGLE = (
     '\t\t\t\t<control type="radiobutton" id="1103">\n'
     "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
     "\t\t\t\t\t<label>  ∟Do not apply labels to Movies &amp; TV Shows</label>\n"
-    "\t\t\t\t\t<onclick>Skin.ToggleSetting(hide_video_tile_labels)</onclick>\n"
-    "\t\t\t\t\t<selected>Skin.HasSetting(hide_video_tile_labels)</selected>\n"
+    "\t\t\t\t\t<onclick>Skin.ToggleSetting(video_tile_labels_off)</onclick>\n"
+    "\t\t\t\t\t<selected>Skin.HasSetting(video_tile_labels_off)</selected>\n"
     "\t\t\t\t\t<visible>!Skin.HasSetting(hide_tile_labels)</visible>\n"
     "\t\t\t\t</control>\n"
     '\t\t\t\t<control type="radiobutton" id="10014">\n'

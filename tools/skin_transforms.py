@@ -191,11 +191,15 @@ _SKINSETTINGS_TILE_TOGGLE = """\t\t\t\t<control type="radiobutton" id="1102">
 # step 1c only rewrites the upstream HideWidgetLabels forms, so this block
 # passes through untouched. Id 1103 is unused by upstream; default off =
 # zero settings writes, the shipped 1.0.40 look.
+#
+# 1.0.71: the id this toggle reads/writes was RETIRED and replaced. See
+# _RETIRED_VIDEO_LABEL_ID below for why - in short, the old name is armed
+# `true` in the wild and any box carrying it lost its movie/TV titles.
 _VIDEO_LABEL_OPTOUT_TOGGLE = """\t\t\t\t<control type="radiobutton" id="1103">
 \t\t\t\t\t<include>DefaultSettingButton</include>
 \t\t\t\t\t<label>  ∟Do not apply labels to Movies &amp; TV Shows</label>
-\t\t\t\t\t<onclick>Skin.ToggleSetting(hide_video_tile_labels)</onclick>
-\t\t\t\t\t<selected>Skin.HasSetting(hide_video_tile_labels)</selected>
+\t\t\t\t\t<onclick>Skin.ToggleSetting(video_tile_labels_off)</onclick>
+\t\t\t\t\t<selected>Skin.HasSetting(video_tile_labels_off)</selected>
 \t\t\t\t\t<visible>!Skin.HasSetting(hide_tile_labels)</visible>
 \t\t\t\t</control>
 """
@@ -1687,8 +1691,31 @@ _POSTER_EMPTY = (
 # per-item <visible> conditions - the poster art renders identically either
 # way, so no include-condition split can desynchronize. Default off = the
 # owner's shipped 1.0.40 look, zero settings writes.
+#
+# RETIRED ID - do not reuse, do not read (1.0.71, owner-reported):
+# `hide_video_tile_labels` was first published by the WITHDRAWN first-take
+# 1.0.40 (pulled within the hour), whose sub-toggle wrote it into
+# userdata/addon_data/skin.estuary7/settings.xml. Pulling the build did not
+# unwrite the value - it only went dormant, because 1.0.39/1.0.40 read
+# nothing. 1.0.41 then re-pointed that SAME id at live behaviour, so every
+# box still carrying the stale `true` silently lost the title and year on
+# its movie/TV widget tiles. The office Fire TV was found armed on
+# 2026-07-19 with exactly that symptom, despite TASKS.md recording the flag
+# as cleared there on 07-15.
+#
+# Clearing the flag box-by-box does NOT close this. The stale value also
+# lives inside every EZ Maintenance++ backup zip taken during the withdrawn
+# build's window, so any future restore can re-arm it on a box that was
+# never near the bad build. A name cannot be un-published; the only durable
+# fix is to stop reading it. Reading a FRESH id makes every stale `true`
+# in the wild - live boxes and archived zips alike - permanently inert,
+# with no migration and no write to anyone's storage (which on tvOS would
+# have to clear the vectored NSUserDefaults KEY, not the file, to work at
+# all). test_retired_video_label_id_is_never_read enforces the retirement.
+_RETIRED_VIDEO_LABEL_ID = "hide_video_tile_labels"
+
 _VIDEO_LABEL_OPTOUT = (
-    "![Skin.HasSetting(hide_video_tile_labels) + ["
+    "![Skin.HasSetting(video_tile_labels_off) + ["
     "String.IsEqual(ListItem.DBType,movie) | "
     "String.IsEqual(ListItem.DBType,set) | "
     "String.IsEqual(ListItem.DBType,tvshow) | "

@@ -23,9 +23,19 @@ work of others:
 - Artwork: **Creative Commons Attribution-ShareAlike 4.0**
 
 See `LICENSE` (upstream's license file, kept verbatim). This repository is
-public to satisfy GPL source availability: the complete corresponding source
-is the pinned upstream commit (recorded in `skin_build.lock`) plus the
-transforms in `tools/`, which together reproduce the shipped zip
-byte-for-byte.
+public to satisfy GPL source availability. The complete corresponding source is
+three things, and all three are required to reproduce the shipped zip
+byte-for-byte:
+
+1. the pinned upstream commit (`upstream_sha` + `upstream_tarball_sha256` in
+   `skin_build.lock`),
+2. the transforms and build in `tools/`, and
+3. the vendored assets in `assets/` (the wordmark, the stock Estuary
+   icon/fanart/screenshots and Videos glyph, the Outline HD weather set with
+   its LICENSE.txt, the splash art, and the pre-built skinshortcuts includes).
+
+The build is deterministic (`python3 tools/build_skin.py --check` builds twice
+and byte-compares), so anyone can reproduce the published release asset from
+these three inputs.
 
 Upstream copyright headers in skin files are never removed by the build.
