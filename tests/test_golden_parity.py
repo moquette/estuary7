@@ -46,8 +46,6 @@ from conftest import GOLDENS
 from skin_transforms import (
     _GREYEDOUT_HOME_ROW,
     _HIDE_WATCHED_TOGGLE,
-    _LIST_LABEL2_APPEARANCES,
-    _LIST_LABEL2_PLUGIN_YEAR,
     SKIN_ID,
     UPSTREAM_ID,
     drop_settings_views_variable,
@@ -492,14 +490,6 @@ NORMALIZE = {
         (
             '<value condition="Skin.HasSetting(powermenu_list)">$LOCALIZE[31427]</value>',
             "<value>$LOCALIZE[31427]</value>",
-            1,
-        ),
-        # 1.0.72: ListLabel2Var gains a plugin-path movie-year branch, so
-        # LIST view (View_50) shows the year on plugin listings, where every
-        # upstream year branch is gated on sort-method Title.
-        (
-            _LIST_LABEL2_APPEARANCES,
-            _LIST_LABEL2_PLUGIN_YEAR + _LIST_LABEL2_APPEARANCES,
             1,
         ),
     ]

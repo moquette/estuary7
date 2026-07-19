@@ -1120,41 +1120,7 @@ def _edit_variables(text: str, path: str) -> str:
         "<value>$LOCALIZE[31427]</value>",
         path=path,
     )
-    # 1.0.72: the year in LIST view (View_50) on plugin-backed movie lists.
-    #
-    # View_50 has no year token of its own; its right-hand column is
-    # `ListLabel2Var`, which does carry the year - but every branch that
-    # emits one is gated on `String.IsEqual(Container.SortMethod,
-    # $LOCALIZE[556])` (sorted by Title). A POV movie list arrives with a
-    # different sort method, so every year branch falls through and the
-    # variable lands on its `$INFO[ListItem.Label2]` tail. That is a SECOND,
-    # separate reason the owner sees no year, and it is NOT a plugin:// gate
-    # - relaxing gates would never have reached it. List matters because
-    # `MyVideoNav.xml` defaultcontrol 50 is where a POV listing lands unless
-    # a saved view or POV itself overrides it.
-    #
-    # Inserted AFTER every SortMethod branch (so a Title-sorted list keeps
-    # upstream's richer rating+year text) and BEFORE the generic tails.
-    # Scoped hard: plugin paths, movie content, the owner's hide_pubyear
-    # show-toggle, and only when a year actually exists - so it can never
-    # blank a Label2 that had something in it.
-    return _insert_before(
-        text,
-        _LIST_LABEL2_APPEARANCES,
-        _LIST_LABEL2_PLUGIN_YEAR,
-        path=path,
-    )
-
-
-_LIST_LABEL2_APPEARANCES = (
-    ' \t\t<value condition="!String.IsEmpty(ListItem.Appearances)">'
-    "$LOCALIZE[38026] : $INFO[ListItem.Appearances]</value>\n"
-)
-_LIST_LABEL2_PLUGIN_YEAR = (
-    '\t\t<value condition="String.StartsWith(Container.FolderPath,plugin://) + '
-    "Container.Content(movies) + Skin.HasSetting(hide_pubyear) + "
-    '!String.IsEmpty(ListItem.Year)">$INFO[ListItem.Year]</value>\n'
-)
+    return text
 
 
 # 1.0.60: hide switch for the home-cover watched/status badge (see
@@ -2415,76 +2381,9 @@ _V54_MOVIE_BADGE_TOPRIGHT = (
 )
 
 
-# 1.0.72 - THE YEAR ON PLUGIN-BACKED MOVIE LISTS (owner-reported).
-#
-# Symptom: open Movies on a box whose video library is EMPTY and the home
-# item falls through to the Videos window on a POV plugin path. The posters
-# render, the titles render, the YEAR does not.
-#
-# InfoWall is the only view in the skin that HAS a movie year label and then
-# suppresses it on plugin paths. Upstream draws the library case as a
-# left-aligned title plus a right-aligned year (both carrying
-# `!String.StartsWith(Container.FolderPath,plugin://)`) and then swaps in ONE
-# centered `$INFO[ListItem.Label]` for plugin paths and artists - title only,
-# no year. POV's data is not the problem; the label simply has no year token.
-#
-# The fix keeps upstream's centered plugin label and gives it the year, which
-# is what views 51/503/508/509 already do on plugin paths with no gate at all.
-# It is split on `hide_pubyear` (a SHOW toggle despite the name: true = year
-# shown) so the owner's existing switch still governs it, mirroring the
-# tvshows pair immediately below it in the same file. Artists keep the plain
-# label - they have no meaningful year and must not gain a "( )".
-#
-# Deliberately NOT changed: views 53, 500, 504, 505, 506 and 507 carry
-# plugin:// gates but NO year token anywhere, and `ListLabelVar` has none
-# either, so they show no year on ANY path, library included. There is no
-# gate to relax there; adding a year would be STAMPING ONE ON EVERY TILE,
-# which is the open tile-vs-header question the owner has not decided.
-_V54_PLUGIN_LABEL_GEOM = (
-    "\t\t\t\t<left>42</left>\n"
-    "\t\t\t\t<top>302</top>\n"
-    "\t\t\t\t<width>536</width>\n"
-    "\t\t\t\t<height>43</height>\n"
-)
-_V54_PLUGIN_LABEL_STYLE = (
-    "\t\t\t\t<font>font25_title</font>\n"
-    "\t\t\t\t<align>center</align>\n"
-    "\t\t\t\t<aligny>center</aligny>\n"
-    "\t\t\t\t<scroll>$PARAM[focused]</scroll>\n"
-)
-_V54_PLUGIN_LABEL_STOCK = (
-    '\t\t\t<control type="label">\n'
-    + _V54_PLUGIN_LABEL_GEOM
-    + "\t\t\t\t<label>$INFO[ListItem.Label]</label>\n"
-    + _V54_PLUGIN_LABEL_STYLE
-    + "\t\t\t\t<visible>String.StartsWith(Container.FolderPath,plugin://) "
-    "| Container.Content(artists)</visible>\n"
-    "\t\t\t</control>\n"
-)
-_V54_PLUGIN_LABEL_WITH_YEAR = (
-    '\t\t\t<control type="label">\n'
-    + _V54_PLUGIN_LABEL_GEOM
-    + "\t\t\t\t<label>$INFO[ListItem.Label]</label>\n"
-    + _V54_PLUGIN_LABEL_STYLE
-    + "\t\t\t\t<visible>[String.StartsWith(Container.FolderPath,plugin://) + "
-    "!Skin.HasSetting(hide_pubyear)] | Container.Content(artists)</visible>\n"
-    "\t\t\t</control>\n"
-    '\t\t\t<control type="label">\n'
-    + _V54_PLUGIN_LABEL_GEOM
-    + "\t\t\t\t<label>$INFO[ListItem.Label]$INFO[ListItem.Year, (,)]</label>\n"
-    + _V54_PLUGIN_LABEL_STYLE
-    + "\t\t\t\t<visible>String.StartsWith(Container.FolderPath,plugin://) + "
-    "!Container.Content(artists) + Skin.HasSetting(hide_pubyear)</visible>\n"
-    "\t\t\t</control>\n"
-)
-
-
 def _edit_view54(text: str, path: str) -> str:
     text = _replace(text, _V54_BADGE_STOCK, _V54_BADGE_TOPRIGHT, path=path)
-    text = _replace(text, _V54_MOVIE_BADGE_STOCK, _V54_MOVIE_BADGE_TOPRIGHT, path=path)
-    return _replace(
-        text, _V54_PLUGIN_LABEL_STOCK, _V54_PLUGIN_LABEL_WITH_YEAR, path=path
-    )
+    return _replace(text, _V54_MOVIE_BADGE_STOCK, _V54_MOVIE_BADGE_TOPRIGHT, path=path)
 
 
 FILE_EDITS = {
