@@ -37,12 +37,23 @@ sys.path.insert(0, str(ROOT / "tools"))
 import build_skin  # noqa: E402
 
 VENDORED = build_skin.ASSETS_DIR / "xml" / "script-skinshortcuts-includes.xml"
-DATA_DIR = ROOT / "build" / "tree" / "skin.estuary7" / "shortcuts"
 
 
 @pytest.fixture(scope="module")
 def includes_text() -> str:
     return VENDORED.read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def data_dir(built) -> Path:
+    """The shipped menu DATA, from the session's transformed tree.
+
+    Deliberately NOT ROOT/"build"/"tree": that path is a gitignored build
+    artifact, so reading it makes the test pass or fail on whatever the last
+    local build happened to leave behind, and fail outright on a clean checkout
+    or in CI. The `built` fixture is the canonical shipped tree.
+    """
+    return built.tree / "shortcuts"
 
 
 def test_capture_has_no_pvr_visibility_conditions(includes_text):
@@ -93,7 +104,9 @@ _RESOLVED_SUBMENU_ICONS = (
 )
 
 
-def test_capture_carries_the_real_icons_the_shipped_data_declares(includes_text):
+def test_capture_carries_the_real_icons_the_shipped_data_declares(
+    includes_text, data_dir
+):
     """Positive counterpart: distinctive DATA icons must survive into the capture.
 
     Guards the failure mode where a capture is emptied or truncated rather than
@@ -101,7 +114,7 @@ def test_capture_carries_the_real_icons_the_shipped_data_declares(includes_text)
     above would both pass on a file with no icons at all.
     """
     declared = set()
-    for data in sorted(DATA_DIR.glob("*.DATA.xml")):
+    for data in sorted(data_dir.glob("*.DATA.xml")):
         for icon in re.findall(
             r"<icon>([^<]+)</icon>", data.read_text(encoding="utf-8")
         ):
