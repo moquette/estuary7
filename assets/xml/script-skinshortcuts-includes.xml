@@ -279,7 +279,6 @@
 			<property name="widget">LiveTVWidget</property>
 			<property name="widgetName">19020</property>
 			<property name="background">special://skin/extras/home-images/livetv.jpg</property>
-			<visible>System.HasPVRAddon</visible>
 			<onclick>ActivateWindow(TVChannels)</onclick>
 			<property name="path">ActivateWindow(TVChannels)</property>
 			<property name="list">TVChannels</property>
@@ -299,7 +298,6 @@
 			<property name="widget">RadioWidget</property>
 			<property name="widgetName">19021</property>
 			<property name="background">special://skin/extras/home-images/radio.jpg</property>
-			<visible>System.HasPVRAddon</visible>
 			<onclick>ActivateWindow(RadioChannels)</onclick>
 			<property name="path">ActivateWindow(RadioChannels)</property>
 			<property name="list">RadioChannels</property>
@@ -469,7 +467,7 @@
 			<property name="mainmenuid">1</property>
 			<label>$LOCALIZE[31634]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/lastseen.png</icon>
 			<thumb />
 			<property name="labelID">31634</property>
 			<property name="defaultID">31634</property>
@@ -519,7 +517,7 @@
 			<property name="mainmenuid">1</property>
 			<label>$LOCALIZE[40000]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultVersions.png</icon>
 			<thumb />
 			<property name="labelID">40000</property>
 			<property name="defaultID">40000</property>
@@ -655,7 +653,7 @@
 			<property name="mainmenuid">1</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -672,7 +670,7 @@
 			<property name="mainmenuid">1</property>
 			<label>$LOCALIZE[31677]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultCinema.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/now_playing</property>
 			<property name="defaultID">script.embuary.info/movie/now_playing</property>
@@ -689,7 +687,7 @@
 			<property name="mainmenuid">1</property>
 			<label>$LOCALIZE[31678]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultNextUp.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/upcoming</property>
 			<property name="defaultID">script.embuary.info/movie/upcoming</property>
@@ -754,7 +752,7 @@
 			<property name="mainmenuid">2</property>
 			<label>$LOCALIZE[31634]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/lastseen.png</icon>
 			<thumb />
 			<property name="labelID">31634</property>
 			<property name="defaultID">31634</property>
@@ -804,7 +802,7 @@
 			<property name="mainmenuid">2</property>
 			<label>$LOCALIZE[40000]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultVersions.png</icon>
 			<thumb />
 			<property name="labelID">40000</property>
 			<property name="defaultID">40000</property>
@@ -940,7 +938,7 @@
 			<property name="mainmenuid">2</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -957,7 +955,7 @@
 			<property name="mainmenuid">2</property>
 			<label>$LOCALIZE[31677]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultCinema.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/now_playing</property>
 			<property name="defaultID">script.embuary.info/movie/now_playing</property>
@@ -974,7 +972,7 @@
 			<property name="mainmenuid">2</property>
 			<label>$LOCALIZE[31678]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultNextUp.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/upcoming</property>
 			<property name="defaultID">script.embuary.info/movie/upcoming</property>
@@ -1039,7 +1037,7 @@
 			<property name="mainmenuid">3</property>
 			<label>$LOCALIZE[31634]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/lastseen.png</icon>
 			<thumb />
 			<property name="labelID">31634</property>
 			<property name="defaultID">31634</property>
@@ -1089,7 +1087,7 @@
 			<property name="mainmenuid">3</property>
 			<label>$LOCALIZE[40000]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultVersions.png</icon>
 			<thumb />
 			<property name="labelID">40000</property>
 			<property name="defaultID">40000</property>
@@ -1225,7 +1223,7 @@
 			<property name="mainmenuid">3</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -1242,7 +1240,7 @@
 			<property name="mainmenuid">3</property>
 			<label>$LOCALIZE[31677]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultCinema.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/now_playing</property>
 			<property name="defaultID">script.embuary.info/movie/now_playing</property>
@@ -1259,7 +1257,7 @@
 			<property name="mainmenuid">3</property>
 			<label>$LOCALIZE[31678]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultNextUp.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/upcoming</property>
 			<property name="defaultID">script.embuary.info/movie/upcoming</property>
@@ -1426,7 +1424,7 @@
 			<property name="mainmenuid">4</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -1593,7 +1591,7 @@
 			<property name="mainmenuid">5</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -1760,7 +1758,7 @@
 			<property name="mainmenuid">6</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -1976,7 +1974,7 @@
 			<property name="mainmenuid">7</property>
 			<label>$LOCALIZE[10516]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">10516</property>
 			<property name="defaultID">10516</property>
@@ -2175,7 +2173,7 @@
 			<property name="mainmenuid">8</property>
 			<label>$LOCALIZE[10516]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">10516</property>
 			<property name="defaultID">10516</property>
@@ -2374,7 +2372,7 @@
 			<property name="mainmenuid">9</property>
 			<label>$LOCALIZE[10516]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">10516</property>
 			<property name="defaultID">10516</property>
@@ -2590,7 +2588,7 @@
 			<property name="mainmenuid">11</property>
 			<label>$LOCALIZE[40145]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">40145</property>
 			<property name="defaultID">40145</property>
@@ -2807,7 +2805,7 @@
 			<property name="mainmenuid">12</property>
 			<label>$LOCALIZE[40145]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">40145</property>
 			<property name="defaultID">40145</property>
@@ -3024,7 +3022,7 @@
 			<property name="mainmenuid">13</property>
 			<label>$LOCALIZE[40145]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">40145</property>
 			<property name="defaultID">40145</property>
@@ -3057,7 +3055,7 @@
 			<property name="mainmenuid">14</property>
 			<label>$ADDON[script.service.gto 30116]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/refresh.png</icon>
 			<thumb />
 			<property name="labelID">addon-script-service-gto30116</property>
 			<property name="defaultID">addon-script-service-gto30116</property>
@@ -3074,7 +3072,7 @@
 			<property name="mainmenuid">14</property>
 			<label>$ADDON[script.service.gto 30115]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/newspaper.png</icon>
 			<thumb />
 			<property name="labelID">addon-script-service-gto30115</property>
 			<property name="defaultID">addon-script-service-gto30115</property>
@@ -3095,11 +3093,10 @@
 			<thumb />
 			<property name="labelID">19019</property>
 			<property name="defaultID">19019</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19020)</visible>
 			<onclick>ActivateWindow(TVChannels)</onclick>
 			<property name="path">ActivateWindow(TVChannels)</property>
 			<property name="list">TVChannels</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19020)</visible>
 			<property name="group">19020</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -3108,15 +3105,14 @@
 			<property name="mainmenuid">14</property>
 			<label>$LOCALIZE[19069]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/epg.png</icon>
 			<thumb />
 			<property name="labelID">19069</property>
 			<property name="defaultID">19069</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19020)</visible>
 			<onclick>ActivateWindow(TVGuide)</onclick>
 			<property name="path">ActivateWindow(TVGuide)</property>
 			<property name="list">TVGuide</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19020)</visible>
 			<property name="group">19020</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -3125,15 +3121,14 @@
 			<property name="mainmenuid">14</property>
 			<label>$LOCALIZE[19017]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/recording.png</icon>
 			<thumb />
 			<property name="labelID">19017</property>
 			<property name="defaultID">19017</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19020)</visible>
 			<onclick>ActivateWindow(TVRecordings)</onclick>
 			<property name="path">ActivateWindow(TVRecordings)</property>
 			<property name="list">TVRecordings</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19020)</visible>
 			<property name="group">19020</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -3142,15 +3137,14 @@
 			<property name="mainmenuid">14</property>
 			<label>$LOCALIZE[19040]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/timer.png</icon>
 			<thumb />
 			<property name="labelID">19040</property>
 			<property name="defaultID">19040</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19020)</visible>
 			<onclick>ActivateWindow(TVTimers)</onclick>
 			<property name="path">ActivateWindow(TVTimers)</property>
 			<property name="list">TVTimers</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19020)</visible>
 			<property name="group">19020</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -3159,15 +3153,14 @@
 			<property name="mainmenuid">14</property>
 			<label>$LOCALIZE[19138]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/timer-rule.png</icon>
 			<thumb />
 			<property name="labelID">19138</property>
 			<property name="defaultID">19138</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19020)</visible>
 			<onclick>ActivateWindow(TVTimerRules)</onclick>
 			<property name="path">ActivateWindow(TVTimerRules)</property>
 			<property name="list">TVTimerRules</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19020)</visible>
 			<property name="group">19020</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -3180,11 +3173,10 @@
 			<thumb />
 			<property name="labelID">137</property>
 			<property name="defaultID">137</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19020)</visible>
 			<onclick>ActivateWindow(TVSearch)</onclick>
 			<property name="path">ActivateWindow(TVSearch)</property>
 			<property name="list">TVSearch</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19020)</visible>
 			<property name="group">19020</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -3193,15 +3185,14 @@
 			<property name="mainmenuid">15</property>
 			<label>$LOCALIZE[19024]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultRadioGuide.png</icon>
 			<thumb />
 			<property name="labelID">19024</property>
 			<property name="defaultID">19024</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19021)</visible>
 			<onclick>ActivateWindow(RadioChannels)</onclick>
 			<property name="path">ActivateWindow(RadioChannels)</property>
 			<property name="list">RadioChannels</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19021)</visible>
 			<property name="group">19021</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -3210,15 +3201,14 @@
 			<property name="mainmenuid">15</property>
 			<label>$LOCALIZE[19069]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/epg.png</icon>
 			<thumb />
 			<property name="labelID">19069</property>
 			<property name="defaultID">19069</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19021)</visible>
 			<onclick>ActivateWindow(RadioGuide)</onclick>
 			<property name="path">ActivateWindow(RadioGuide)</property>
 			<property name="list">RadioGuide</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19021)</visible>
 			<property name="group">19021</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -3227,15 +3217,14 @@
 			<property name="mainmenuid">15</property>
 			<label>$LOCALIZE[19017]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/recording.png</icon>
 			<thumb />
 			<property name="labelID">19017</property>
 			<property name="defaultID">19017</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19021)</visible>
 			<onclick>ActivateWindow(RadioRecordings)</onclick>
 			<property name="path">ActivateWindow(RadioRecordings)</property>
 			<property name="list">RadioRecordings</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19021)</visible>
 			<property name="group">19021</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -3244,15 +3233,14 @@
 			<property name="mainmenuid">15</property>
 			<label>$LOCALIZE[19040]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/timer.png</icon>
 			<thumb />
 			<property name="labelID">19040</property>
 			<property name="defaultID">19040</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19021)</visible>
 			<onclick>ActivateWindow(RadioTimers)</onclick>
 			<property name="path">ActivateWindow(RadioTimers)</property>
 			<property name="list">RadioTimers</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19021)</visible>
 			<property name="group">19021</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -3261,15 +3249,14 @@
 			<property name="mainmenuid">15</property>
 			<label>$LOCALIZE[19138]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/timer-rule.png</icon>
 			<thumb />
 			<property name="labelID">19138</property>
 			<property name="defaultID">19138</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19021)</visible>
 			<onclick>ActivateWindow(RadioTimerRules)</onclick>
 			<property name="path">ActivateWindow(RadioTimerRules)</property>
 			<property name="list">RadioTimerRules</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19021)</visible>
 			<property name="group">19021</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -3282,11 +3269,10 @@
 			<thumb />
 			<property name="labelID">137</property>
 			<property name="defaultID">137</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19021)</visible>
 			<onclick>ActivateWindow(RadioSearch)</onclick>
 			<property name="path">ActivateWindow(RadioSearch)</property>
 			<property name="list">RadioSearch</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Container(9000).ListItem.Property(submenuVisibility),num-19021)</visible>
 			<property name="group">19021</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -3375,7 +3361,7 @@
 			<property name="mainmenuid">17</property>
 			<label>$LOCALIZE[31131]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>Settings.png</icon>
 			<thumb />
 			<property name="labelID">31131</property>
 			<property name="defaultID">31131</property>
@@ -3506,7 +3492,7 @@
 			<property name="mainmenuid">19</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -3540,7 +3526,7 @@
 			<property name="mainmenuid">1</property>
 			<label>$LOCALIZE[31634]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/lastseen.png</icon>
 			<thumb />
 			<property name="labelID">31634</property>
 			<property name="defaultID">31634</property>
@@ -3590,7 +3576,7 @@
 			<property name="mainmenuid">1</property>
 			<label>$LOCALIZE[40000]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultVersions.png</icon>
 			<thumb />
 			<property name="labelID">40000</property>
 			<property name="defaultID">40000</property>
@@ -3726,7 +3712,7 @@
 			<property name="mainmenuid">1</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -3743,7 +3729,7 @@
 			<property name="mainmenuid">1</property>
 			<label>$LOCALIZE[31677]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultCinema.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/now_playing</property>
 			<property name="defaultID">script.embuary.info/movie/now_playing</property>
@@ -3760,7 +3746,7 @@
 			<property name="mainmenuid">1</property>
 			<label>$LOCALIZE[31678]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultNextUp.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/upcoming</property>
 			<property name="defaultID">script.embuary.info/movie/upcoming</property>
@@ -3827,7 +3813,7 @@
 			<property name="mainmenuid">1</property>
 			<label>$LOCALIZE[31634]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/lastseen.png</icon>
 			<thumb />
 			<property name="labelID">31634</property>
 			<property name="defaultID">31634</property>
@@ -3877,7 +3863,7 @@
 			<property name="mainmenuid">1</property>
 			<label>$LOCALIZE[40000]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultVersions.png</icon>
 			<thumb />
 			<property name="labelID">40000</property>
 			<property name="defaultID">40000</property>
@@ -4013,7 +3999,7 @@
 			<property name="mainmenuid">1</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -4030,7 +4016,7 @@
 			<property name="mainmenuid">1</property>
 			<label>$LOCALIZE[31677]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultCinema.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/now_playing</property>
 			<property name="defaultID">script.embuary.info/movie/now_playing</property>
@@ -4047,7 +4033,7 @@
 			<property name="mainmenuid">1</property>
 			<label>$LOCALIZE[31678]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultNextUp.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/upcoming</property>
 			<property name="defaultID">script.embuary.info/movie/upcoming</property>
@@ -4114,7 +4100,7 @@
 			<property name="mainmenuid">2</property>
 			<label>$LOCALIZE[31634]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/lastseen.png</icon>
 			<thumb />
 			<property name="labelID">31634</property>
 			<property name="defaultID">31634</property>
@@ -4164,7 +4150,7 @@
 			<property name="mainmenuid">2</property>
 			<label>$LOCALIZE[40000]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultVersions.png</icon>
 			<thumb />
 			<property name="labelID">40000</property>
 			<property name="defaultID">40000</property>
@@ -4300,7 +4286,7 @@
 			<property name="mainmenuid">2</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -4317,7 +4303,7 @@
 			<property name="mainmenuid">2</property>
 			<label>$LOCALIZE[31677]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultCinema.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/now_playing</property>
 			<property name="defaultID">script.embuary.info/movie/now_playing</property>
@@ -4334,7 +4320,7 @@
 			<property name="mainmenuid">2</property>
 			<label>$LOCALIZE[31678]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultNextUp.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/upcoming</property>
 			<property name="defaultID">script.embuary.info/movie/upcoming</property>
@@ -4401,7 +4387,7 @@
 			<property name="mainmenuid">2</property>
 			<label>$LOCALIZE[31634]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/lastseen.png</icon>
 			<thumb />
 			<property name="labelID">31634</property>
 			<property name="defaultID">31634</property>
@@ -4451,7 +4437,7 @@
 			<property name="mainmenuid">2</property>
 			<label>$LOCALIZE[40000]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultVersions.png</icon>
 			<thumb />
 			<property name="labelID">40000</property>
 			<property name="defaultID">40000</property>
@@ -4587,7 +4573,7 @@
 			<property name="mainmenuid">2</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -4604,7 +4590,7 @@
 			<property name="mainmenuid">2</property>
 			<label>$LOCALIZE[31677]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultCinema.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/now_playing</property>
 			<property name="defaultID">script.embuary.info/movie/now_playing</property>
@@ -4621,7 +4607,7 @@
 			<property name="mainmenuid">2</property>
 			<label>$LOCALIZE[31678]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultNextUp.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/upcoming</property>
 			<property name="defaultID">script.embuary.info/movie/upcoming</property>
@@ -4688,7 +4674,7 @@
 			<property name="mainmenuid">3</property>
 			<label>$LOCALIZE[31634]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/lastseen.png</icon>
 			<thumb />
 			<property name="labelID">31634</property>
 			<property name="defaultID">31634</property>
@@ -4738,7 +4724,7 @@
 			<property name="mainmenuid">3</property>
 			<label>$LOCALIZE[40000]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultVersions.png</icon>
 			<thumb />
 			<property name="labelID">40000</property>
 			<property name="defaultID">40000</property>
@@ -4874,7 +4860,7 @@
 			<property name="mainmenuid">3</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -4891,7 +4877,7 @@
 			<property name="mainmenuid">3</property>
 			<label>$LOCALIZE[31677]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultCinema.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/now_playing</property>
 			<property name="defaultID">script.embuary.info/movie/now_playing</property>
@@ -4908,7 +4894,7 @@
 			<property name="mainmenuid">3</property>
 			<label>$LOCALIZE[31678]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultNextUp.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/upcoming</property>
 			<property name="defaultID">script.embuary.info/movie/upcoming</property>
@@ -4975,7 +4961,7 @@
 			<property name="mainmenuid">3</property>
 			<label>$LOCALIZE[31634]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/lastseen.png</icon>
 			<thumb />
 			<property name="labelID">31634</property>
 			<property name="defaultID">31634</property>
@@ -5025,7 +5011,7 @@
 			<property name="mainmenuid">3</property>
 			<label>$LOCALIZE[40000]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultVersions.png</icon>
 			<thumb />
 			<property name="labelID">40000</property>
 			<property name="defaultID">40000</property>
@@ -5161,7 +5147,7 @@
 			<property name="mainmenuid">3</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -5178,7 +5164,7 @@
 			<property name="mainmenuid">3</property>
 			<label>$LOCALIZE[31677]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultCinema.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/now_playing</property>
 			<property name="defaultID">script.embuary.info/movie/now_playing</property>
@@ -5195,7 +5181,7 @@
 			<property name="mainmenuid">3</property>
 			<label>$LOCALIZE[31678]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultNextUp.png</icon>
 			<thumb />
 			<property name="labelID">script.embuary.info/movie/upcoming</property>
 			<property name="defaultID">script.embuary.info/movie/upcoming</property>
@@ -5364,7 +5350,7 @@
 			<property name="mainmenuid">4</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -5533,7 +5519,7 @@
 			<property name="mainmenuid">4</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -5702,7 +5688,7 @@
 			<property name="mainmenuid">5</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -5871,7 +5857,7 @@
 			<property name="mainmenuid">5</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -6040,7 +6026,7 @@
 			<property name="mainmenuid">6</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -6209,7 +6195,7 @@
 			<property name="mainmenuid">6</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -6427,7 +6413,7 @@
 			<property name="mainmenuid">7</property>
 			<label>$LOCALIZE[10516]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">10516</property>
 			<property name="defaultID">10516</property>
@@ -6628,7 +6614,7 @@
 			<property name="mainmenuid">7</property>
 			<label>$LOCALIZE[10516]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">10516</property>
 			<property name="defaultID">10516</property>
@@ -6829,7 +6815,7 @@
 			<property name="mainmenuid">8</property>
 			<label>$LOCALIZE[10516]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">10516</property>
 			<property name="defaultID">10516</property>
@@ -7030,7 +7016,7 @@
 			<property name="mainmenuid">8</property>
 			<label>$LOCALIZE[10516]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">10516</property>
 			<property name="defaultID">10516</property>
@@ -7231,7 +7217,7 @@
 			<property name="mainmenuid">9</property>
 			<label>$LOCALIZE[10516]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">10516</property>
 			<property name="defaultID">10516</property>
@@ -7432,7 +7418,7 @@
 			<property name="mainmenuid">9</property>
 			<label>$LOCALIZE[10516]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">10516</property>
 			<property name="defaultID">10516</property>
@@ -7656,7 +7642,7 @@
 			<property name="mainmenuid">11</property>
 			<label>$LOCALIZE[40145]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">40145</property>
 			<property name="defaultID">40145</property>
@@ -7875,7 +7861,7 @@
 			<property name="mainmenuid">11</property>
 			<label>$LOCALIZE[40145]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">40145</property>
 			<property name="defaultID">40145</property>
@@ -8094,7 +8080,7 @@
 			<property name="mainmenuid">12</property>
 			<label>$LOCALIZE[40145]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">40145</property>
 			<property name="defaultID">40145</property>
@@ -8313,7 +8299,7 @@
 			<property name="mainmenuid">12</property>
 			<label>$LOCALIZE[40145]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">40145</property>
 			<property name="defaultID">40145</property>
@@ -8532,7 +8518,7 @@
 			<property name="mainmenuid">13</property>
 			<label>$LOCALIZE[40145]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">40145</property>
 			<property name="defaultID">40145</property>
@@ -8751,7 +8737,7 @@
 			<property name="mainmenuid">13</property>
 			<label>$LOCALIZE[40145]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">40145</property>
 			<property name="defaultID">40145</property>
@@ -8786,7 +8772,7 @@
 			<property name="mainmenuid">14</property>
 			<label>$ADDON[script.service.gto 30116]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/refresh.png</icon>
 			<thumb />
 			<property name="labelID">addon-script-service-gto30116</property>
 			<property name="defaultID">addon-script-service-gto30116</property>
@@ -8803,7 +8789,7 @@
 			<property name="mainmenuid">14</property>
 			<label>$ADDON[script.service.gto 30115]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/newspaper.png</icon>
 			<thumb />
 			<property name="labelID">addon-script-service-gto30115</property>
 			<property name="defaultID">addon-script-service-gto30115</property>
@@ -8824,7 +8810,6 @@
 			<thumb />
 			<property name="labelID">19019</property>
 			<property name="defaultID">19019</property>
-			<visible>System.HasPVRAddon</visible>
 			<onclick>ActivateWindow(TVChannels)</onclick>
 			<property name="path">ActivateWindow(TVChannels)</property>
 			<property name="list">TVChannels</property>
@@ -8837,11 +8822,10 @@
 			<property name="mainmenuid">14</property>
 			<label>$LOCALIZE[19069]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/epg.png</icon>
 			<thumb />
 			<property name="labelID">19069</property>
 			<property name="defaultID">19069</property>
-			<visible>System.HasPVRAddon</visible>
 			<onclick>ActivateWindow(TVGuide)</onclick>
 			<property name="path">ActivateWindow(TVGuide)</property>
 			<property name="list">TVGuide</property>
@@ -8854,11 +8838,10 @@
 			<property name="mainmenuid">14</property>
 			<label>$LOCALIZE[19017]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/recording.png</icon>
 			<thumb />
 			<property name="labelID">19017</property>
 			<property name="defaultID">19017</property>
-			<visible>System.HasPVRAddon</visible>
 			<onclick>ActivateWindow(TVRecordings)</onclick>
 			<property name="path">ActivateWindow(TVRecordings)</property>
 			<property name="list">TVRecordings</property>
@@ -8871,11 +8854,10 @@
 			<property name="mainmenuid">14</property>
 			<label>$LOCALIZE[19040]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/timer.png</icon>
 			<thumb />
 			<property name="labelID">19040</property>
 			<property name="defaultID">19040</property>
-			<visible>System.HasPVRAddon</visible>
 			<onclick>ActivateWindow(TVTimers)</onclick>
 			<property name="path">ActivateWindow(TVTimers)</property>
 			<property name="list">TVTimers</property>
@@ -8888,11 +8870,10 @@
 			<property name="mainmenuid">14</property>
 			<label>$LOCALIZE[19138]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/timer-rule.png</icon>
 			<thumb />
 			<property name="labelID">19138</property>
 			<property name="defaultID">19138</property>
-			<visible>System.HasPVRAddon</visible>
 			<onclick>ActivateWindow(TVTimerRules)</onclick>
 			<property name="path">ActivateWindow(TVTimerRules)</property>
 			<property name="list">TVTimerRules</property>
@@ -8909,7 +8890,6 @@
 			<thumb />
 			<property name="labelID">137</property>
 			<property name="defaultID">137</property>
-			<visible>System.HasPVRAddon</visible>
 			<onclick>ActivateWindow(TVSearch)</onclick>
 			<property name="path">ActivateWindow(TVSearch)</property>
 			<property name="list">TVSearch</property>
@@ -8924,7 +8904,7 @@
 			<property name="mainmenuid">14</property>
 			<label>$ADDON[script.service.gto 30116]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/refresh.png</icon>
 			<thumb />
 			<property name="labelID">addon-script-service-gto30116</property>
 			<property name="defaultID">addon-script-service-gto30116</property>
@@ -8941,7 +8921,7 @@
 			<property name="mainmenuid">14</property>
 			<label>$ADDON[script.service.gto 30115]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/newspaper.png</icon>
 			<thumb />
 			<property name="labelID">addon-script-service-gto30115</property>
 			<property name="defaultID">addon-script-service-gto30115</property>
@@ -8962,11 +8942,10 @@
 			<thumb />
 			<property name="labelID">19019</property>
 			<property name="defaultID">19019</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19020)</visible>
 			<onclick>ActivateWindow(TVChannels)</onclick>
 			<property name="path">ActivateWindow(TVChannels)</property>
 			<property name="list">TVChannels</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19020)</visible>
 			<property name="group">19020</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -8975,15 +8954,14 @@
 			<property name="mainmenuid">14</property>
 			<label>$LOCALIZE[19069]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/epg.png</icon>
 			<thumb />
 			<property name="labelID">19069</property>
 			<property name="defaultID">19069</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19020)</visible>
 			<onclick>ActivateWindow(TVGuide)</onclick>
 			<property name="path">ActivateWindow(TVGuide)</property>
 			<property name="list">TVGuide</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19020)</visible>
 			<property name="group">19020</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -8992,15 +8970,14 @@
 			<property name="mainmenuid">14</property>
 			<label>$LOCALIZE[19017]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/recording.png</icon>
 			<thumb />
 			<property name="labelID">19017</property>
 			<property name="defaultID">19017</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19020)</visible>
 			<onclick>ActivateWindow(TVRecordings)</onclick>
 			<property name="path">ActivateWindow(TVRecordings)</property>
 			<property name="list">TVRecordings</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19020)</visible>
 			<property name="group">19020</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -9009,15 +8986,14 @@
 			<property name="mainmenuid">14</property>
 			<label>$LOCALIZE[19040]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/timer.png</icon>
 			<thumb />
 			<property name="labelID">19040</property>
 			<property name="defaultID">19040</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19020)</visible>
 			<onclick>ActivateWindow(TVTimers)</onclick>
 			<property name="path">ActivateWindow(TVTimers)</property>
 			<property name="list">TVTimers</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19020)</visible>
 			<property name="group">19020</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -9026,15 +9002,14 @@
 			<property name="mainmenuid">14</property>
 			<label>$LOCALIZE[19138]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/timer-rule.png</icon>
 			<thumb />
 			<property name="labelID">19138</property>
 			<property name="defaultID">19138</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19020)</visible>
 			<onclick>ActivateWindow(TVTimerRules)</onclick>
 			<property name="path">ActivateWindow(TVTimerRules)</property>
 			<property name="list">TVTimerRules</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19020)</visible>
 			<property name="group">19020</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -9047,11 +9022,10 @@
 			<thumb />
 			<property name="labelID">137</property>
 			<property name="defaultID">137</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19020)</visible>
 			<onclick>ActivateWindow(TVSearch)</onclick>
 			<property name="path">ActivateWindow(TVSearch)</property>
 			<property name="list">TVSearch</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19020)</visible>
 			<property name="group">19020</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -9062,11 +9036,10 @@
 			<property name="mainmenuid">15</property>
 			<label>$LOCALIZE[19024]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultRadioGuide.png</icon>
 			<thumb />
 			<property name="labelID">19024</property>
 			<property name="defaultID">19024</property>
-			<visible>System.HasPVRAddon</visible>
 			<onclick>ActivateWindow(RadioChannels)</onclick>
 			<property name="path">ActivateWindow(RadioChannels)</property>
 			<property name="list">RadioChannels</property>
@@ -9079,11 +9052,10 @@
 			<property name="mainmenuid">15</property>
 			<label>$LOCALIZE[19069]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/epg.png</icon>
 			<thumb />
 			<property name="labelID">19069</property>
 			<property name="defaultID">19069</property>
-			<visible>System.HasPVRAddon</visible>
 			<onclick>ActivateWindow(RadioGuide)</onclick>
 			<property name="path">ActivateWindow(RadioGuide)</property>
 			<property name="list">RadioGuide</property>
@@ -9096,11 +9068,10 @@
 			<property name="mainmenuid">15</property>
 			<label>$LOCALIZE[19017]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/recording.png</icon>
 			<thumb />
 			<property name="labelID">19017</property>
 			<property name="defaultID">19017</property>
-			<visible>System.HasPVRAddon</visible>
 			<onclick>ActivateWindow(RadioRecordings)</onclick>
 			<property name="path">ActivateWindow(RadioRecordings)</property>
 			<property name="list">RadioRecordings</property>
@@ -9113,11 +9084,10 @@
 			<property name="mainmenuid">15</property>
 			<label>$LOCALIZE[19040]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/timer.png</icon>
 			<thumb />
 			<property name="labelID">19040</property>
 			<property name="defaultID">19040</property>
-			<visible>System.HasPVRAddon</visible>
 			<onclick>ActivateWindow(RadioTimers)</onclick>
 			<property name="path">ActivateWindow(RadioTimers)</property>
 			<property name="list">RadioTimers</property>
@@ -9130,11 +9100,10 @@
 			<property name="mainmenuid">15</property>
 			<label>$LOCALIZE[19138]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/timer-rule.png</icon>
 			<thumb />
 			<property name="labelID">19138</property>
 			<property name="defaultID">19138</property>
-			<visible>System.HasPVRAddon</visible>
 			<onclick>ActivateWindow(RadioTimerRules)</onclick>
 			<property name="path">ActivateWindow(RadioTimerRules)</property>
 			<property name="list">RadioTimerRules</property>
@@ -9151,7 +9120,6 @@
 			<thumb />
 			<property name="labelID">137</property>
 			<property name="defaultID">137</property>
-			<visible>System.HasPVRAddon</visible>
 			<onclick>ActivateWindow(RadioSearch)</onclick>
 			<property name="path">ActivateWindow(RadioSearch)</property>
 			<property name="list">RadioSearch</property>
@@ -9166,15 +9134,14 @@
 			<property name="mainmenuid">15</property>
 			<label>$LOCALIZE[19024]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>DefaultRadioGuide.png</icon>
 			<thumb />
 			<property name="labelID">19024</property>
 			<property name="defaultID">19024</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19021)</visible>
 			<onclick>ActivateWindow(RadioChannels)</onclick>
 			<property name="path">ActivateWindow(RadioChannels)</property>
 			<property name="list">RadioChannels</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19021)</visible>
 			<property name="group">19021</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -9183,15 +9150,14 @@
 			<property name="mainmenuid">15</property>
 			<label>$LOCALIZE[19069]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/epg.png</icon>
 			<thumb />
 			<property name="labelID">19069</property>
 			<property name="defaultID">19069</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19021)</visible>
 			<onclick>ActivateWindow(RadioGuide)</onclick>
 			<property name="path">ActivateWindow(RadioGuide)</property>
 			<property name="list">RadioGuide</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19021)</visible>
 			<property name="group">19021</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -9200,15 +9166,14 @@
 			<property name="mainmenuid">15</property>
 			<label>$LOCALIZE[19017]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/recording.png</icon>
 			<thumb />
 			<property name="labelID">19017</property>
 			<property name="defaultID">19017</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19021)</visible>
 			<onclick>ActivateWindow(RadioRecordings)</onclick>
 			<property name="path">ActivateWindow(RadioRecordings)</property>
 			<property name="list">RadioRecordings</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19021)</visible>
 			<property name="group">19021</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -9217,15 +9182,14 @@
 			<property name="mainmenuid">15</property>
 			<label>$LOCALIZE[19040]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/timer.png</icon>
 			<thumb />
 			<property name="labelID">19040</property>
 			<property name="defaultID">19040</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19021)</visible>
 			<onclick>ActivateWindow(RadioTimers)</onclick>
 			<property name="path">ActivateWindow(RadioTimers)</property>
 			<property name="list">RadioTimers</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19021)</visible>
 			<property name="group">19021</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -9234,15 +9198,14 @@
 			<property name="mainmenuid">15</property>
 			<label>$LOCALIZE[19138]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>icons/pvr/timer-rule.png</icon>
 			<thumb />
 			<property name="labelID">19138</property>
 			<property name="defaultID">19138</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19021)</visible>
 			<onclick>ActivateWindow(RadioTimerRules)</onclick>
 			<property name="path">ActivateWindow(RadioTimerRules)</property>
 			<property name="list">RadioTimerRules</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19021)</visible>
 			<property name="group">19021</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -9255,11 +9218,10 @@
 			<thumb />
 			<property name="labelID">137</property>
 			<property name="defaultID">137</property>
-			<visible>[System.HasPVRAddon] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19021)</visible>
 			<onclick>ActivateWindow(RadioSearch)</onclick>
 			<property name="path">ActivateWindow(RadioSearch)</property>
 			<property name="list">RadioSearch</property>
-			<visible>String.IsEqual(System.ProfileName,Master user)</visible>
+			<visible>[String.IsEqual(System.ProfileName,Master user)] + String.IsEqual(Window(10000).Property(submenuVisibility),num-19021)</visible>
 			<property name="group">19021</property>
 			<property name="isSubmenu">True</property>
 			</item>
@@ -9356,7 +9318,7 @@
 			<property name="mainmenuid">17</property>
 			<label>$LOCALIZE[31131]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>Settings.png</icon>
 			<thumb />
 			<property name="labelID">31131</property>
 			<property name="defaultID">31131</property>
@@ -9454,7 +9416,7 @@
 			<property name="mainmenuid">17</property>
 			<label>$LOCALIZE[31131]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>Settings.png</icon>
 			<thumb />
 			<property name="labelID">31131</property>
 			<property name="defaultID">31131</property>
@@ -9607,7 +9569,7 @@
 			<property name="mainmenuid">19</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
@@ -9724,7 +9686,7 @@
 			<property name="mainmenuid">19</property>
 			<label>$LOCALIZE[20314]</label>
 			<label2>Common Shortcut</label2>
-			<icon>special://skin/extras/icons/addtile.png</icon>
+			<icon>LibrarySettings.png</icon>
 			<thumb />
 			<property name="labelID">20314</property>
 			<property name="defaultID">20314</property>
