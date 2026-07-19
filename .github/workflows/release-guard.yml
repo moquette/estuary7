@@ -1,0 +1,80 @@
+name: Release guard
+
+# ci.yml's `publish` job is `needs: [test, anchored-build-check]`, and that gate
+# works - on the red run 29688381523 the test job failed and publish was
+# skipped. The hole this workflow closes is different: the workflow is not the
+# only way a release can appear. `gh release create` from a laptop attaches any
+# zip to any tag with no CI job consulted at all. v1.0.67 exists on top of a
+# commit whose CI had FAILED for exactly that reason.
+#
+# This makes such a release loudly red. tools/verify_release.py checks two
+# things against primary sources: that the tag's commit has a successful CI run,
+# and that the published asset byte-matches a deterministic rebuild of that
+# commit. Both are needed - v1.0.67's asset sha256 DOES match its commit's
+# recorded sha256, so the integrity check alone would have passed it; only the
+# provenance check catches it.
+#
+# THIS IS DETECTION, NOT PREVENTION. It cannot stop a release from being
+# created. Actual prevention requires a repository setting that only the owner
+# can change, and there is no way for this workflow to substitute for it:
+#
+#     GitHub -> Settings -> Actions -> General -> Workflow permissions, plus a
+#     tag protection / ruleset on `v*` (Settings -> Rules -> Rulesets ->
+#     New tag ruleset, pattern `v*`, restrict tag creation to the
+#     github-actions bot / a release app).
+#
+# Until that ruleset exists, a human with push rights can still hand-create a
+# release; this workflow guarantees it turns the repo red rather than passing
+# unnoticed.
+
+on:
+  release:
+    # Note: releases created with the built-in GITHUB_TOKEN do NOT emit these
+    # events, which is why ci.yml dispatches the hub rebuild directly instead of
+    # relying on `release: published`. That asymmetry works in our favour here -
+    # a PAT/human-created release DOES emit them, and that is the case we are
+    # policing. The scheduled sweep below covers everything regardless.
+    types: [published, created, edited]
+  schedule:
+    # Daily sweep of every existing release, so a bypass cannot hide by not
+    # emitting an event.
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Single tag to verify (blank = sweep all releases)"
+        required: false
+        type: string
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: the guard rebuilds the tagged commit in a worktree.
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify release provenance and artifact integrity
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          T7B_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "release" ]; then
+            python3 tools/verify_release.py --tag "${{ github.event.release.tag_name }}" --rebuild
+          elif [ -n "${{ inputs.tag }}" ]; then
+            python3 tools/verify_release.py --tag "${{ inputs.tag }}" --rebuild
+          else
+            # Sweep: provenance for every release (no rebuild - that would be one
+            # full build per release and would time out; the per-release event and
+            # dispatch paths above do the rebuild).
+            python3 tools/verify_release.py --all
+          fi
