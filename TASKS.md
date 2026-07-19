@@ -218,7 +218,13 @@ prevention checklist:
   renders immediately; purge recovery renders custom not stock; reset
   keydrop; log forensics: exactly one ReloadSkin per trigger; later-load
   chained build fires at all - helpers.py is now the single build producer on
-  tvOS later loads). NOT committed, NOT released; 192.168.7.162 untouched.
+  tvOS later loads). ~~NOT committed, NOT released~~ **CORRECTED 2026-07-18:
+  1.0.66 IS committed and released.** Commit `4d1958d` is on `main`, tag
+  `v1.0.66` exists locally, `skin_build.lock` records
+  `our_version: 1.0.66`, and the hub serves 1.0.66. The contradiction note at
+  the top of this file flagged this and could not check the tag (no network);
+  the tag is now confirmed. `192.168.7.162 untouched` still stands for that
+  release's verification.
 
 - **1.0.65 (2026-07-17) - Customize Main Menu edits SAVE + DISPLAY + PERSIST on
   Apple TV: the standalone tvOS DATA reconcile that 1.0.64 deliberately deferred,
