@@ -87,6 +87,18 @@ Second, separate tvOS gotcha: a stuck `Window(10000).Property(skinshortcuts-isru
 2. Classify the add-on's I/O: unzip `~/Code/moquette/kodi/repo/addons/hosted/script.skinshortcuts/script.skinshortcuts-2.0.3.zip`; grep `xbmcvfs` / `open(` / `ElementTree` / `translatePath`; label every read/write/exists by lane.
 3. Model + test against `~/Code/moquette/kodi/estuary7/tests/fake_kodi_storage.py` (source-derived split).
 4. On-device (required before "fixed"): JSON-RPC 9090 - `Files.GetDirectory` the addon_data dir, `Addons.GetAddonDetails` for versions; if possible compare `xbmcvfs.exists(path)` vs `os.path.exists(translatePath(path))` after a save (mismatch = split confirmed). Office Fire TV 192.168.7.162 is HANDS-OFF without explicit permission.
+5. **When JSON-RPC is refused on an Apple TV, that is the tvOS suspend lifecycle, NOT a config fault.** tvOS suspends background apps, so port 9090 only answers while Kodi is foregrounded on the TV. Verified 2026-07-18: both ATVs have `services.webserver = true` and still refuse the port when backgrounded. Read the key layer offline instead, with `devicectl` (no root, no tunnel):
+
+   ```python
+   # after: devicectl device copy from ... --source Library/Preferences/<bundle>.plist
+   import plistlib, gzip, re
+   with open("prefs.plist", "rb") as f:
+       d = plistlib.load(f)
+   s = gzip.decompress(d["/userdata/guisettings.xml"]).decode("utf-8", errors="replace")
+   ```
+
+   **The key value is GZIPPED**, so `plutil -p` shows only binary and a naive reader concludes the setting is absent. Decompress first. The plist also enumerates every vectored `/userdata/*` path, which is the fastest inventory of what the key layer is currently shadowing. Full recipe: `repo/.claude/skills/atv-log-pull/SKILL.md` section 6.
+6. **NEVER write a setting back into the key while Kodi is alive**, even suspended. It holds settings in memory and `CApplication::Stop` -> `SaveSettings` serializes that memory over the store on resume or clean shutdown, silently discarding your write. That is the settings-clobber class (`repo/docs/playbooks/kodi-settings-clobber.md`). To change a setting on an Apple TV: foreground Kodi, then set it live over JSON-RPC.
 
 ## Companion docs
 
