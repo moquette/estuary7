@@ -9,45 +9,38 @@ Full phase plan + locked decisions: `docs/PLAN.md`. Project rules: `CLAUDE.md`.
 > Everything between them is a release history and must not be read as a
 > backlog. Fleet meta index: `~/Code/moquette/kodi/TASKS.md`.
 
-## UNRESOLVED status contradictions (audited 2026-07-18, NOT adjudicated)
+## Status contradictions (audited 2026-07-18; 4 of 7 closed 2026-07-20)
 
 Read this before trusting any version number or open/closed marker below.
-Nothing was rewritten to resolve these; the owner decides.
+Three items remain; the owner decides those.
+
+> **Audit 2026-07-20:** the original list had seven items. Four were verified
+> against the tree and DELETED because they were provably already fixed:
+> the old item 2 (1.0.66 "NOT committed") is adjudicated in place at
+> `TASKS.md:274-280` and tag `v1.0.66` exists; the old item 5 (Phase 5 still
+> live in PLAN.md) is answered by the superseded banner at `docs/PLAN.md:8-19`;
+> the old item 6 (FINDINGS.md items listed OPEN) is answered by
+> `docs/verification/phase3/FINDINGS.md:90,94`, where both are annotated CLOSED;
+> and the old item 7 (the playbook documents a reverted fix as current) is
+> answered by `docs/playbooks/skinshortcuts-reset-tvos-vfs-split.md:3-5,152-158`,
+> which explicitly disowns the 1.0.24 attempt. The three below are renumbered;
+> they were items 1, 3 and 4.
 
 1. **What is current: 1.0.65 or 1.0.66?** The "Post-launch hardening" heading
    (line ~131) says "1.0.28-1.0.65 (current: 1.0.65, build-verified)". The
    first bullet inside that same section is 1.0.66 and says HARDWARE-VERIFIED
    by the owner on 2026-07-17. The heading was never updated.
-2. **The 1.0.66 entry contradicts itself.** It claims hardware verification by
-   the owner, and then closes with "NOT committed, NOT released;
-   192.168.7.162 untouched." Verified independently: `skin_build.lock` records
-   `our_version: 1.0.66` with a zip sha256, and commit `4d1958d`
-   ("Estuary 7 1.0.66: immediate on-demand menu refresh") is on `main` with a
-   clean working tree. So "NOT committed" is false as written. Whether a
-   GitHub release v1.0.66 exists was NOT checked (no network calls were made).
-3. **"Open hardening" item 2 (menu edits take 1-2 min to show) is very likely
+2. **"Open hardening" item 2 (menu edits take 1-2 min to show) is very likely
    already fixed.** Its root-cause analysis was overtaken by 1.0.62-1.0.66,
    and the 1.0.66 entry describes fixing exactly that chain with owner
    hardware verification. Nobody closed the item. It is left OPEN here rather
    than silently closed. **Owner: confirm and close, or say what still fails.**
-4. **Bench state is stale.** It records 1.0.40 on the office box and 1.0.39 on
+3. **Bench state is stale.** It records 1.0.40 on the office box and 1.0.39 on
    atv2 "confirmed live 2026-07-15", contradicted by the 1.0.48 entry
    ("ATV2 self-updated 1.0.39 -> 1.0.46") and by the 1.0.66 verification claim.
-   Its rationale is also stale: it calls modv2plus "the future Phase 5
-   migrator", but Phase 5 was dropped and modv2plus deprecated on 2026-07-15.
-5. **Phase 5 is DROPPED here but still live in `docs/PLAN.md`.** PLAN.md was
-   never updated and still ends with "Next: Phase 5 - fleet migration". The
-   drop (owner decision 2026-07-15) is the newer fact.
-6. **`docs/verification/phase3/FINDINGS.md:90-91` lists two items as OPEN**
-   that are closed elsewhere: the ATV by-eye check (closed per Phase 3 below)
-   and the MOD V2 logo artwork decision (decided per `docs/DESIGN.md:228-234`).
-   The closures were never back-annotated into FINDINGS.md.
-7. **`docs/playbooks/skinshortcuts-reset-tvos-vfs-split.md` documents a
-   REVERTED fix as current.** Its lines 136-144 describe repointing the
-   override at `icons/sidemenu/videos.png`; the shipped fix was the opposite
-   (remove the override entirely plus shadow the `Textures.xbt` entry). Its
-   status header also credits 1.0.24, which this tracker records as the WRONG
-   fix, with 1.0.27 being the real one. That playbook is actively misleading.
+   Partially corrected 2026-07-20 in the bench-state block itself: the stale
+   modv2plus rationale and the stale box-version claims are now labelled. Still
+   OPEN because the office Fire TV remains hands-off and unverified.
 
 ## HARD CONSTRAINT - the office Fire TV is hands-off
 
@@ -129,8 +122,12 @@ replacement bench for this project.
       `~/Code/moquette/kodi/docs/static-repo-and-tailscale.md` - and no
       longer gates on this migration.
 - [ ] **Phase 6 - Retirement + docs**: retire modv2plus once the last box has
-      left MOD V2; correct the playbook's wrong "MIT" license note (upstream =
-      GPL-2.0 code + CC-BY-SA-4.0 art).
+      left MOD V2. ~~Correct the playbook's wrong "MIT" license note (upstream =
+      GPL-2.0 code + CC-BY-SA-4.0 art).~~ **That half is CLOSED 2026-07-20: the
+      note was corrected in place** at
+      `repo/docs/playbooks/modv2plus-dev-cycle-and-lessons.md:42`, per
+      `CLAUDE.md:115` and `ATTRIBUTION.md`. Only the modv2plus retirement is
+      still owed here.
 
 ## Menu-reset incident (1.0.2x, RESOLVED 2026-07-12)
 
@@ -169,11 +166,34 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.65 (current: 1.0.65, build-verified)
+## Post-launch hardening, 1.0.28-1.0.72 (current: 1.0.71; 1.0.72 shipped and was reverted)
 
+- **1.0.72 (2026-07-19) - SHIPPED THEN REVERTED, REASON UNRECORDED. OWNER
+  INPUT NEEDED.** Commit `8a0d8db` ("Estuary 7 1.0.72: show the year on
+  plugin-backed movie lists") was tagged and released on 2026-07-19, then
+  reverted 8 minutes later by `d6ae0de` ("Revert ..."). Tag `v1.0.71` was then
+  placed on that revert commit and published as Latest, so `v1.0.72` points at
+  `8a0d8db` and `v1.0.71` points at `d6ae0de`.
+  **This was NOT a defect rollback as far as any evidence shows:** CI was GREEN
+  on 1.0.72 (run 29704577498). **No written reason exists anywhere in the
+  tree** - not in the commit messages, not in this tracker, not in `docs/`.
+  **REASON: OPEN, owner to supply.** Until then nobody can tell whether the
+  change was bad, premature, or pulled for an unrelated reason, and nobody can
+  safely re-land it.
+  **Published-order hazard, flagged:** releases now run 1.0.72 and THEN 1.0.71,
+  a backward version. Kodi's repo updater only ever moves forward, so any box
+  that pulled 1.0.72 during those 8 minutes will NEVER downgrade to 1.0.71 and
+  is stranded on withdrawn code. Nothing checks for this. If any box is
+  suspected to have caught 1.0.72, it needs a manual reinstall, not a repo
+  update.
 - **1.0.71 (2026-07-19) - movie and TV titles come back on home widget
-  tiles: the withdrawn build's setting id is RETIRED - BENCH-VERIFIED,
-  NOT YET RELEASED** - owner reported his POV movies widget rendering bare
+  tiles: the withdrawn build's setting id is RETIRED - BENCH-VERIFIED AND
+  RELEASED (tag `v1.0.71`, on revert commit `d6ae0de`).**
+  **OPEN GAP: the hub still publishes 1.0.70.**
+  `repo/addons/hosted/skin.estuary7/addon.xml` carries `version="1.0.70"`, so
+  the release exists on GitHub but NO box has 1.0.71 or can get it. A release
+  here is only half; the hosted metadata bump is the other half and has not
+  happened. Owner reported his POV movies widget rendering bare
   posters with no title and no year. Cause found on his box: the skin
   setting `hide_video_tile_labels` was sitting at `true` in
   `userdata/addon_data/skin.estuary7/settings.xml`, and he never set it.
@@ -1031,15 +1051,21 @@ landed on the bench box(es) ahead of it). In order:
 - Since 2026-07-10 (1.0.1 tweak round): Estuary 7 ACTIVE; BOTH
   `script.tony7bones.modv2plus` AND `skin.estuary.modv2` DISABLED (deliberate
   end-state soak - the fork standing with zero overlay machinery). Both stay
-  INSTALLED: modv2plus (currently 1.8.0 in `tony7bones.github.io`) is the
-  future Phase 5 migrator, and the MOD V2 skin dir keeps the applied overlay
-  and its `.baks` frozen (disabled add-ons do not auto-update, so no Kodinerds
-  clobber is possible). Rollback = re-enable both, switch skins - seconds, no
-  downloads. The other six boxes keep everything enabled until Phase 5.
-- **Current version (confirmed live 2026-07-15 via JSON-RPC):** `skin.estuary7`
-  1.0.40 on the office Fire TV (192.168.7.162, bench-pushed bytes identical
-  to release v1.0.40); atv2 (192.168.7.183) still on 1.0.39 pending a repo
-  update at the owner's leisure; `script.ezmaintenanceplusplus` 2026.07.14.1.
+  INSTALLED: modv2plus (currently 1.8.0 in `tony7bones.github.io`) is
+  **DEPRECATED, not a future migrator** - Phase 5 was dropped by owner decision
+  on 2026-07-15 and no 2.0.0 migrator will be built. It stays installed for one
+  reason only: to keep the applied MOD V2 overlay and its `.baks` frozen
+  (disabled add-ons do not auto-update, so no Kodinerds clobber is possible).
+  Rollback = re-enable both, switch skins - seconds, no downloads. The other six
+  boxes keep everything enabled and switch manually, at leisure.
+- **Last known versions (2026-07-15, NOT re-verified since; releases through
+  1.0.71 have shipped, so these numbers are almost certainly wrong):**
+  `skin.estuary7` 1.0.40 on the office Fire TV (192.168.7.162, bench-pushed
+  bytes identical to release v1.0.40); `script.ezmaintenanceplusplus`
+  2026.07.14.1. **The office Fire TV is HANDS-OFF and remains unverified.**
+- **atv2 (192.168.7.183), RE-POLLED 2026-07-20, real numbers:** `skin.estuary7`
+  **1.0.70** and `script.ezmaintenanceplusplus` **2026.07.19.8**. The old
+  "still on 1.0.39" line above it was long stale; atv2 is current with the hub.
 
 ## Open hardening (owner-reported 2026-07-17, atv2) - TRACKED, not yet fixed
 
@@ -1127,29 +1153,47 @@ These are questions, not work orders. Nothing gets changed until they are
 answered. Both concern the EZM++ add-on UI, raised here because that is where
 the owner filed them; move them to `ezmpp/TASKS.md` if that is the right owner.
 
-- **P1 QUESTION: is "Purge stale tvOS keys" still needed in EZM++? Why?**
+- ~~**P1 QUESTION: is "Purge stale tvOS keys" still needed in EZM++? Why?**
   Establish what the action actually does today, which defect it was added for,
   and whether that defect is still reachable on current Kodi/tvOS. If it has no
-  live justification, it is a candidate for removal.
+  live justification, it is a candidate for removal.~~
+  **CLOSED / ANSWERED 2026-07-20: no, and it is gone.** The manual menu action
+  was REMOVED in EZM++ `2026.07.19.5` (commit `3d3bc72`, "Stop the false 'needs
+  attention' after a tvOS restore, and retire the manual purge"). It covered no
+  case the three automatic clearers miss, and it asked a non-technical owner to
+  self-diagnose an invisible symptom. `ezmpp/CLAUDE.md` records the removal and
+  states: do not reintroduce a manual entry point.
 
-- **P1 QUESTION: why is "Verify backup archive" not folded into the
+- ~~**P1 QUESTION: why is "Verify backup archive" not folded into the
   Backup/Restore section?** It is a backup-lifecycle operation sitting in
   Tools. If it belongs under Backup/Restore, move it - and note that if the
   stale-key purge above turns out to be unneeded, the Tools section has nothing
-  left in it and can be removed entirely.
+  left in it and can be removed entirely.~~
+  **CLOSED 2026-07-20: it was moved.** EZM++ commit `33d50e0`, "Release
+  2026.07.19.7: fold Verify backup archive into Backup/Restore and move Device
+  Name into box setup".
 
 ## Deferred / revisit later
 
-- **Labeled poster-tile look (1.0.40) - REVISIT (owner, 2026-07-15).** The
-  poster+label-on-fade design is live on the office bench (fade at top 220,
-  150px, full strength) and the owner paused tuning there ("let's pause for
-  a moment here but make it a task to revisit this again"). Revisit the fade
-  height/strength and overall tile look with the owner before cutting the
-  1.0.40 release; the build, tests, and bench deploy loop are all in place
-  (see the second 1.0.40 entry above - one-minute iteration cycle).
+- **Labeled poster-tile look - OPEN design idea, no gate (regated 2026-07-20).**
+  The poster+label-on-fade design is live (fade at top 220, 150px, full
+  strength) and the owner paused tuning there ("let's pause for a moment here
+  but make it a task to revisit this again").
+  **The original gating premise is DEAD and was removed:** this item used to say
+  "revisit before cutting the 1.0.40 release". 1.0.40 shipped long ago, and the
+  tiles were reworked twice since (1.0.41 and 1.0.71). It gates nothing.
+  What remains OPEN is the design question itself: revisit the fade
+  height/strength and overall tile look with the owner, whenever the owner wants
+  to. The build and test loop are in place. See also the P1 defect above about
+  "Show Title and Year on Poster Wall View", which touches this same view.
 
-- **Phase 4/5 MUST handle the proxy's 1h manifest cache** (learned on the ATV
-  2026-07-10): the proxy service caches its GENERATED addons.xml for an hour
+- **STANDING NOTE (demoted from open work 2026-07-20), the proxy's 1h manifest
+  cache.** This was filed as "Phase 4/5 MUST handle ...". It is no longer open
+  work: Phase 4 is complete and Phase 5 was DROPPED on 2026-07-15, so there is
+  no phase left to handle it. The ADVICE below stays valid and applies to every
+  repo-resolved install, so it is kept as a standing operational note rather
+  than deleted. Learned on the ATV 2026-07-10: the proxy service caches its
+  GENERATED addons.xml for an hour
   (LoadingCache TTL) and Kodi's "Check for updates" / full Kodi restarts do
   NOT reliably bust a bad/stale build - the deterministic refresh is the
   proxy's own update endpoint (`http://127.0.0.1:<port>/update`, exposed in

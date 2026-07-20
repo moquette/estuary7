@@ -57,8 +57,10 @@ machinery deleted; skin updates come only from us.
   (Sizing at the time of this decision: ~94MB. The shipped zip is ~21MB since the
   1.0.39/1.0.44 payload trims; the headroom argument is unchanged.)
 - License: upstream is **GPL-2.0 (code) + CC-BY-SA-4.0 (artwork)** - a rebranded fork is
-  permitted with attribution + license retained. (The playbook's "MIT" note at line 42
-  is WRONG and gets corrected in Phase 6.)
+  permitted with attribution + license retained. (~~The playbook's "MIT" note at line 42
+  is WRONG and gets corrected in Phase 6.~~ **CLOSED 2026-07-20: corrected now, not
+  deferred.** `repo/docs/playbooks/modv2plus-dev-cycle-and-lessons.md:42` states the
+  real licenses. Nothing about this is owed to Phase 6.)
 - `repository.kodinerds` must stay installed on boxes (pinned in the base closure,
   `_tools/test_modular_setup.py:542`, and serves script.skinshortcuts +
   image.resource.select), so keeping the same skin id would be a permanent version race.
