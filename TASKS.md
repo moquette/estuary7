@@ -1052,14 +1052,45 @@ landed on the bench box(es) ahead of it). In order:
   close, or say what still fails.**
 
 - **P1 DEFECT (owner-reported 2026-07-19): Skin Settings > Library > "Show
-  Title and Year on Poster Wall View" does not work.** Toggling the setting
-  produces no visible change on the poster wall view. Not yet triaged: unknown
-  whether the setting id is written but nothing reads it, whether the view's
-  label blocks are gated on a different condition, or whether the transform
-  dropped the wiring. Reproduce first, then trace the setting id from
-  `settings.xml` through the poster wall view XML before proposing a fix. Note
-  the related deferred item below (labeled poster-tile look, 1.0.40) - the
-  label-on-fade work touched this same view.
+  Title and Year on Poster Wall View" does not work.** DEFERRED by owner
+  2026-07-20, to be revisited next session. **Triaged already, do NOT re-derive
+  the trace below.**
+
+  - Setting id is **`show_wallviewlabels`** (string `#31656`, radiobutton `921`
+    at `xml/SkinSettings.xml:978` upstream / `:982` built). It is NOT
+    `hide_pubyear`, which is a different setting (`#31554`, control 905).
+  - It has **exactly ONE consumer in the whole skin**:
+    `xml/View_54_InfoWall.xml:1621`, which includes `WallViewLabels` (defined at
+    `:1274`, year label at `:1296`). The only caller passing `infolabels=true`
+    is **view 500 "Wall (posters)"** (`View_500_Wall.xml:32-33` and `:42-43`).
+  - **Not a fork regression.** `grep show_wallviewlabels tools/ tests/` is
+    empty, and a full upstream-vs-built diff of `View_54_InfoWall.xml` (98
+    hunks) contains zero hunks touching `WallViewLabels`. This is stock
+    Estuary-modv2 behaviour, inert before 1.0.72, unchanged by it, and unchanged
+    by its revert.
+  - **NOT the reverted 1.0.72.** That was a separate feature (year on
+    plugin-backed movie lists) and explicitly declared view 500 out of scope.
+    Re-landing it does not fix this.
+
+  **Two live mechanisms, and the fix differs by which one it is. The owner
+  answer needed is: which view is on screen when toggling does nothing?**
+
+  1. **Scope.** The setting only ever affects view **500 "Wall (posters)"**
+     (`#31102`). On "InfoWall (posters)" (`#31101`), "Poster" (`20021`) or
+     either ThumbsWall it is genuinely a no-op. Those names differ by one word
+     in the view picker, so this is easy to hit. Fix would be widening
+     `show_wallviewlabels` beyond view 500, or relabelling `#31656` so it stops
+     promising more than it delivers.
+  2. **Content type.** View 500 only routes to `InfoWallMovieLayout` (the layout
+     carrying `infolabels=true`) when `Container.Content(movies|sets|tvshows|
+     seasons)`. A plugin listing reporting `Container.Content(videos)` falls to
+     `InfoWallEpisodeLayout` (`View_500_Wall.xml:51,62`), which never includes
+     `WallViewLabels`, so the toggle is structurally unreachable there. Given
+     the owner's plugin-backed Movies setup this is the likely case. Fix would
+     be the routing at `View_500_Wall.xml:46,57`.
+
+  Reproduce on the wipeable macOS Kodi bench before any hardware: seed a
+  plugin-backed movie list, force view 500, toggle control 921.
 
 - **HARDEN: the skin closes Kodi entirely on some Back/window-close paths
   (owner: "temperamental... I backed up from a view and it closed and had
