@@ -33,10 +33,9 @@ was never routed to the tracker.
 both are still required reading before transform work. But neither is the open
 task list. **`TASKS.md` is.**
 
-Note the status contradictions recorded at the top of `TASKS.md` before you
-trust any version number in this repo: the tracker's section headings, its
-bench-state block, and its release entries disagree with each other about what
-is current. `skin_build.lock` and `git log` are the load-bearing facts.
+Do not trust version numbers in `TASKS.md` section headings or its bench-state
+block; both lag reality. `skin_build.lock` and `git log` are the load-bearing
+facts.
 
 ## HARD CONSTRAINT - the office Fire TV is hands-off
 
@@ -176,8 +175,17 @@ that keeps Live TV/Radio visible like stock - numeric window ids do NOT work
 
 ## House rules (inherited from the fleet's workflow)
 
-- implement -> TEST -> gate -> adversarial QA -> REAL-DEVICE verify -> document
-  -> only then commit/release. No "fixed in code" claims without hardware proof.
+- implement -> TEST -> gate -> commit/release. **Independent QA + architecture
+  review is required ONLY for changes to backup, restore, or wipe code; this
+  repo has none, so no review is mandated here** (narrowed 2026-07-20 from
+  "every phase"). Still no "fixed in code" claims without proof.
+- **Routine changes get a one-line commit message.** Long-form records are for
+  genuine incidents only.
+- Approval is needed for DESTRUCTIVE or OUTWARD-FACING actions only (restoring
+  onto a box, publishing, pushing). Reading logs, listing files and read-only
+  JSON-RPC need no approval. `192.168.7.162` stays HANDS-OFF for everything.
+- Safety core, unchanged: CI green before deploy, and **skins install from the
+  Kodi repo only, never adb/devicectl push**.
   (Historical note: the Office Fire TV 192.168.7.162 WAS the instrumented bench
   and most of the recorded verification came from it. It is now HANDS-OFF, see
   the constraint at the top of this file. tvOS boxes cannot screenshot. There

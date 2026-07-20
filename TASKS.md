@@ -3,44 +3,20 @@
 Estuary 7 - fork-by-build of skin.estuary.modv2 for the Tony.7.Bones fleet.
 Full phase plan + locked decisions: `docs/PLAN.md`. Project rules: `CLAUDE.md`.
 
-> **This file is the task index for this project.** Open work is in three
-> places, all near the bottom: "Open hardening" (owner-reported 2026-07-17),
-> "Deferred / revisit later", and the unchecked Phase 6 box in Phase status.
-> Everything between them is a release history and must not be read as a
-> backlog. Fleet meta index: `~/Code/moquette/kodi/TASKS.md`.
+**The LIVE open-item list is `~/Code/moquette/kodi/TASKS.md` (2026-07-20).**
+This file is now mostly historical record. Its bodies are kept deliberately.
 
-## Status contradictions (audited 2026-07-18; 4 of 7 closed 2026-07-20)
+> Open work here is in three places, all near the bottom: "Open hardening"
+> (owner-reported 2026-07-17), "Deferred / revisit later", and the unchecked
+> Phase 6 box in Phase status. Everything between them is a release history and
+> must not be read as a backlog.
 
-Read this before trusting any version number or open/closed marker below.
-Three items remain; the owner decides those.
+## Version facts
 
-> **Audit 2026-07-20:** the original list had seven items. Four were verified
-> against the tree and DELETED because they were provably already fixed:
-> the old item 2 (1.0.66 "NOT committed") is adjudicated in place at
-> `TASKS.md:274-280` and tag `v1.0.66` exists; the old item 5 (Phase 5 still
-> live in PLAN.md) is answered by the superseded banner at `docs/PLAN.md:8-19`;
-> the old item 6 (FINDINGS.md items listed OPEN) is answered by
-> `docs/verification/phase3/FINDINGS.md:90,94`, where both are annotated CLOSED;
-> and the old item 7 (the playbook documents a reverted fix as current) is
-> answered by `docs/playbooks/skinshortcuts-reset-tvos-vfs-split.md:3-5,152-158`,
-> which explicitly disowns the 1.0.24 attempt. The three below are renumbered;
-> they were items 1, 3 and 4.
-
-1. **What is current: 1.0.65 or 1.0.66?** The "Post-launch hardening" heading
-   (line ~131) says "1.0.28-1.0.65 (current: 1.0.65, build-verified)". The
-   first bullet inside that same section is 1.0.66 and says HARDWARE-VERIFIED
-   by the owner on 2026-07-17. The heading was never updated.
-2. **"Open hardening" item 2 (menu edits take 1-2 min to show) is very likely
-   already fixed.** Its root-cause analysis was overtaken by 1.0.62-1.0.66,
-   and the 1.0.66 entry describes fixing exactly that chain with owner
-   hardware verification. Nobody closed the item. It is left OPEN here rather
-   than silently closed. **Owner: confirm and close, or say what still fails.**
-3. **Bench state is stale.** It records 1.0.40 on the office box and 1.0.39 on
-   atv2 "confirmed live 2026-07-15", contradicted by the 1.0.48 entry
-   ("ATV2 self-updated 1.0.39 -> 1.0.46") and by the 1.0.66 verification claim.
-   Partially corrected 2026-07-20 in the bench-state block itself: the stale
-   modv2plus rationale and the stale box-version claims are now labelled. Still
-   OPEN because the office Fire TV remains hands-off and unverified.
+`skin_build.lock` and `git log` are load-bearing; section headings and the
+bench-state block below are not, and both lag reality. (The tracker's
+self-auditing "Status contradictions" section was CUT 2026-07-20 as
+meta-commentary. Its one real open item moved into "Open hardening".)
 
 ## HARD CONSTRAINT - the office Fire TV is hands-off
 
@@ -1069,6 +1045,12 @@ landed on the bench box(es) ahead of it). In order:
 
 ## Open hardening (owner-reported 2026-07-17, atv2) - TRACKED, not yet fixed
 
+- **LIKELY ALREADY FIXED, needs an owner call: "menu edits take 1-2 min to
+  show".** Its root-cause analysis was overtaken by 1.0.62-1.0.66, and the
+  1.0.66 entry describes fixing exactly that chain with owner hardware
+  verification. Left OPEN rather than silently closed. **Owner: confirm and
+  close, or say what still fails.**
+
 - **P1 DEFECT (owner-reported 2026-07-19): Skin Settings > Library > "Show
   Title and Year on Poster Wall View" does not work.** Toggling the setting
   produces no visible change on the poster wall view. Not yet triaged: unknown
@@ -1233,5 +1215,8 @@ the owner filed them; move them to `ezmpp/TASKS.md` if that is the right owner.
 
 - The fleet stays on overlay 1.8.0 until Phase 5; nothing here touches boxes
   before then.
-- Every phase: implement -> test -> gate -> QA -> real-device verify -> document
-  -> commit. No hardware claim without proof.
+- implement -> test -> gate -> commit. No hardware claim without proof.
+  Independent QA + architecture review applies ONLY to backup/restore/wipe code
+  changes, which this repo has none of (narrowed 2026-07-20).
+- Skins install from the Kodi repo only, never adb/devicectl push. CI green
+  before deploy.
