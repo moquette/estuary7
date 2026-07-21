@@ -142,14 +142,15 @@ def test_labeled_poster_tiles_render_poster_plus_label(corpus):
     assert "tile_unlabeled" not in joined
 
 
-def test_video_label_optout_toggle_wired(corpus):
-    """1.0.41: 'Do not apply labels to Movies & TV Shows' (radiobutton 1103
-    under 'Show labeled tiles') hides the fork poster fade + label on
+def test_video_label_optin_toggle_wired(corpus):
+    """1.0.73 (owner request): 'Show Movies and TV Shows labels' (radiobutton
+    1103 under 'Show labeled tiles') opts IN to the fork poster fade + label on
     video-library items only, via per-item <visible> terms on the fork
     controls - never include conditions (the withdrawn first attempt's
-    hardware lesson). Default off = the shipped 1.0.40 look untouched."""
-    optout = (
-        "![Skin.HasSetting(video_tile_labels_off) + ["
+    hardware lesson). Reversed from the prior opt-out: default off = clean
+    posters on video tiles, the stock-closer look."""
+    optin = (
+        "[Skin.HasSetting(show_video_tile_labels) | !["
         "String.IsEqual(ListItem.DBType,movie) | "
         "String.IsEqual(ListItem.DBType,set) | "
         "String.IsEqual(ListItem.DBType,tvshow) | "
@@ -158,42 +159,46 @@ def test_video_label_optout_toggle_wired(corpus):
     )
     ih = corpus["Includes_Home.xml"]
     # Every fork fade (4) and label (8) control carries the gate.
-    assert ih.count("<visible>" + optout + "</visible>") == 12
+    assert ih.count("<visible>" + optin + "</visible>") == 12
     # The sub-toggle: wired in SkinSettings.xml, visible only while the
     # parent labels toggle is on, and nothing else writes the flag.
     skinsettings = corpus["SkinSettings.xml"]
-    assert "Skin.ToggleSetting(video_tile_labels_off)" in skinsettings
-    assert "<selected>Skin.HasSetting(video_tile_labels_off)</selected>" in skinsettings
+    assert "Skin.ToggleSetting(show_video_tile_labels)" in skinsettings
+    assert (
+        "<selected>Skin.HasSetting(show_video_tile_labels)</selected>" in skinsettings
+    )
     writers = [
         name
         for name, text in corpus.items()
-        if "Skin.ToggleSetting(video_tile_labels_off)" in text
+        if "Skin.ToggleSetting(show_video_tile_labels)" in text
     ]
     assert writers == ["SkinSettings.xml"], writers
     readers = sorted(
-        name for name, text in corpus.items() if "video_tile_labels_off" in text
+        name for name, text in corpus.items() if "show_video_tile_labels" in text
     )
     assert readers == ["Includes_Home.xml", "SkinSettings.xml"], readers
 
 
-def test_retired_video_label_id_is_never_read(corpus):
-    """1.0.71: `hide_video_tile_labels` is RETIRED and must appear nowhere in
-    the built skin.
+def test_retired_video_label_ids_are_never_read(corpus):
+    """`hide_video_tile_labels` (retired 1.0.71) and `video_tile_labels_off`
+    (retired 1.0.73) must appear nowhere in the built skin.
 
-    The withdrawn first-take 1.0.40 published that id and wrote it `true`
-    into addon_data; 1.0.41 later re-pointed the same id at live behaviour,
-    so any box (or any EZ Maintenance++ backup zip) still carrying the stale
-    value silently loses the title and year on its movie/TV widget tiles.
-    A published name cannot be un-published, so the fork stops reading it
-    instead - which makes every stale `true` in the wild inert forever,
-    without writing to a single box's storage.
+    The withdrawn first-take 1.0.40 published `hide_video_tile_labels` and
+    wrote it `true` into addon_data; 1.0.41 later re-pointed the same id at
+    live behaviour, so any box (or any EZ Maintenance++ backup zip) still
+    carrying the stale value silently loses the title and year on its movie/TV
+    widget tiles. 1.0.73 then reversed the toggle to opt-in and dropped
+    `video_tile_labels_off` too. A published name cannot be un-published, so
+    the fork stops reading these instead - which makes every stale value in
+    the wild inert forever, without writing to a single box's storage.
 
     If this test fails, someone has re-armed a live landmine. Pick a new
-    name; never revive this one."""
-    offenders = sorted(
-        name for name, text in corpus.items() if "hide_video_tile_labels" in text
-    )
-    assert offenders == [], offenders
+    name; never revive these."""
+    for retired in ("hide_video_tile_labels", "video_tile_labels_off"):
+        offenders = sorted(
+            name for name, text in corpus.items() if retired in text
+        )
+        assert offenders == [], (retired, offenders)
 
 
 def test_pov_search_toggle_wired(corpus):

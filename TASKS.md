@@ -142,8 +142,26 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.72 (current: 1.0.71; 1.0.72 shipped and was reverted)
+## Post-launch hardening, 1.0.28-1.0.73 (current: 1.0.71 released; 1.0.73 in this branch; 1.0.72 shipped and was reverted)
 
+- **1.0.73 (2026-07-21) - Movies & TV Shows label toggle REVERSED and renamed
+  (owner request), IN BRANCH, not yet released.** The 1103 sub-toggle under
+  "Show labeled tiles" was flipped from opt-out to opt-in and renamed from
+  "Do not apply labels to Movies & TV Shows" to "Show Movies and TV Shows
+  labels", default OFF. Default OFF now means the fork fade + label are HIDDEN
+  on video-library items (DBType movie/set/tvshow/season/episode), leaving the
+  clean poster - the stock-closer default per the First Mandate; the owner opts
+  IN to bring labels back. Non-video poster items keep their label either way,
+  and the gate still rides per-item `<visible>` terms on the fork's own
+  controls (never include conditions - the 1.0.40 hardware lesson). The prior
+  setting id `video_tile_labels_off` is RETIRED in favour of a fresh
+  `show_video_tile_labels`, same stale-id discipline as the 1.0.71 retirement;
+  `test_retired_video_label_ids_are_never_read` now guards both retired ids.
+  Version chosen 1.0.73, NOT 1.0.72: `v1.0.72` is a burned tag (a released,
+  then reverted, "show the year on plugin-backed movie lists" build - see the
+  entry below), so this moves forward past it. Ship delta vs 1.0.71:
+  `tools/skin_transforms.py` (2 constants + the toggle block), the two tests
+  that mirror them, `docs/DESIGN.md`, and the lock version bump.
 - **1.0.72 (2026-07-19) - SHIPPED THEN REVERTED, REASON UNRECORDED. OWNER
   INPUT NEEDED.** Commit `8a0d8db` ("Estuary 7 1.0.72: show the year on
   plugin-backed movie lists") was tagged and released on 2026-07-19, then

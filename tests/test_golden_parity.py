@@ -258,15 +258,15 @@ _SYSINFO_IN_GENERAL = (
 )
 
 # The fork's "Show labeled tiles" sub-option (1.0.41, owner request
-# 2026-07-15): hide the fork poster fade + label on Movies & TV Shows tiles
-# only. Inserted after the PVR-info sub-option (10022), before the next
-# stock toggle (10014).
-_VIDEO_LABEL_OPTOUT_TOGGLE = (
+# 2026-07-15; reversed + renamed 1.0.73): opt IN to the fork poster fade +
+# label on Movies & TV Shows tiles only. Inserted after the PVR-info
+# sub-option (10022), before the next stock toggle (10014).
+_VIDEO_LABEL_OPTIN_TOGGLE = (
     '\t\t\t\t<control type="radiobutton" id="1103">\n'
     "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
-    "\t\t\t\t\t<label>  ∟Do not apply labels to Movies &amp; TV Shows</label>\n"
-    "\t\t\t\t\t<onclick>Skin.ToggleSetting(video_tile_labels_off)</onclick>\n"
-    "\t\t\t\t\t<selected>Skin.HasSetting(video_tile_labels_off)</selected>\n"
+    "\t\t\t\t\t<label>  ∟Show Movies and TV Shows labels</label>\n"
+    "\t\t\t\t\t<onclick>Skin.ToggleSetting(show_video_tile_labels)</onclick>\n"
+    "\t\t\t\t\t<selected>Skin.HasSetting(show_video_tile_labels)</selected>\n"
     "\t\t\t\t\t<visible>!Skin.HasSetting(hide_tile_labels)</visible>\n"
     "\t\t\t\t</control>\n"
     '\t\t\t\t<control type="radiobutton" id="10014">\n'
@@ -521,7 +521,7 @@ NORMALIZE = {
         ),
         (
             '\t\t\t\t<control type="radiobutton" id="10014">\n',
-            _VIDEO_LABEL_OPTOUT_TOGGLE,
+            _VIDEO_LABEL_OPTIN_TOGGLE,
             1,
         ),
         # 1.0.42 (moved/renamed 1.0.43): POV search toggle, just above the
