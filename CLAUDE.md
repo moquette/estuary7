@@ -2,14 +2,9 @@
 
 This file provides guidance to Claude Code when working in this repository.
 
-## MANDATORY: markdown house style
+## Markdown rules (enforced by the global git hook)
 
-Before writing or editing ANY `.md` file in this tree, follow the
-**`markdown-house-style`** skill at
-`~/Code/moquette/kodi/.claude/skills/markdown-house-style/SKILL.md`. It is the
-single standard for all five checkouts and every agent, with no exceptions.
-
-Non-negotiable summary:
+These are the whole standard. There is no skill to load.
 
 - No em dash, en dash, horizontal bar, robot emoji, or AI attribution anywhere.
   The plain hyphen `-` is always fine.
@@ -17,25 +12,20 @@ Non-negotiable summary:
   list item and splits your paragraph.
 - Never let an inline code span cross a line break. It strips the
   list-continuation indent and leaves the next agent editing a stale copy.
-- Markdown is deliberately NOT auto-formatted here (removed from
-  `~/.claude/hooks/auto-format` on 2026-07-18, because prettier's markdown
-  printer relocates content between block containers). Do not add it back.
+- Markdown is deliberately NOT auto-formatted here. Do not add it back.
 
-## READ FIRST: start at `TASKS.md`
 
-**`TASKS.md` is this project's task index** and holds every open item: the two
-owner-reported hardening issues from 2026-07-17, the deferred design items, the
-flagged-but-unfixed upstream typos, and the full release history. Until
-2026-07-18 this file did not point at it, so an agent reading only `CLAUDE.md`
-was never routed to the tracker.
+## Where things stand
 
-`docs/PLAN.md` is the phase plan and `docs/DESIGN.md` is the design intent;
-both are still required reading before transform work. But neither is the open
-task list. **`TASKS.md` is.**
+There is no tracker. `TASKS.md` was deleted 2026-07-21 along with the rest of
+the fleet process; it had become a chore that listed 18 items already done.
+`git log` and `skin_build.lock` are the load-bearing facts. `docs/PLAN.md` is
+the phase plan and `docs/DESIGN.md` is the design intent; both are still
+required reading before transform work.
 
-Do not trust version numbers in `TASKS.md` section headings or its bench-state
-block; both lag reality. `skin_build.lock` and `git log` are the load-bearing
-facts.
+**For anything Apple TV, read `~/Code/moquette/kodi/.claude/skills/apple-tv/SKILL.md`.**
+It is the single reference: storage model, the four I/O bugs, the skinshortcuts
+menu split, the Siri remote keymap, and the crash inventory.
 
 ## HARD CONSTRAINT - the office Fire TV is hands-off
 
@@ -45,7 +35,7 @@ bedroom Fire TV at `192.168.7.84` is the sanctioned JSON-RPC target. Carry this
 prohibition into any subagent prompt you write.
 
 This supersedes the "instrumented bench" language further down in this file and
-in `TASKS.md`, `docs/PLAN.md` and `docs/verification/phase3/FINDINGS.md`. Those
+in `docs/PLAN.md` and `docs/verification/phase3/FINDINGS.md`. Those
 predate the rule and describe how the box WAS used; they are not authorization
 to use it now.
 
@@ -191,7 +181,7 @@ that keeps Live TV/Radio visible like stock - numeric window ids do NOT work
 - No AI attribution anywhere; no em dashes in written deliverables.
 - STALE, kept for context: "The fleet is exposed ONLY during the Phase 5
   migration (see docs/PLAN.md), one box at a time." **Phase 5 was DROPPED as a
-  project by owner decision on 2026-07-15** (`TASKS.md:67-76`): boxes switch to
+  project by owner decision on 2026-07-15: boxes switch to
   Estuary 7 manually, one at a time, at leisure, and `script.tony7bones.modv2plus`
   is deprecated. `docs/PLAN.md` was never updated for that drop and still
   documents Phase 5 as live with a 2.0.0 migrator; do not build from it.
