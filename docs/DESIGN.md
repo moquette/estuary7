@@ -158,13 +158,17 @@ revert toward stock - flag it during transform work, ask the owner:
   drawn poster width - darker and taller than InfoWallMovieLayout's
   episode-count band per owner taste, bench-tuned 2026-07-15); items WITHOUT
   (music, genres, categories) keep the stock square look byte-for-byte.
-  1.0.41 adds an owner-requested opt-out: "Do not apply labels to Movies &
-  TV Shows" (radiobutton 1103 under "Show labeled tiles", beside the
-  PVR-info sub-option, default OFF). ON = the fork fade + label hide on
-  video-library items (DBType movie/set/tvshow/season/episode) per item,
-  leaving the clean poster; everything else keeps its label. Safe where the
-  withdrawn first attempt was not: the gate rides `<visible>` terms on the
-  fork's own controls - the poster art renders identically either way.
+  1.0.41 added an owner-requested toggle here, REVERSED and renamed 1.0.73 to
+  "Show Movies and TV Shows labels" (radiobutton 1103 under "Show labeled
+  tiles", beside the PVR-info sub-option, default OFF). It is now opt-IN:
+  default OFF = the fork fade + label are hidden on video-library items (DBType
+  movie/set/tvshow/season/episode) per item, leaving the clean poster (the
+  stock-closer default, the First Mandate); ON brings the fork fade + label
+  back on those items. Everything else keeps its label either way. Safe where
+  the withdrawn first attempt was not: the gate rides `<visible>` terms on the
+  fork's own controls - the poster art renders identically either way. The
+  reversal retired the prior setting id `video_tile_labels_off` in favour of a
+  fresh `show_video_tile_labels`, keeping the 1.0.71 stale-id discipline.
   WidgetPanelPoster keeps its stock design (labels on focus only, no
   stacking bug). ENGINEERING RULE (hardware-learned, see TASKS.md 1.0.40):
   the per-item split rides `<control type="group">` visibility - NEVER

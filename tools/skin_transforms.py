@@ -185,21 +185,27 @@ _SKINSETTINGS_TILE_TOGGLE = """\t\t\t\t<control type="radiobutton" id="1102">
 
 # "Show labeled tiles" sub-option (owner request 2026-07-15, shipped 1.0.41),
 # styled like the PVR-info sub-option above it (indented ∟ label, visible
-# only while the parent is on): hide the fork poster fade + label on
-# Movies & TV Shows tiles only (see _VIDEO_LABEL_OPTOUT, which the fork
+# only while the parent is on): opt IN to the fork poster fade + label on
+# Movies & TV Shows tiles (see _VIDEO_LABEL_OPTIN, which the fork
 # fade/label controls read per item). Written in POST-FLIP names on purpose -
 # step 1c only rewrites the upstream HideWidgetLabels forms, so this block
 # passes through untouched. Id 1103 is unused by upstream; default off =
-# zero settings writes, the shipped 1.0.40 look.
+# zero settings writes, clean posters on video tiles.
 #
 # 1.0.71: the id this toggle reads/writes was RETIRED and replaced. See
-# _RETIRED_VIDEO_LABEL_ID below for why - in short, the old name is armed
+# _RETIRED_VIDEO_LABEL_IDS below for why - in short, the old name is armed
 # `true` in the wild and any box carrying it lost its movie/TV titles.
-_VIDEO_LABEL_OPTOUT_TOGGLE = """\t\t\t\t<control type="radiobutton" id="1103">
+#
+# 1.0.73 (owner request): the toggle was REVERSED and renamed. It now reads
+# "Show Movies and TV Shows labels" and means opt-in, default OFF = no labels
+# on video tiles (the stock-closer look, the First Mandate). The prior id
+# `video_tile_labels_off` was retired too - a fresh id makes every stale value
+# in the wild inert with zero writes, same discipline as the 1.0.71 retirement.
+_VIDEO_LABEL_OPTIN_TOGGLE = """\t\t\t\t<control type="radiobutton" id="1103">
 \t\t\t\t\t<include>DefaultSettingButton</include>
-\t\t\t\t\t<label>  ∟Do not apply labels to Movies &amp; TV Shows</label>
-\t\t\t\t\t<onclick>Skin.ToggleSetting(video_tile_labels_off)</onclick>
-\t\t\t\t\t<selected>Skin.HasSetting(video_tile_labels_off)</selected>
+\t\t\t\t\t<label>  ∟Show Movies and TV Shows labels</label>
+\t\t\t\t\t<onclick>Skin.ToggleSetting(show_video_tile_labels)</onclick>
+\t\t\t\t\t<selected>Skin.HasSetting(show_video_tile_labels)</selected>
 \t\t\t\t\t<visible>!Skin.HasSetting(hide_tile_labels)</visible>
 \t\t\t\t</control>
 """
@@ -1211,13 +1217,13 @@ def _edit_skinsettings(text: str, path: str) -> str:
         path=path,
     )
     # New sub-option under "Show labeled tiles", after the PVR-info
-    # sub-option (10022) and before the next stock toggle (10014): hide the
-    # fork poster labels on Movies & TV Shows tiles only (see
-    # _VIDEO_LABEL_OPTOUT_TOGGLE).
+    # sub-option (10022) and before the next stock toggle (10014): opt in to
+    # the fork poster labels on Movies & TV Shows tiles only (see
+    # _VIDEO_LABEL_OPTIN_TOGGLE).
     text = _insert_before(
         text,
         '\t\t\t\t<control type="radiobutton" id="10014">\n',
-        _VIDEO_LABEL_OPTOUT_TOGGLE,
+        _VIDEO_LABEL_OPTIN_TOGGLE,
         path=path,
     )
     # POV search toggle, just above the Power-options background toggle
@@ -1685,37 +1691,44 @@ _POSTER_EMPTY = (
 )
 
 # The 1103 sub-toggle's per-item gate (owner request 2026-07-15, wired as
-# 1.0.41): 'Do not apply labels to Movies & TV Shows' hides the fork fade +
-# label on video-library items only. Safe where the withdrawn first 1.0.40
-# attempt was not: the fade and label are fork-authored CONTROLS gated by
-# per-item <visible> conditions - the poster art renders identically either
-# way, so no include-condition split can desynchronize. Default off = the
-# owner's shipped 1.0.40 look, zero settings writes.
+# 1.0.41; REVERSED 1.0.73): 'Show Movies and TV Shows labels' opts IN to the
+# fork fade + label on video-library items only. Default OFF now means those
+# items render the CLEAN poster (the stock-closer look, the First Mandate);
+# turning it on brings the fork fade + label back. Non-video poster items
+# (music, genres, categories) are unaffected either way. Safe where the
+# withdrawn first 1.0.40 attempt was not: the fade and label are fork-authored
+# CONTROLS gated by per-item <visible> conditions - the poster art renders
+# identically either way, so no include-condition split can desynchronize.
 #
-# RETIRED ID - do not reuse, do not read (1.0.71, owner-reported):
-# `hide_video_tile_labels` was first published by the WITHDRAWN first-take
-# 1.0.40 (pulled within the hour), whose sub-toggle wrote it into
-# userdata/addon_data/skin.estuary7/settings.xml. Pulling the build did not
-# unwrite the value - it only went dormant, because 1.0.39/1.0.40 read
+# RETIRED IDS - do not reuse, do not read:
+# `hide_video_tile_labels` (1.0.71, owner-reported) was first published by the
+# WITHDRAWN first-take 1.0.40 (pulled within the hour), whose sub-toggle wrote
+# it into userdata/addon_data/skin.estuary7/settings.xml. Pulling the build did
+# not unwrite the value - it only went dormant, because 1.0.39/1.0.40 read
 # nothing. 1.0.41 then re-pointed that SAME id at live behaviour, so every
 # box still carrying the stale `true` silently lost the title and year on
 # its movie/TV widget tiles. The office Fire TV was found armed on
 # 2026-07-19 with exactly that symptom, despite TASKS.md recording the flag
 # as cleared there on 07-15.
+# `video_tile_labels_off` (1.0.71's replacement, retired here 1.0.73) is
+# dropped by the polarity reversal - the toggle no longer reads it. A box that
+# had opted to hide labels carries a stale `true`; under the new default that
+# is harmless (labels are already off by default), but reading a FRESH id
+# `show_video_tile_labels` keeps to the same discipline: no migration, no write.
 #
-# Clearing the flag box-by-box does NOT close this. The stale value also
-# lives inside every EZ Maintenance++ backup zip taken during the withdrawn
-# build's window, so any future restore can re-arm it on a box that was
+# Clearing a stale flag box-by-box does NOT close the general hazard. Stale
+# values also live inside every EZ Maintenance++ backup zip taken during a
+# build's window, so any future restore can re-arm one on a box that was
 # never near the bad build. A name cannot be un-published; the only durable
-# fix is to stop reading it. Reading a FRESH id makes every stale `true`
+# fix is to stop reading it. Reading a FRESH id makes every stale value
 # in the wild - live boxes and archived zips alike - permanently inert,
 # with no migration and no write to anyone's storage (which on tvOS would
 # have to clear the vectored NSUserDefaults KEY, not the file, to work at
-# all). test_retired_video_label_id_is_never_read enforces the retirement.
-_RETIRED_VIDEO_LABEL_ID = "hide_video_tile_labels"
+# all). test_retired_video_label_ids_are_never_read enforces the retirement.
+_RETIRED_VIDEO_LABEL_IDS = ("hide_video_tile_labels", "video_tile_labels_off")
 
-_VIDEO_LABEL_OPTOUT = (
-    "![Skin.HasSetting(video_tile_labels_off) + ["
+_VIDEO_LABEL_OPTIN = (
+    "[Skin.HasSetting(show_video_tile_labels) | !["
     "String.IsEqual(ListItem.DBType,movie) | "
     "String.IsEqual(ListItem.DBType,set) | "
     "String.IsEqual(ListItem.DBType,tvshow) | "
@@ -1794,7 +1807,7 @@ def _widget_poster_label(focused: bool, with_year: bool) -> str:
         "\t\t\t\t\t\t\t<visible>Skin.HasSetting(HideWidgetLabels) + "
         + ("" if with_year else "!")
         + "Skin.HasSetting(hide_pubyear)</visible>\n"
-        "\t\t\t\t\t\t\t<visible>" + _VIDEO_LABEL_OPTOUT + "</visible>\n"
+        "\t\t\t\t\t\t\t<visible>" + _VIDEO_LABEL_OPTIN + "</visible>\n"
         "\t\t\t\t\t\t</control>\n"
     )
 
@@ -1813,7 +1826,7 @@ def _widget_poster_label_fade() -> str:
         "\t\t\t\t\t\t\t<texture>overlays/overlayfade.png</texture>\n"
         "\t\t\t\t\t\t\t<visible>!" + _POSTER_EMPTY + "</visible>\n"
         "\t\t\t\t\t\t\t<visible>Skin.HasSetting(HideWidgetLabels)</visible>\n"
-        "\t\t\t\t\t\t\t<visible>" + _VIDEO_LABEL_OPTOUT + "</visible>\n"
+        "\t\t\t\t\t\t\t<visible>" + _VIDEO_LABEL_OPTIN + "</visible>\n"
         "\t\t\t\t\t\t</control>\n"
     )
 
