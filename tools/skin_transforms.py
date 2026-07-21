@@ -1724,7 +1724,9 @@ _POSTER_EMPTY = (
 # in the wild - live boxes and archived zips alike - permanently inert,
 # with no migration and no write to anyone's storage (which on tvOS would
 # have to clear the vectored NSUserDefaults KEY, not the file, to work at
-# all). test_retired_video_label_ids_are_never_read enforces the retirement.
+# all). test_retired_video_label_ids_are_never_read READS this tuple and greps
+# the built tree for each entry, so adding an id here arms the guard - there is
+# no second list to keep in sync.
 _RETIRED_VIDEO_LABEL_IDS = ("hide_video_tile_labels", "video_tile_labels_off")
 
 _VIDEO_LABEL_OPTIN = (
