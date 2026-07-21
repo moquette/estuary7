@@ -142,11 +142,12 @@ prevention checklist:
 `CLAUDE.md` (Runtime gotchas). These fixes ship to the ATV via the proxy; the
 6-box fleet is untouched (still Phase 5-gated).
 
-## Post-launch hardening, 1.0.28-1.0.73 (current: 1.0.71 released; 1.0.73 in this branch; 1.0.72 shipped and was reverted)
+## Post-launch hardening, 1.0.28-1.0.73 (current: 1.0.73 released; 1.0.72 shipped, was reverted, and its release is now deleted)
 
 - **1.0.73 (2026-07-21) - Movies & TV Shows label toggle REVERSED and renamed
-  (owner request), IN BRANCH, not yet released.** The 1103 sub-toggle under
-  "Show labeled tiles" was flipped from opt-out to opt-in and renamed from
+  (owner request), RELEASED (tag `v1.0.73` on commit `ae0abc5`).** The 1103
+  sub-toggle under "Show labeled tiles" was flipped from opt-out to opt-in
+  and renamed from
   "Do not apply labels to Movies & TV Shows" to "Show Movies and TV Shows
   labels", default OFF. Default OFF now means the fork fade + label are HIDDEN
   on video-library items (DBType movie/set/tvshow/season/episode), leaving the
@@ -162,6 +163,18 @@ prevention checklist:
   entry below), so this moves forward past it. Ship delta vs 1.0.71:
   `tools/skin_transforms.py` (2 constants + the toggle block), the two tests
   that mirror them, `docs/DESIGN.md`, and the lock version bump.
+  Shipped via PR #1, squash-merged as `ae0abc5`; CI built and published the
+  asset (`skin.estuary7-1.0.73.zip`, sha256 `fe475bb4...c822f89b`), which was
+  then re-downloaded anonymously and byte-checked, and the packaged
+  `addon.xml` reads 1.0.73. Follow-up `973c77f` (PR #2) made the retired-id
+  registry load-bearing: `test_retired_video_label_ids_are_never_read` now
+  READS `_RETIRED_VIDEO_LABEL_IDS` from `tools/skin_transforms.py` instead of
+  re-typing the ids, so retiring a future id arms the guard automatically.
+  That follow-up is comment-and-test only, so the shipped zip is unchanged and
+  the publish job took its idempotent no-op path.
+  NOT yet done: `verify_release.py --tag v1.0.73 --rebuild`, which is the only
+  check that compares the published asset against a fresh deterministic
+  rebuild of its tagged commit. The daily release-guard sweep covers it.
 - **1.0.72 (2026-07-19) - SHIPPED THEN REVERTED, REASON UNRECORDED. OWNER
   INPUT NEEDED.** Commit `8a0d8db` ("Estuary 7 1.0.72: show the year on
   plugin-backed movie lists") was tagged and released on 2026-07-19, then
@@ -180,6 +193,13 @@ prevention checklist:
   is stranded on withdrawn code. Nothing checks for this. If any box is
   suspected to have caught 1.0.72, it needs a manual reinstall, not a repo
   update.
+  **Resolved 2026-07-21 (partly):** the `v1.0.72` RELEASE was deleted at owner
+  instruction, so no catalog can offer the withdrawn build any more, and
+  1.0.73 supersedes it on version order regardless. The TAG `v1.0.72` was
+  deliberately KEPT on `8a0d8db`, which is what keeps the number burned and
+  unreusable. The stranded-box hazard above is unchanged: deleting a release
+  does not downgrade a box that already installed it. **The REASON the build
+  was reverted is still OPEN and still owner-supplied.**
 - **1.0.71 (2026-07-19) - movie and TV titles come back on home widget
   tiles: the withdrawn build's setting id is RETIRED - BENCH-VERIFIED AND
   RELEASED (tag `v1.0.71`, on revert commit `d6ae0de`).**
