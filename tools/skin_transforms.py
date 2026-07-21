@@ -158,6 +158,7 @@ _WIDGET_FLAGS = (
     "audioaddons",  # Music add-ons (#1038)
     "gameaddons",  # Game add-ons (#35049)
     "imageaddons",  # Picture add-ons (#1039)
+    "androidapps",  # Android apps (#20244), Android-only (owner 2026-07-21)
 )
 
 # The system-info toggle lives in stock Estuary's OWN structure (owner
@@ -1555,7 +1556,7 @@ def _edit_custom_tv_widgets(text: str, path: str) -> str:
 
 
 def _edit_custom_programs_widgets(text: str, path: str) -> str:
-    for flag in ("audioaddons", "gameaddons", "imageaddons"):
+    for flag in ("audioaddons", "gameaddons", "imageaddons", "androidapps"):
         text = _widget_toggle_invert(text, flag, path)
     return text
 

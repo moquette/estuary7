@@ -295,6 +295,7 @@ _WIDGET_INVERSIONS = [
         "audioaddons",
         "gameaddons",
         "imageaddons",
+        "androidapps",
     )
 ]
 _BACKGROUND_INVERSIONS = [
