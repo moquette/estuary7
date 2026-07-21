@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import pytest
 
+import skin_transforms  # noqa: E402  (tools/ is on sys.path via conftest.py)
+
 # Flags the retired runtime overlay used to WRITE; after the inversion not a
 # single reference may survive anywhere in the shipped tree.
 RETIRED_FLAGS = [
@@ -193,11 +195,16 @@ def test_retired_video_label_ids_are_never_read(corpus):
     the wild inert forever, without writing to a single box's storage.
 
     If this test fails, someone has re-armed a live landmine. Pick a new
-    name; never revive these."""
-    for retired in ("hide_video_tile_labels", "video_tile_labels_off"):
-        offenders = sorted(
-            name for name, text in corpus.items() if retired in text
-        )
+    name; never revive these.
+
+    The id list is READ from skin_transforms rather than re-typed here. That
+    does not weaken this module's independence rule (see the module docstring):
+    no transform EMITS these strings, so there is no mirrored producer whose
+    typo could hide. The constant is a registry, and importing it is what makes
+    it load-bearing - retiring an id there now arms this guard automatically
+    instead of relying on someone remembering to edit two files."""
+    for retired in skin_transforms._RETIRED_VIDEO_LABEL_IDS:
+        offenders = sorted(name for name, text in corpus.items() if retired in text)
         assert offenders == [], (retired, offenders)
 
 
