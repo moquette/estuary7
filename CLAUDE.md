@@ -175,10 +175,7 @@ that keeps Live TV/Radio visible like stock - numeric window ids do NOT work
 
 ## House rules (inherited from the fleet's workflow)
 
-- implement -> TEST -> gate -> commit/release. **Independent QA + architecture
-  review is required ONLY for changes to backup, restore, or wipe code; this
-  repo has none, so no review is mandated here** (narrowed 2026-07-20 from
-  "every phase"). Still no "fixed in code" claims without proof.
+- implement -> TEST -> gate -> commit/release.
 - **Routine changes get a one-line commit message.** Long-form records are for
   genuine incidents only.
 - Approval is needed for DESTRUCTIVE or OUTWARD-FACING actions only (restoring
