@@ -63,7 +63,7 @@ The recurring project trap: `script.skinshortcuts` writes its menu with `Element
 
 ## Fleet references (read the relevant one first)
 
-- `~/Code/moquette/kodi/repo/.claude/skills/kodi-storage-map/SKILL.md` - the exhaustive per-OS file map (what is vectored, what survives a purge, which API per class).
+- `~/Code/moquette/kodi/.claude/skills/kodi-storage-map/SKILL.md` - the exhaustive per-OS file map (what is vectored, what survives a purge, which API per class).
 - `.claude/skills/tvos-kodi-storage/SKILL.md` (this project) - your field guide: mechanism, fix patterns, research + verify checklist.
 - `~/Code/moquette/kodi/estuary7/docs/playbooks/skinshortcuts-reset-tvos-vfs-split.md` - the skinshortcuts menu split, field-proven.
 - `~/Code/moquette/kodi/estuary7/docs/playbooks/tvos-siri-remote-firetv-parity.md` - Siri-remote/keymap + the JSON-RPC-vs-physical-button diagnosis method.
