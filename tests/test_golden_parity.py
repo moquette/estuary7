@@ -558,6 +558,27 @@ NORMALIZE = {
             "",
             1,
         ),
+        # Orphaned '  |_ Display Position' (id 513) removed 2026-07-21: its parent
+        # id 510 is CoreELEC-gated and hidden here, but 513 has no <visible> of its
+        # own, so it rendered permanently greyed and unfocusable.
+        (
+            '\t\t\t\t<control type="button" id="513">\n'
+            "\t\t\t\t\t<label>  ∟$LOCALIZE[31712]</label>\n"
+            "\t\t\t\t\t<label2>$VAR[VideoResolutionPositionVar]</label2>\n"
+            "\t\t\t\t\t<enable>System.HasAddon(service.coreelec.settings) + "
+            "!String.IsEmpty(Skin.String(show_videoresolution)) + "
+            "!String.IsEqual(Skin.String(show_videoresolution),31578)</enable>\n"
+            "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+            '\t\t\t\t\t<onclick condition="String.IsEmpty(Skin.String(videoresolutionpos))">'
+            "Skin.SetString(videoresolutionpos,31710)</onclick>\n"
+            '\t\t\t\t\t<onclick condition="String.IsEqual(Skin.String(videoresolutionpos),31711)">'
+            "Skin.SetString(videoresolutionpos,31710)</onclick>\n"
+            '\t\t\t\t\t<onclick condition="String.IsEqual(Skin.String(videoresolutionpos),31710)">'
+            "Skin.SetString(videoresolutionpos,31711)</onclick>\n"
+            "\t\t\t\t</control>\n",
+            "",
+            1,
+        ),
         (
             "\t\t\t\t<width>470</width>\n\t\t\t\t<height>770</height>",
             "\t\t\t\t<width>470</width>\n\t\t\t\t<height>700</height>",

@@ -166,6 +166,47 @@ _WIDGET_FLAGS = (
 # as possible): General category, right below "Disable zoom effect"
 # (radiobutton 702), i.e. before "Default button on Video/Audio OSD" (button
 # 703). Id 1101 is unused by upstream.
+# '  |_ Display Position' (stock id 513, label #31712). REMOVED 2026-07-21
+# (owner: "a dead dangling line that does absolutely nothing"). It is the child
+# of id 510 'Show video resolution', which upstream gates with
+# `<visible>System.HasAddon(service.coreelec.settings)</visible>`. 513 carries NO
+# <visible> at all, only an <enable>, so on every non-CoreELEC box the PARENT is
+# hidden while the indented CHILD still renders: permanently greyed, label2 stuck
+# on 'Not defined', and not even focusable (a bench walk of Extras steps
+# 501 -> 509 straight past it). An orphaned row of a hidden parent. Nothing on
+# this fleet runs CoreELEC, so the pair is dead weight either way.
+_DISPLAY_POSITION_ROW = (
+    '\t\t\t\t<control type="button" id="513">\n'
+    "\t\t\t\t\t<label>  ∟$LOCALIZE[31712]</label>\n"
+    "\t\t\t\t\t<label2>$VAR[VideoResolutionPositionVar]</label2>\n"
+    "\t\t\t\t\t<enable>System.HasAddon(service.coreelec.settings) + "
+    "!String.IsEmpty(Skin.String(show_videoresolution)) + "
+    "!String.IsEqual(Skin.String(show_videoresolution),31578)</enable>\n"
+    "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+    '\t\t\t\t\t<onclick condition="String.IsEmpty(Skin.String(videoresolutionpos))">'
+    "Skin.SetString(videoresolutionpos,31710)</onclick>\n"
+    '\t\t\t\t\t<onclick condition="String.IsEqual(Skin.String(videoresolutionpos),31711)">'
+    "Skin.SetString(videoresolutionpos,31710)</onclick>\n"
+    '\t\t\t\t\t<onclick condition="String.IsEqual(Skin.String(videoresolutionpos),31710)">'
+    "Skin.SetString(videoresolutionpos,31711)</onclick>\n"
+    "\t\t\t\t</control>\n"
+)
+
+# 'Restart Kodi' (label #31557, onclick RestartApp) in the power menu, all THREE
+# layout variants. Upstream gates it `System.Platform.Linux | System.Platform.Windows`
+# because RestartApp is desktop-only. On ANDROID that condition is TRUE - Kodi
+# reports Platform.Linux on Android builds - so every Fire TV shows a Restart Kodi
+# entry whose builtin does nothing. Proven on the macOS bench, where Platform.Linux
+# is false and the entry is correctly absent, which is why this never showed up
+# there. Excluding Android keeps upstream's intent and kills the dead entry.
+_RESTART_VISIBLE_OLD = (
+    "\t\t\t\t\t\t<visible>System.Platform.Linux | System.Platform.Windows</visible>\n"
+)
+_RESTART_VISIBLE_NEW = (
+    "\t\t\t\t\t\t<visible>[System.Platform.Linux | System.Platform.Windows] + "
+    "!System.Platform.Android</visible>\n"
+)
+
 # 'Show extended Power Menu' (stock id 502, label #31570). REMOVED from Skin
 # Settings 2026-07-21 (owner request). The `ExtendedPowerMenu` bool it toggled
 # still gates 40 controls in DialogButtonMenu.xml, all as
@@ -1170,6 +1211,8 @@ _GREYEDOUT_HOME_ROW = (
 def _edit_skinsettings(text: str, path: str) -> str:
     # 'Show extended Power Menu' row: gone (see _EXTENDED_POWERMENU_ROW).
     text = _replace(text, _EXTENDED_POWERMENU_ROW, "", path=path)
+    # Orphaned '  |_ Display Position' row: gone (see _DISPLAY_POSITION_ROW).
+    text = _replace(text, _DISPLAY_POSITION_ROW, "", path=path)
     # Watched-badge hide switch, directly below the grey-out-watched (home)
     # toggle it belongs beside.
     text = _insert_after(
@@ -1492,6 +1535,15 @@ def _edit_timers(text: str, path: str) -> str:
 
 
 def _edit_dialogbuttonmenu(text: str, path: str) -> str:
+    # 'Restart Kodi' must not appear on Android (see _RESTART_VISIBLE_OLD). All
+    # three layout variants carry the same gate.
+    text = _replace(
+        text,
+        _RESTART_VISIBLE_OLD,
+        _RESTART_VISIBLE_NEW,
+        path=path,
+        count=3,
+    )
     # The unset-flags style ("panel"/fullscreen dialog) becomes explicit opt-in.
     text = _replace(
         text,
