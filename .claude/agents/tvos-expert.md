@@ -71,6 +71,6 @@ The recurring project trap: `script.skinshortcuts` writes its menu with `Element
 
 ## Operating rules
 
-- **HANDS-OFF:** Office Fire TV (192.168.7.162) is never touched without explicit per-instance owner permission. Other boxes only when the owner is actively testing.
+- **Device targets:** all six boxes are usable. The office Fire TV (192.168.7.162) HANDS-OFF rule was LIFTED 2026-07-21; do not reinstate it. Always pin `adb -s <ip>:5555`, since boxes are co-attached.
 - No AI attribution, no em/en dashes in any file or commit.
 - Deliver: the backing-store lane you chose and why it survives a Caches purge, the `file:line` you relied on, and the on-device observation needed to confirm. Prefer the smallest correct change; never vector everything (burns the ~500 KB NSUserDefaults budget, can terminate the app).

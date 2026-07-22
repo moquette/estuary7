@@ -83,10 +83,14 @@ completes.
 `tony7bones/tony7bones.github.io`, local checkout `~/Code/moquette/kodi/repo`;
 the standalone path `~/Code/moquette/tony7bones.github.io` that older docs cite
 DOES NOT EXIST, verified 2026-07-18)
-(the virtual proxy `repository.tony7bones`): the built zip is uploaded as a
-GitHub Release asset on THIS repo, and the proxy's `repository.json` points at
-it (the proxy engine supports `release_asset://` and plain https zip URLs and
-streams in chunks, so the zip never enters git). The zip is ~21MB as of 1.0.70;
+the built zip is uploaded as a GitHub Release asset on THIS repo, and the hub
+carries only metadata: `addons/hosted/skin.estuary7/addon.xml` plus a
+`_tools/catalog.json` entry whose `assets.zip` template points boxes straight
+at `releases/download/v{version}/{id}-{version}.zip`, so the zip never enters
+git. Boxes still install through the `repository.tony7bones` add-on, but there
+is no `repository.json` and no `release_asset://` scheme anywhere in the hub
+(verified 2026-07-22); those belonged to the retired dynamic-proxy design.
+The zip is ~21MB as of 1.0.70;
 the 94MB figure in `docs/PLAN.md`'s Phase 1/2 log is the pre-trim 1.0.0 size and
 is history, not the current build.
 
@@ -140,16 +144,18 @@ strip upstream copyright headers.
 python3 tools/build_skin.py            # fetch pinned upstream, transform, package
 python3 tools/build_skin.py --check    # build twice, byte-compare (determinism gate)
 python3 -m pytest tests/ -q            # transform anchors, golden parity, sweep contracts
-
-# Release provenance guard (network + gh CLI; also run by .github/workflows/release-guard.yml)
-python3 tools/verify_release.py --tag v1.0.70            # provenance only (fast)
-python3 tools/verify_release.py --tag v1.0.70 --rebuild  # + deterministic rebuild byte-compare
-python3 tools/verify_release.py --all                    # sweep every release
 ```
 
-`verify_release.py` is DETECTION, not prevention: it makes a hand-made
-`gh release create` bypass loudly red. Explicit `--tag` always verifies;
-`--all` honours the pre-CI enforcement window and the `KNOWN_BYPASSES` waiver.
+`tools/` holds exactly two files, `build_skin.py` and `skin_transforms.py`.
+`tools/verify_release.py` and `.github/workflows/release-guard.yml` were
+DELETED on 2026-07-21 in `6d6b976`; do not cite or recreate them.
+
+Release provenance is now the `publish` job in `.github/workflows/ci.yml`,
+which runs only on a green `test` + `anchored-build-check` on main. It builds
+the zip, creates the tag's release once per version (idempotent no-op if the
+tag exists), then re-downloads the published asset anonymously and fails the
+run on a sha256 mismatch against the CI build. Releasing is not publishing:
+the hosted mirror still has to be bumped separately.
 
 ## tvOS Siri remote behavior is FORK-AUTHORED, not stock
 

@@ -122,7 +122,8 @@ in-session, no reboot. `get_shortcuts` reads clean. (The IP recorded here
 originally, `192.168.1.162`, is not on the fleet's `192.168.7.0/24` subnet and
 could not be reconciled with any known box - it is removed rather than left as
 a target someone might contact. Do not restore an IP here without confirming
-it, and note that the office Fire TV `192.168.7.162` is HANDS-OFF.)
+it. The office Fire TV `192.168.7.162` HANDS-OFF rule this paragraph used to
+cite was LIFTED 2026-07-21; that box is a normal target.)
 
 ## Prevention checklist (for any future skin-side file work on tvOS)
 
