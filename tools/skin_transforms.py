@@ -166,6 +166,22 @@ _WIDGET_FLAGS = (
 # as possible): General category, right below "Disable zoom effect"
 # (radiobutton 702), i.e. before "Default button on Video/Audio OSD" (button
 # 703). Id 1101 is unused by upstream.
+# 'Show extended Power Menu' (stock id 502, label #31570). REMOVED from Skin
+# Settings 2026-07-21 (owner request). The `ExtendedPowerMenu` bool it toggled
+# still gates 40 controls in DialogButtonMenu.xml, all as
+# `!Skin.HasSetting(ExtendedPowerMenu)`, so deleting only the row leaves each box
+# frozen at whatever it already had: unset (the stock default) keeps the extended
+# entries VISIBLE, and a box that had toggled it keeps them hidden. Nothing about
+# the power menu itself changes, and no box loses a menu it can currently see.
+_EXTENDED_POWERMENU_ROW = (
+    '\t\t\t\t<control type="radiobutton" id="502">\n'
+    "\t\t\t\t\t<label>$LOCALIZE[31570]</label>\n"
+    "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+    "\t\t\t\t\t<onclick>Skin.ToggleSetting(ExtendedPowerMenu)</onclick>\n"
+    "\t\t\t\t\t<selected>!Skin.HasSetting(ExtendedPowerMenu)</selected>\n"
+    "\t\t\t\t</control>\n"
+)
+
 _SYSINFO_TOGGLE = """\t\t\t\t<control type="radiobutton" id="1101">
 \t\t\t\t\t<label>Show system info on Settings focus</label>
 \t\t\t\t\t<include>DefaultSettingButton</include>
@@ -1152,6 +1168,8 @@ _GREYEDOUT_HOME_ROW = (
 
 
 def _edit_skinsettings(text: str, path: str) -> str:
+    # 'Show extended Power Menu' row: gone (see _EXTENDED_POWERMENU_ROW).
+    text = _replace(text, _EXTENDED_POWERMENU_ROW, "", path=path)
     # Watched-badge hide switch, directly below the grey-out-watched (home)
     # toggle it belongs beside.
     text = _insert_after(

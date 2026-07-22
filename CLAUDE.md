@@ -56,17 +56,16 @@ required reading before transform work.
 It is the single reference: storage model, the four I/O bugs, the skinshortcuts
 menu split, the Siri remote keymap, and the crash inventory.
 
-## HARD CONSTRAINT - the office Fire TV is hands-off
+## Test boxes
 
-The office Fire TV at `192.168.7.162` is HANDS-OFF. Never adb, JSON-RPC, ping
-or otherwise contact it without explicit per-instance owner permission. The
-bedroom Fire TV at `192.168.7.84` is the sanctioned JSON-RPC target. Carry this
-prohibition into any subagent prompt you write.
+All six boxes are usable targets. The office Fire TV `192.168.7.162` HANDS-OFF
+rule was LIFTED 2026-07-21 by the owner; it is a normal box. `docs/PLAN.md` and
+`docs/verification/phase3/FINDINGS.md` describing it as the instrumented bench
+are accurate again, not superseded.
 
-This supersedes the "instrumented bench" language further down in this file and
-in `docs/PLAN.md` and `docs/verification/phase3/FINDINGS.md`. Those
-predate the rule and describe how the box WAS used; they are not authorization
-to use it now.
+Roster, addresses and per-box gotchas: `~/Code/moquette/kodi/.claude/scripts/DEVICES.md`.
+Getting a released version onto a box: `~/Code/moquette/kodi/.claude/skills/update/SKILL.md`.
+Always pin `adb -s <ip>:5555`; several boxes sit on adb at once.
 
 ## What this repo is
 
@@ -199,14 +198,12 @@ that keeps Live TV/Radio visible like stock - numeric window ids do NOT work
   genuine incidents only.
 - Approval is needed for DESTRUCTIVE or OUTWARD-FACING actions only (restoring
   onto a box, publishing, pushing). Reading logs, listing files and read-only
-  JSON-RPC need no approval. `192.168.7.162` stays HANDS-OFF for everything.
+  JSON-RPC need no approval.
 - Safety core, unchanged: CI green before deploy, and **skins install from the
   Kodi repo only, never adb/devicectl push**.
-  (Historical note: the Office Fire TV 192.168.7.162 WAS the instrumented bench
-  and most of the recorded verification came from it. It is now HANDS-OFF, see
-  the constraint at the top of this file. tvOS boxes cannot screenshot. There
-  is currently no designated replacement bench for this project; raise it with
-  the owner rather than improvising a target.)
+  (The Office Fire TV 192.168.7.162 is the instrumented bench and most of the
+  recorded verification came from it. Fire TV boxes screenshot with
+  `adb shell screencap`; tvOS cannot screenshot at all.)
 - No AI attribution anywhere; no em dashes in written deliverables.
 - STALE, kept for context: "The fleet is exposed ONLY during the Phase 5
   migration (see docs/PLAN.md), one box at a time." **Phase 5 was DROPPED as a

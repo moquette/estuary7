@@ -544,6 +544,20 @@ NORMALIZE = {
         (_GOLDEN_CATEGORY_ORDER, _FORK_CATEGORY_ORDER, 1),
         (_GOLDEN_SKINSETTINGS_LOGO, "", 1),
         (_GOLDEN_SCROLLBAR_WIRING, "", 1),
+        # 'Show extended Power Menu' row removed 2026-07-21 (owner request).
+        # Restated independently here, not imported from skin_transforms: the
+        # point of this file is that the fork bytes are what we expect, not what
+        # the transform happens to produce.
+        (
+            '\t\t\t\t<control type="radiobutton" id="502">\n'
+            "\t\t\t\t\t<label>$LOCALIZE[31570]</label>\n"
+            "\t\t\t\t\t<include>DefaultSettingButton</include>\n"
+            "\t\t\t\t\t<onclick>Skin.ToggleSetting(ExtendedPowerMenu)</onclick>\n"
+            "\t\t\t\t\t<selected>!Skin.HasSetting(ExtendedPowerMenu)</selected>\n"
+            "\t\t\t\t</control>\n",
+            "",
+            1,
+        ),
         (
             "\t\t\t\t<width>470</width>\n\t\t\t\t<height>770</height>",
             "\t\t\t\t<width>470</width>\n\t\t\t\t<height>700</height>",
