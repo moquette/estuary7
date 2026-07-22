@@ -2472,7 +2472,65 @@ def _edit_view54(text: str, path: str) -> str:
     return _replace(text, _V54_MOVIE_BADGE_STOCK, _V54_MOVIE_BADGE_TOPRIGHT, path=path)
 
 
+# The select dialog's footer. Upstream draws one right-aligned label carrying
+# $VAR[SelectLabel] ("4 items - 1/1"), a count that tells the user nothing she
+# cannot see by looking at the list. An add-on that sets ListItem.Property
+# ezm.footer on its rows takes the line over instead, flush left under the row
+# text (list left 20 + the row label's own left 20 = 40), and the count hides.
+#
+# Per ITEM, not per dialog: the footer follows the highlight, so EZ Maintenance++
+# shows the backup path on Backup and the restore path on Restore. A row that
+# wants the line BLANK sets the property to a single space - non-empty to
+# String.IsEmpty (verified on Kodi 21), so the count stays hidden rather than
+# blinking back as she scrolls past. Any other add-on's select dialog is
+# untouched: no property, stock label, stock geometry.
+_SELECT_FOOTER_STOCK = (
+    '\t\t\t<control type="label">\n'
+    "\t\t\t\t<left>925</left>\n"
+    "\t\t\t\t<bottom>10</bottom>\n"
+    "\t\t\t\t<width>275</width>\n"
+    "\t\t\t\t<height>30</height>\n"
+    "\t\t\t\t<font>font12</font>\n"
+    "\t\t\t\t<align>right</align>\n"
+    "\t\t\t\t<textcolor>grey</textcolor>\n"
+    "\t\t\t\t<label>$VAR[SelectLabel]</label>\n"
+    "\t\t\t</control>\n"
+)
+
+_SELECT_FOOTER_ADDON = (
+    '\t\t\t<control type="label">\n'
+    "\t\t\t\t<left>925</left>\n"
+    "\t\t\t\t<bottom>10</bottom>\n"
+    "\t\t\t\t<width>275</width>\n"
+    "\t\t\t\t<height>30</height>\n"
+    "\t\t\t\t<font>font12</font>\n"
+    "\t\t\t\t<align>right</align>\n"
+    "\t\t\t\t<textcolor>grey</textcolor>\n"
+    "\t\t\t\t<label>$VAR[SelectLabel]</label>\n"
+    "\t\t\t\t<visible>String.IsEmpty(Container(3)."
+    "ListItem.Property(ezm.footer))</visible>\n"
+    "\t\t\t</control>\n"
+    '\t\t\t<control type="label">\n'
+    "\t\t\t\t<left>40</left>\n"
+    "\t\t\t\t<bottom>10</bottom>\n"
+    "\t\t\t\t<width>1160</width>\n"
+    "\t\t\t\t<height>30</height>\n"
+    "\t\t\t\t<font>font12</font>\n"
+    "\t\t\t\t<align>left</align>\n"
+    "\t\t\t\t<textcolor>grey</textcolor>\n"
+    "\t\t\t\t<label>$INFO[Container(3).ListItem.Property(ezm.footer)]</label>\n"
+    "\t\t\t\t<visible>!String.IsEmpty(Container(3)."
+    "ListItem.Property(ezm.footer))</visible>\n"
+    "\t\t\t</control>\n"
+)
+
+
+def _edit_includes_dialogselect(text: str, path: str) -> str:
+    return _replace(text, _SELECT_FOOTER_STOCK, _SELECT_FOOTER_ADDON, path=path)
+
+
 FILE_EDITS = {
+    "xml/Includes_DialogSelect.xml": _edit_includes_dialogselect,
     "xml/Home.xml": _edit_home,
     "xml/Settings.xml": _edit_settings,
     "xml/Includes.xml": _edit_includes,
