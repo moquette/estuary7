@@ -20,7 +20,13 @@ jobs:
     permissions:
       contents: read
     steps:
+      # fetch-depth: 0 is required by the unreleased-changes check below, which
+      # diffs the working tree against the tag of the current our_version. A
+      # shallow clone has no tags, and that check refuses to pass when it cannot
+      # see them rather than reporting a false all-clear.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
@@ -30,6 +36,30 @@ jobs:
         # Versions live in requirements-ci.txt. See that file for why they are
         # pinned at all.
         run: pip install -r requirements-ci.txt
+
+      # Deliberately a WARNING, never a failure. The publish job is idempotent by
+      # tag: if the tag for the current our_version already exists it prints
+      # "nothing to publish" and exits 0, so a fix committed without bumping
+      # skin_build.lock reaches zero boxes with nothing red anywhere (2026-07-25
+      # audit). This repo is the more exposed of the two, because unlike the
+      # add-on it has no release script that fails closed; CI is the only path
+      # that cuts a release. It does NOT block, because batching several commits
+      # into one later release is the normal workflow and a gate that fought it
+      # would just get bypassed.
+      - name: Unreleased-changes check (warning only)
+        run: |
+          python3 tools/check_unreleased_changes.py | tee /tmp/unreleased.txt
+          if grep -q WARNING /tmp/unreleased.txt; then
+            {
+              echo "### Unreleased changes"
+              echo
+              echo '```'
+              cat /tmp/unreleased.txt
+              echo '```'
+              echo
+              echo "Bump \`our_version\` in \`skin_build.lock\` before this can reach a box."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       # Corrected 2026-07-14 (GAP 4 audit): most of this suite is NOT network-free. Its
       # `built`/`upstream_tree` fixtures (tests/conftest.py) call build_skin.ensure_tarball(),
