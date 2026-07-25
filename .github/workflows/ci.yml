@@ -27,7 +27,9 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install pytest
+        # Versions live in requirements-ci.txt. See that file for why they are
+        # pinned at all.
+        run: pip install -r requirements-ci.txt
 
       # Corrected 2026-07-14 (GAP 4 audit): most of this suite is NOT network-free. Its
       # `built`/`upstream_tree` fixtures (tests/conftest.py) call build_skin.ensure_tarball(),

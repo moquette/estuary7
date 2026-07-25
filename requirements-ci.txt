@@ -1,0 +1,13 @@
+# Pinned CI tooling. SINGLE SOURCE OF TRUTH for .github/workflows/ci.yml.
+#
+# Why pinned at all: on 2026-07-23 ruff 0.16.0 moved rules into its stable set
+# and failed the sibling repo's scheduled deploy two nights running, on code
+# nobody had touched. An unpinned tool turns an upstream release into a red
+# build with no local cause, and pytest is exactly the same shape.
+#
+# Bumping: change the pin here ONLY, in a commit that also clears whatever the
+# new version flags. Never bump it to make a red build go green.
+#
+# No ruff entry: this repo does not lint in CI today. Adding it is a separate
+# deliberate change (there are 4 pre-existing E741 findings to clear first).
+pytest==9.1.1
