@@ -30,9 +30,20 @@ import subprocess
 import sys
 
 # Only what build_skin.py actually reads into the zip: the upstream pin and our
-# version (skin_build.lock), the transform code (tools/), and the overlaid art
-# and resources (assets/). docs/, tests/ and CLAUDE.md cannot change the artifact.
-SOURCE_PATHS = ("skin_build.lock", "tools", "assets")
+# version (skin_build.lock), the two files that do the transforming, and the
+# overlaid art and resources (assets/). docs/, tests/ and CLAUDE.md cannot change
+# the artifact.
+#
+# NAMED FILES, NOT THE tools/ DIRECTORY. Watching all of tools/ meant this script
+# counted ITSELF as a build input, so it warned about its own arrival the hour it
+# shipped on 2026-07-25. A gate that is wrong on day one is one people learn to
+# ignore, which is worse than not having it.
+SOURCE_PATHS = (
+    "skin_build.lock",
+    "assets",
+    "tools/build_skin.py",
+    "tools/skin_transforms.py",
+)
 
 
 def repo_root():

@@ -146,9 +146,11 @@ python3 tools/build_skin.py --check    # build twice, byte-compare (determinism 
 python3 -m pytest tests/ -q            # transform anchors, golden parity, sweep contracts
 ```
 
-`tools/` holds exactly two files, `build_skin.py` and `skin_transforms.py`.
-`tools/verify_release.py` and `.github/workflows/release-guard.yml` were
-DELETED on 2026-07-21 in `6d6b976`; do not cite or recreate them.
+`tools/` holds three files: `build_skin.py` and `skin_transforms.py` (the two
+that build the zip), plus `check_unreleased_changes.py` (added 2026-07-25, a
+warning only, not a build input). `tools/verify_release.py` and
+`.github/workflows/release-guard.yml` were DELETED on 2026-07-21 in `6d6b976`;
+do not cite or recreate them.
 
 Release provenance is now the `publish` job in `.github/workflows/ci.yml`,
 which runs only on a green `test` + `anchored-build-check` on main. It builds

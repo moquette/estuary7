@@ -106,5 +106,13 @@ def test_source_paths_cover_every_build_input(mod):
         )
         assert path in mod.SOURCE_PATHS, f"{path} is a build input but is not watched"
 
-    # The transform code itself is an input: it rewrites the upstream tree.
-    assert "tools" in mod.SOURCE_PATHS
+    # The transform code itself is an input: it rewrites the upstream tree. Named
+    # files, NOT the tools/ directory. Watching all of tools/ made this gate count
+    # ITSELF as a build input, so it warned about its own arrival on the day it
+    # shipped (2026-07-25). A gate that is wrong on day one is one people learn to
+    # ignore, which is worse than not having it.
+    assert "tools/build_skin.py" in mod.SOURCE_PATHS
+    assert "tools/skin_transforms.py" in mod.SOURCE_PATHS
+    assert "tools" not in mod.SOURCE_PATHS, (
+        "watch named files, not the whole tools/ dir: the gate would flag itself"
+    )
