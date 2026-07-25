@@ -1,0 +1,29 @@
+# The ruff version and the rule set are BOTH declared here, matching the pin in
+# requirements-ci.txt.
+#
+# Why the version: on 2026-07-23 ruff 0.16.0 moved rules into its stable set and
+# failed the sibling repo's scheduled deploy two nights running, on code nobody
+# had touched. Declaring the version means a mismatch fails with one clear
+# sentence instead of a wall of findings that look like real defects.
+#
+# Why the rule set, which is the more important half: the floating input was
+# never ruff's version, it was ruff's DEFAULT rule set, which a release is free
+# to change. With the set declared, 0.15.22 and 0.16.0 agree exactly. Measured on
+# this repo: 4 findings on both, against 4 and 159 on their respective defaults.
+#
+# These four are ruff's pre-0.16 defaults, written down rather than inherited:
+#   E4 imports, E7 statements, E9 syntax/IO errors, F pyflakes.
+# Widening the set is a deliberate choice to make in its own commit.
+#
+# There is a second, load-bearing effect. The global auto-format hook runs
+# `ruff format` then `ruff check --fix` with whatever ruff is on PATH. On
+# 2026-07-25 that rewrote 120 lines of tools/skin_transforms.py in one edit,
+# converting .format() calls to f-strings and stripping a noqa. That file is a
+# BUILD INPUT with anchored transforms and a zip_sha256 recorded in
+# skin_build.lock, so a wholesale rewrite is exactly what must not happen to it
+# silently. Declaring required-version makes that hook a no-op here until the
+# pin and the installed ruff agree deliberately.
+required-version = "==0.15.22"
+
+[lint]
+select = ["E4", "E7", "E9", "F"]

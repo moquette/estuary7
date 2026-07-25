@@ -8,6 +8,9 @@
 # Bumping: change the pin here ONLY, in a commit that also clears whatever the
 # new version flags. Never bump it to make a red build go green.
 #
-# No ruff entry: this repo does not lint in CI today. Adding it is a separate
-# deliberate change (there are 4 pre-existing E741 findings to clear first).
+# ruff added 2026-07-25, once the 4 pre-existing E741 findings were cleared. The
+# rename that cleared them is proven behavior-preserving: the built zip still
+# reproduces the zip_sha256 recorded in skin_build.lock. Rule set is declared in
+# ruff.toml so a ruff release cannot change what "clean" means here.
 pytest==9.1.1
+ruff==0.15.22

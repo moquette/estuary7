@@ -191,8 +191,8 @@ def _cat_item(item_id, label_id):
 # The fork lists the categories in stock Estuary's order (General, Main menu,
 # Artwork, OSD, then MOD V2's extra panels); the golden kept upstream's order.
 _GOLDEN_CATEGORY_ORDER = "".join(
-    _cat_item(i, l)
-    for i, l in (
+    _cat_item(i, lbl)
+    for i, lbl in (
         (2, 31203),
         (1, 128),
         (5, 14022),
@@ -206,8 +206,8 @@ _GOLDEN_CATEGORY_ORDER = "".join(
     )
 )
 _FORK_CATEGORY_ORDER = "".join(
-    _cat_item(i, l)
-    for i, l in (
+    _cat_item(i, lbl)
+    for i, lbl in (
         (1, 128),
         (2, 31203),
         (3, 31159),

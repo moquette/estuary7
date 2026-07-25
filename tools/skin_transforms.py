@@ -1299,8 +1299,8 @@ def _edit_skinsettings(text: str, path: str) -> str:
     # Categories in stock Estuary's order.
     text = _replace(
         text,
-        "".join(_category_item(i, l) for i, l in _CATEGORY_ORDER_UPSTREAM),
-        "".join(_category_item(i, l) for i, l in _CATEGORY_ORDER_STOCK),
+        "".join(_category_item(i, lbl) for i, lbl in _CATEGORY_ORDER_UPSTREAM),
+        "".join(_category_item(i, lbl) for i, lbl in _CATEGORY_ORDER_STOCK),
         path=path,
     )
     # No MOD V2 wordmark (stock shows nothing here).

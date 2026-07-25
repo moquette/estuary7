@@ -78,6 +78,16 @@ jobs:
       - name: Run the test suite
         run: python3 -m pytest tests/ -q
 
+      # Added 2026-07-25. This repo had no linter at all, which was drift rather
+      # than a decision: the sibling add-on repo documents in detail WHY its
+      # add-on source is excluded, while nothing here ever explained the absence.
+      # Scope is tools/ + tests/, the only Python this repo owns. The rule set is
+      # declared in ruff.toml, so a ruff release cannot silently change what
+      # "clean" means and red-light a repo nobody touched, which is exactly what
+      # took the sibling repo's deploy down for two nights.
+      - name: Lint (tools + tests)
+        run: ruff check tools/ tests/
+
   anchored-build-check:
     # GAP 4: the pytest suite above never runs the real CLI entrypoint end to end, so a
     # break confined to trim_payload() (TRIM_PATHS upstream-drift detection), the aggregate
