@@ -123,6 +123,14 @@ sibling repo's `docs/playbooks/modv2plus-dev-cycle-and-lessons.md`.
 - **Deterministic packaging.** Sorted paths, 1980-01-01 zip timestamps (same
   discipline as the sibling repo's `_tools/generate_repo.py`). `build_skin.py`
   builds twice and byte-compares; the zip sha256 is recorded in the lock.
+- **`tools/skin_transforms.py` must not be reformatted by accident.** It is a
+  BUILD INPUT carrying anchor strings, and the lock records the sha256 of what it
+  produces. The global auto-format hook runs `ruff format` then
+  `ruff check --fix` with whatever ruff is on PATH after every Python edit, and on
+  2026-07-25 it rewrote 120 lines of that file out of a one-line edit (`.format()`
+  calls turned into f-strings, a `noqa` stripped). `required-version` in
+  `ruff.toml` now makes that hook a no-op here. If a hook ever reports rewriting a
+  file, read `git diff --stat` before continuing.
 - **No bold anywhere** (owner directive): the build strips `[B]`/`[/B]` markup
   from every XML, rewrites Font.xml to Estuary weights (NotoSans-Regular for
   the `*_title` ids + `font_MainMenu`; RobotoCondensed-Light flags), and
@@ -143,12 +151,24 @@ strip upstream copyright headers.
 ```bash
 python3 tools/build_skin.py            # fetch pinned upstream, transform, package
 python3 tools/build_skin.py --check    # build twice, byte-compare (determinism gate)
-python3 -m pytest tests/ -q            # transform anchors, golden parity, sweep contracts
+/opt/homebrew/bin/python3 -m pytest tests/ -q   # 153 tests: anchors, goldens, sweeps
+../bin/check-all estuary7              # all of the above plus the PINNED ruff
 ```
 
+`build_skin.py` is stdlib-only and runs on any `python3`; the suite needs the
+Homebrew one, because the system 3.9 has no pytest. Lint arrived 2026-07-25, so
+`ruff` is a gate here now: versions live in `requirements-ci.txt`, the rule set
+in `ruff.toml`, and `ruff.toml` also declares `required-version`, so a `ruff`
+off PATH refuses to run unless it is the pinned one. `../bin/check-all`
+provisions that pin for you.
+
 `tools/` holds three files: `build_skin.py` and `skin_transforms.py` (the two
-that build the zip), plus `check_unreleased_changes.py` (added 2026-07-25, a
-warning only, not a build input). `tools/verify_release.py` and
+that build the zip), plus `check_unreleased_changes.py`. That last one warns,
+never blocks, when a build input moved at an already-released `our_version`. The
+publish job is idempotent by tag, and this repo is the more exposed of the two
+add-on repos because it has no release script that fails closed: CI on push to
+main is the only path that ever cuts a release, so a forgotten `skin_build.lock`
+bump ships nothing while every signal stays green. `tools/verify_release.py` and
 `.github/workflows/release-guard.yml` were DELETED on 2026-07-21 in `6d6b976`;
 do not cite or recreate them.
 
@@ -201,17 +221,15 @@ that keeps Live TV/Radio visible like stock - numeric window ids do NOT work
 
 ## House rules (inherited from the fleet's workflow)
 
-- implement -> TEST -> gate -> commit/release.
+- implement -> TEST -> gate (`../bin/check-all estuary7`) -> commit/release.
 - **Routine changes get a one-line commit message.** Long-form records are for
   genuine incidents only.
 - Approval is needed for DESTRUCTIVE or OUTWARD-FACING actions only (restoring
   onto a box, publishing, pushing). Reading logs, listing files and read-only
   JSON-RPC need no approval.
 - Safety core, unchanged: CI green before deploy, and **skins install from the
-  Kodi repo only, never adb/devicectl push**.
-  (The Office Fire TV 192.168.7.162 is the instrumented bench and most of the
-  recorded verification came from it. Fire TV boxes screenshot with
-  `adb shell screencap`; tvOS cannot screenshot at all.)
+  Kodi repo only, never adb/devicectl push**. Fire TV boxes screenshot with
+  `adb shell screencap`; tvOS cannot screenshot at all.
 - No AI attribution anywhere; no em dashes in written deliverables.
 - STALE, kept for context: "The fleet is exposed ONLY during the Phase 5
   migration (see docs/PLAN.md), one box at a time." **Phase 5 was DROPPED as a
