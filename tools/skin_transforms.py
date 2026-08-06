@@ -2594,7 +2594,7 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
     text = _replace(
         text,
         "<source>https://github.com/b-jesch/skin.estuary.modv2/tree/Omega</source>",
-        "<source>https://github.com/moquette/estuary7</source>",
+        "<source>https://github.com/moquette/kodi-estuary7</source>",
         path=path,
     )
     text = _replace(
@@ -2607,7 +2607,7 @@ def rebrand_addon_xml(text: str, version: str, *, path: str = "addon.xml") -> st
         # user-facing "What's new" lives in the hub mirror's addon.xml, which
         # is bumped per release; the zip just points at the release history.
         "        <news>\nv{}: release notes at "
-        "https://github.com/moquette/estuary7/releases\n"
+        "https://github.com/moquette/kodi-estuary7/releases\n"
         "        </news>".format(version),
         path=path,
     )
