@@ -17,6 +17,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
@@ -24,11 +25,11 @@ jobs:
       # diffs the working tree against the tag of the current our_version. A
       # shallow clone has no tags, and that check refuses to pass when it cannot
       # see them rather than reporting a false all-clear.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
@@ -98,12 +99,13 @@ jobs:
     # slow down or flake the fast vendored-golden job above; it reports as its own
     # independent, loudly-named check.
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
         # No pip install: tools/build_skin.py and tools/skin_transforms.py are stdlib-only.
@@ -124,12 +126,13 @@ jobs:
     needs: [test, anchored-build-check]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
